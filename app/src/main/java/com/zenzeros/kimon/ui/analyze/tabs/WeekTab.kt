@@ -2,8 +2,8 @@
 
 package com.zenzeros.kimon.ui.analyze.tabs
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -39,35 +40,47 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun DayTab(
-    onNavigateToFocus: () -> Unit = {},
+fun WeekTab(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var selectedCalendar by remember { mutableStateOf(Calendar.getInstance()) }
-
-    val dayOfWeek = remember(selectedCalendar) {
-        SimpleDateFormat("EEE", Locale.getDefault()).format(selectedCalendar.time).uppercase()
+    var selectedWeekStart by remember {
+        val cal = Calendar.getInstance()
+        cal.firstDayOfWeek = Calendar.MONDAY
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        mutableStateOf(cal)
     }
 
-    val formattedDate = remember(selectedCalendar) {
-        SimpleDateFormat("MM / dd / yyyy", Locale.getDefault()).format(selectedCalendar.time)
+    val weekEndCal = remember(selectedWeekStart) {
+        val end = selectedWeekStart.clone() as Calendar
+        end.add(Calendar.DAY_OF_YEAR, 6)
+        end
+    }
+
+    val weekRangeText = remember(selectedWeekStart, weekEndCal) {
+        val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
+        "${dateFormat.format(selectedWeekStart.time)} - ${dateFormat.format(weekEndCal.time)}".uppercase()
     }
 
     val totalSectionsGroup = 3
-    val todayFocusShapesGroup = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
-    val focusByTagShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
-    val dailyTimelineShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
+    val weeklyFocusShapes = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
+    val focusDistributionShapes = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
+    val focusTrendsShapes = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
 
     Column(
         modifier = modifier
@@ -76,7 +89,7 @@ fun DayTab(
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
-        // 1. Navigation Header: [ Left: Combined Day & Date Pill ] ... [ Right: ButtonGroup with < and > ]
+        // 1. Navigation Header: [ Left: Combined Week Range Pill ] ... [ Right: ButtonGroup with < and > ]
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,7 +97,7 @@ fun DayTab(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Combined Compact Day & Date Pill
+            // Left: Combined Compact Week Range Pill
             Surface(
                 shape = RoundedCornerShape(10.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -92,7 +105,9 @@ fun DayTab(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
                 ),
-                modifier = Modifier.height(36.dp)
+                modifier = Modifier
+                    .height(36.dp)
+                    .weight(1f, fill = false)
             ) {
                 Row(
                     modifier = Modifier
@@ -102,32 +117,14 @@ fun DayTab(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = dayOfWeek,
+                        text = weekRangeText,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
-                            letterSpacing = 0.5.sp
+                            letterSpacing = 0.4.sp
                         ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
-                        ),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-
-                    Text(
-                        text = formattedDate,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 11.5.sp,
-                            letterSpacing = 0.3.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
                     )
 
                     Icon(
@@ -138,6 +135,8 @@ fun DayTab(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
 
             // Right: Connected ButtonGroup with < and > arrows
             ButtonGroup(
@@ -153,9 +152,9 @@ fun DayTab(
                         FilledTonalToggleButton(
                             checked = false,
                             onCheckedChange = {
-                                val newCal = selectedCalendar.clone() as Calendar
-                                newCal.add(Calendar.DAY_OF_YEAR, -1)
-                                selectedCalendar = newCal
+                                val newCal = selectedWeekStart.clone() as Calendar
+                                newCal.add(Calendar.DAY_OF_YEAR, -7)
+                                selectedWeekStart = newCal
                             },
                             shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                             colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
@@ -167,7 +166,7 @@ fun DayTab(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_chevron_left),
-                                contentDescription = "Previous Day",
+                                contentDescription = "Previous Week",
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -181,9 +180,9 @@ fun DayTab(
                         FilledTonalToggleButton(
                             checked = false,
                             onCheckedChange = {
-                                val newCal = selectedCalendar.clone() as Calendar
-                                newCal.add(Calendar.DAY_OF_YEAR, 1)
-                                selectedCalendar = newCal
+                                val newCal = selectedWeekStart.clone() as Calendar
+                                newCal.add(Calendar.DAY_OF_YEAR, 7)
+                                selectedWeekStart = newCal
                             },
                             shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                             colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
@@ -195,7 +194,7 @@ fun DayTab(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = "Next Day",
+                                contentDescription = "Next Week",
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -207,14 +206,14 @@ fun DayTab(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 2. Material 3 Expressive Segmented Group (Today's Focus, Focus Time by Tag, Daily Timeline)
+        // 2. Material 3 Expressive Segmented 3-Card Group
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(3.5.dp)
         ) {
-            // --- Card 1: Today's Focus ---
+            // --- Card 1: Weekly Focus ---
             Surface(
-                shape = todayFocusShapesGroup.shape,
+                shape = weeklyFocusShapes.shape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
@@ -222,7 +221,7 @@ fun DayTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (🕒) Today's Focus ]
+                    // Header Row: [ (🕒) Weekly Focus ]
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(7.dp)
@@ -243,7 +242,7 @@ fun DayTab(
                         }
 
                         Text(
-                            text = "Today's Focus",
+                            text = "Weekly Focus",
                             style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp
@@ -254,7 +253,7 @@ fun DayTab(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Horizontal Segmented Row: [ Total Focus ] [ Total Sessions ]
+                    // Horizontal Segmented Row: [ Total Time ] [ Sessions ]
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(3.dp)
@@ -268,7 +267,7 @@ fun DayTab(
                             cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
-                            label = "Total Focus",
+                            label = "Total Time",
                             value = "0m"
                         )
 
@@ -281,16 +280,16 @@ fun DayTab(
                             cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
-                            label = "Total Sessions",
+                            label = "Sessions",
                             value = "0"
                         )
                     }
                 }
             }
 
-            // --- Card 2: Focus Time by Tag ---
+            // --- Card 2: Focus Distribution ---
             Surface(
-                shape = focusByTagShapesGroup.shape,
+                shape = focusDistributionShapes.shape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
@@ -298,7 +297,7 @@ fun DayTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (🏷️) Focus Time by Tag ]
+                    // Header Row: [ (📊) Focus Distribution ]
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(7.dp)
@@ -311,7 +310,7 @@ fun DayTab(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_tag),
+                                painter = painterResource(R.drawable.ic_pie_chart),
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
@@ -319,7 +318,7 @@ fun DayTab(
                         }
 
                         Text(
-                            text = "Focus Time by Tag",
+                            text = "Focus Distribution",
                             style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp
@@ -328,76 +327,69 @@ fun DayTab(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Empty State Container
-                    Column(
+                    // Donut Ring Chart Row: [ Donut ]  [ Text: No focus data available yet. ]
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        // Large Centered Tag Icon Badge
+                        // Donut Ring
+                        val ringTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)
                         Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                            modifier = Modifier.size(110.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_tag),
-                                contentDescription = null,
-                                modifier = Modifier.size(26.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                drawCircle(
+                                    color = ringTrackColor,
+                                    style = Stroke(width = 14.dp.toPx(), cap = StrokeCap.Round)
+                                )
+                            }
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "0m",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp,
+                                        fontFamily = LocalAppFonts.current.topBarTitle
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Total",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
+                        // Right description
                         Text(
-                            text = "No focus sessions for this day.",
+                            text = "No focus data available yet.",
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 12.5.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Normal
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Action Link: "Go here to start one →"
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { onNavigateToFocus() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Go here to start one",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
                     }
                 }
             }
 
-            // --- Card 3: Daily Timeline ---
+            // --- Card 3: Focus Trends ---
             Surface(
-                shape = dailyTimelineShapesGroup.shape,
+                shape = focusTrendsShapes.shape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 1.dp,
                 modifier = Modifier
@@ -407,7 +399,7 @@ fun DayTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (📅) Daily Timeline ]
+                    // Header Row: [ (📈) Focus Trends ]
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(7.dp)
@@ -420,7 +412,7 @@ fun DayTab(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_calendar),
+                                painter = painterResource(R.drawable.ic_trending_up),
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer
@@ -428,7 +420,7 @@ fun DayTab(
                         }
 
                         Text(
-                            text = "Daily Timeline",
+                            text = "Focus Trends",
                             style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp
@@ -437,70 +429,100 @@ fun DayTab(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Empty State Container
-                    Column(
+                    // Weekly Timeline & Dots
+                    val weekDayLabels = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                    val todayDayOfWeekIndex = remember {
+                        val cal = Calendar.getInstance()
+                        // Convert Calendar day (Sunday=1, Monday=2..Saturday=7) to Mon=0..Sun=6
+                        (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+                    }
+
+                    val timelineColor = MaterialTheme.colorScheme.primary
+                    val surfaceContainerHigh = MaterialTheme.colorScheme.surfaceContainerHigh
+
+                    // 1. Interactive Nodes Timeline Canvas
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .height(48.dp)
+                            .padding(horizontal = 14.dp)
                     ) {
-                        // Large Centered Clock Icon Badge
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_focus),
-                                contentDescription = null,
-                                modifier = Modifier.size(26.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val step = size.width / (weekDayLabels.size - 1)
+                            val centerY = size.height / 2
+
+                            // Base track line
+                            drawLine(
+                                color = timelineColor.copy(alpha = 0.5f),
+                                start = androidx.compose.ui.geometry.Offset(0f, centerY),
+                                end = androidx.compose.ui.geometry.Offset(size.width, centerY),
+                                strokeWidth = 3.dp.toPx(),
+                                cap = StrokeCap.Round
                             )
-                        }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                            // 7 Day Nodes
+                            for (i in weekDayLabels.indices) {
+                                val x = i * step
+                                val isToday = i == todayDayOfWeekIndex
 
-                        Text(
-                            text = "No focus sessions for this day.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                                // Outer circle
+                                drawCircle(
+                                    color = if (isToday) timelineColor else timelineColor.copy(alpha = 0.7f),
+                                    radius = if (isToday) 6.dp.toPx() else 4.5.dp.toPx(),
+                                    center = androidx.compose.ui.geometry.Offset(x, centerY)
+                                )
 
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Action Link: "Go here to start one →"
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { onNavigateToFocus() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Go here to start one",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                                // Inner core
+                                drawCircle(
+                                    color = surfaceContainerHigh,
+                                    radius = if (isToday) 2.5.dp.toPx() else 1.8.dp.toPx(),
+                                    center = androidx.compose.ui.geometry.Offset(x, centerY)
+                                )
+                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // 2. Day Labels Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        weekDayLabels.forEachIndexed { index, day ->
+                            val isToday = index == todayDayOfWeekIndex
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.width(36.dp)
+                            ) {
+                                Text(
+                                    text = day,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 11.5.sp
+                                    ),
+                                    color = if (isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center
+                                )
+
+                                if (isToday) {
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(4.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
         }

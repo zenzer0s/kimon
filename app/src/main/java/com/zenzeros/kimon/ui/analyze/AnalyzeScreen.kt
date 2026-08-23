@@ -2,12 +2,6 @@
 
 package com.zenzeros.kimon.ui.analyze
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,25 +9,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalToggleButton
-import androidx.compose.material3.FilledTonalToggleButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.ui.analyze.tabs.DayTab
 import com.zenzeros.kimon.ui.analyze.tabs.OverviewTab
+import com.zenzeros.kimon.ui.analyze.tabs.WeekTab
+import kotlinx.coroutines.launch
 
 enum class AnalyzeTimeRange(val label: String) {
     OVERVIEW("Overview"),
@@ -46,86 +43,88 @@ enum class AnalyzeTimeRange(val label: String) {
 fun AnalyzeScreen(
     modifier: Modifier = Modifier
 ) {
-    var selectedRange by remember { mutableStateOf(AnalyzeTimeRange.OVERVIEW) }
+    val coroutineScope = rememberCoroutineScope()
+    val ranges = remember { AnalyzeTimeRange.values() }
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { ranges.size }
+    )
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 14.dp)
+        modifier = modifier.fillMaxSize()
     ) {
-        // 1. Material 3 Expressive ButtonGroup Tabs
-        ButtonGroup(
-            overflowIndicator = { menuState ->
-                ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+        // 1. Material 3 PrimaryTabRow with Full Width & No Text Clipping
+        PrimaryTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            indicator = {
+                TabRowDefaults.PrimaryIndicator(
+                    modifier = Modifier.tabIndicatorOffset(pagerState.currentPage),
+                    width = 38.dp,
+                    height = 3.5.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                )
             },
+            divider = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                .padding(horizontal = 4.dp)
         ) {
-            val ranges = AnalyzeTimeRange.values()
             ranges.forEachIndexed { index, range ->
-                customItem(
-                    buttonGroupContent = {
-                        val shapes = when (index) {
-                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                            ranges.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                        }
-
-                        FilledTonalToggleButton(
-                            checked = selectedRange == range,
-                            onCheckedChange = { if (it) selectedRange = range },
-                            shapes = shapes,
-                            colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = range.label,
-                                fontWeight = if (selectedRange == range) FontWeight.SemiBold else FontWeight.Normal,
-                                fontSize = 12.sp,
-                                maxLines = 1
-                            )
+                val selected = pagerState.currentPage == index
+                Tab(
+                    selected = selected,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
                         }
                     },
-                    menuContent = {}
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    text = {
+                        Text(
+                            text = range.label,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                            fontSize = 13.sp,
+                            letterSpacing = (-0.2).sp,
+                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        // 2. Animated Content Routing for Tabs
-        AnimatedContent(
-            targetState = selectedRange,
-            transitionSpec = {
-                fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(150))
-            },
-            label = "analyzeTabContent",
+        // 2. Smooth Swipeable HorizontalPager with 14.dp Page Padding
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-        ) { range ->
-            when (range) {
-                AnalyzeTimeRange.OVERVIEW -> {
-                    OverviewTab()
-                }
-                AnalyzeTimeRange.DAY -> {
-                    DayTab()
-                }
-                AnalyzeTimeRange.WEEK -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        // Week Tab Placeholder
+        ) { page ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 14.dp)
+            ) {
+                when (ranges[page]) {
+                    AnalyzeTimeRange.OVERVIEW -> {
+                        OverviewTab()
                     }
-                }
-                AnalyzeTimeRange.YEAR -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        // Year Tab Placeholder
+                    AnalyzeTimeRange.DAY -> {
+                        DayTab()
+                    }
+                    AnalyzeTimeRange.WEEK -> {
+                        WeekTab()
+                    }
+                    AnalyzeTimeRange.YEAR -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            // Year Tab Placeholder
+                        }
                     }
                 }
             }
