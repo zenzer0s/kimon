@@ -11,7 +11,15 @@ import com.zenzeros.kimon.domain.usecase.GetOverviewStatsUseCase
 import com.zenzeros.kimon.domain.usecase.GetWeekStatsUseCase
 import com.zenzeros.kimon.domain.usecase.GetYearStatsUseCase
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import com.zenzeros.kimon.data.local.SampleDataSeeder
+
 class KimonApplication : Application() {
+
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database by lazy { KimonDatabase.getInstance(this) }
     val sessionRepository by lazy { SessionRepository(database.focusSessionDao()) }
@@ -23,4 +31,11 @@ class KimonApplication : Application() {
     val getDayStatsUseCase by lazy { GetDayStatsUseCase(sessionRepository) }
     val getWeekStatsUseCase by lazy { GetWeekStatsUseCase(sessionRepository) }
     val getYearStatsUseCase by lazy { GetYearStatsUseCase(sessionRepository) }
+
+    override fun onCreate() {
+        super.onCreate()
+        applicationScope.launch {
+            SampleDataSeeder.seedSampleDataIfEmpty(database)
+        }
+    }
 }
