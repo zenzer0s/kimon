@@ -1,10 +1,14 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.zenzeros.kimon.ui.theme
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 
 enum class ThemePalette(val displayName: String) {
+    DYNAMIC("Dynamic / System"),
     DEFAULT("Default"),
     OCEAN("Ocean Blue"),
     EMERALD("Emerald Green"),
@@ -102,6 +106,7 @@ val LavenderDarkColorScheme = darkColorScheme(
 
 fun getPaletteColorScheme(palette: ThemePalette, darkTheme: Boolean): ColorScheme {
     return when (palette) {
+        ThemePalette.DYNAMIC,
         ThemePalette.DEFAULT -> if (darkTheme) darkColorScheme() else lightColorScheme()
         ThemePalette.OCEAN -> if (darkTheme) OceanDarkColorScheme else OceanLightColorScheme
         ThemePalette.EMERALD -> if (darkTheme) EmeraldDarkColorScheme else EmeraldLightColorScheme
