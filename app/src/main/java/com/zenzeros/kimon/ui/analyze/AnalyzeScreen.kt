@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -40,15 +39,16 @@ enum class AnalyzeTimeRange(val label: String) {
     YEAR("Year")
 }
 
+private val ANALYZE_RANGES = AnalyzeTimeRange.values()
+
 @Composable
 fun AnalyzeScreen(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val ranges = remember { AnalyzeTimeRange.values() }
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { ranges.size }
+        pageCount = { ANALYZE_RANGES.size }
     )
 
     Column(
@@ -73,7 +73,7 @@ fun AnalyzeScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp)
         ) {
-            ranges.forEachIndexed { index, range ->
+            ANALYZE_RANGES.forEachIndexed { index, range ->
                 val selected = pagerState.currentPage == index
                 Tab(
                     selected = selected,
@@ -100,9 +100,10 @@ fun AnalyzeScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // 2. Smooth Swipeable HorizontalPager with 14.dp Page Padding
+        // 2. Smooth Swipeable HorizontalPager with Pre-fetching for 60/120fps Swiping
         HorizontalPager(
             state = pagerState,
+            beyondViewportPageCount = 1,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -112,7 +113,7 @@ fun AnalyzeScreen(
                     .fillMaxSize()
                     .padding(horizontal = 14.dp)
             ) {
-                when (ranges[page]) {
+                when (ANALYZE_RANGES[page]) {
                     AnalyzeTimeRange.OVERVIEW -> {
                         OverviewTab()
                     }

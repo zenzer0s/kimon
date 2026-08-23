@@ -50,6 +50,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+private val OVERVIEW_WEEK_DAYS = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
+
 @Composable
 fun OverviewTab(
     modifier: Modifier = Modifier
@@ -317,8 +319,9 @@ private fun ActivityLogContent() {
         mutableStateOf(Calendar.getInstance())
     }
 
-    val monthYearFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
-    val currentFormattedMonth = monthYearFormat.format(calendarMonth.time)
+    val currentFormattedMonth = remember(calendarMonth.timeInMillis) {
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(calendarMonth.time)
+    }
 
     val todayCalendar = remember { Calendar.getInstance() }
     val todayDayOfMonth = todayCalendar.get(Calendar.DAY_OF_MONTH)
@@ -403,12 +406,11 @@ private fun ActivityLogContent() {
         Spacer(modifier = Modifier.height(12.dp))
 
         // Weekday Labels: [ SUN  MON  TUE  WED  THU  FRI  SAT ]
-        val weekDays = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            weekDays.forEach { day ->
+            OVERVIEW_WEEK_DAYS.forEach { day ->
                 Text(
                     text = day,
                     style = MaterialTheme.typography.labelSmall.copy(
@@ -426,10 +428,13 @@ private fun ActivityLogContent() {
         Spacer(modifier = Modifier.height(8.dp))
 
         // Calendar Days Grid (7 columns)
-        val cal = calendarMonth.clone() as Calendar
-        cal.set(Calendar.DAY_OF_MONTH, 1)
-        val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1 // 0 for Sunday
-        val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val cal = remember(calendarMonth.timeInMillis) {
+            val c = calendarMonth.clone() as Calendar
+            c.set(Calendar.DAY_OF_MONTH, 1)
+            c
+        }
+        val firstDayOfWeek = remember(cal) { cal.get(Calendar.DAY_OF_WEEK) - 1 }
+        val maxDaysInMonth = remember(cal) { cal.getActualMaximum(Calendar.DAY_OF_MONTH) }
         val totalGridSlots = ((firstDayOfWeek + maxDaysInMonth + 6) / 7) * 7
 
         Column(

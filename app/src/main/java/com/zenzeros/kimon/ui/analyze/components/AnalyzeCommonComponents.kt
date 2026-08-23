@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,15 +37,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 
+// Pre-allocated static shapes to eliminate runtime object allocation during recomposition
+private val Shape2Leading = RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+private val Shape2Trailing = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 14.dp, bottomEnd = 14.dp)
+
+private val Shape3Leading = RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+private val Shape3Middle = RoundedCornerShape(4.dp)
+private val Shape3Trailing = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 14.dp, bottomEnd = 14.dp)
+
+private val Shape3Leading10 = RoundedCornerShape(topStart = 10.dp, bottomStart = 10.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+private val Shape3Trailing10 = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 10.dp, bottomEnd = 10.dp)
+
 /**
- * Creates horizontal segmented shapes with rounded outer corners and square connected inner corners.
+ * Creates horizontal segmented shapes with zero allocations for common configs.
  */
 fun horizontalSegmentedShape(
     index: Int,
@@ -52,6 +63,28 @@ fun horizontalSegmentedShape(
     outerCornerRadius: Dp = 14.dp,
     innerCornerRadius: Dp = 4.dp
 ): Shape {
+    if (innerCornerRadius == 4.dp) {
+        if (outerCornerRadius == 14.dp) {
+            when (count) {
+                2 -> when (index) {
+                    0 -> return Shape2Leading
+                    1 -> return Shape2Trailing
+                }
+                3 -> when (index) {
+                    0 -> return Shape3Leading
+                    1 -> return Shape3Middle
+                    2 -> return Shape3Trailing
+                }
+            }
+        } else if (outerCornerRadius == 10.dp && count == 3) {
+            when (index) {
+                0 -> return Shape3Leading10
+                1 -> return Shape3Middle
+                2 -> return Shape3Trailing10
+            }
+        }
+    }
+
     return when {
         count <= 1 -> RoundedCornerShape(outerCornerRadius)
         index == 0 -> RoundedCornerShape(
@@ -281,7 +314,7 @@ fun MetricTileCard(
                     lineHeight = 12.5.sp
                 ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 minLines = minLabelLines,
                 maxLines = 2
             )
@@ -297,7 +330,7 @@ fun MetricTileCard(
                     fontFamily = LocalAppFonts.current.topBarTitle
                 ),
                 color = valueColor,
-                textAlign = TextAlign.Center,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 maxLines = 1
             )
         }

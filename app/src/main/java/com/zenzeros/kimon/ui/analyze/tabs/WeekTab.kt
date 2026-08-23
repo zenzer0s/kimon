@@ -51,6 +51,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+private val WEEK_DAY_LABELS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
 @Composable
 fun WeekTab(
     modifier: Modifier = Modifier
@@ -63,13 +65,13 @@ fun WeekTab(
         mutableStateOf(cal)
     }
 
-    val weekEndCal = remember(selectedWeekStart) {
+    val weekEndCal = remember(selectedWeekStart.timeInMillis) {
         val end = selectedWeekStart.clone() as Calendar
         end.add(Calendar.DAY_OF_YEAR, 6)
         end
     }
 
-    val weekRangeText = remember(selectedWeekStart, weekEndCal) {
+    val weekRangeText = remember(selectedWeekStart.timeInMillis, weekEndCal.timeInMillis) {
         val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
         "${dateFormat.format(selectedWeekStart.time)} - ${dateFormat.format(weekEndCal.time)}".uppercase()
     }
@@ -278,7 +280,6 @@ fun WeekTab(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    val weekDayLabels = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
                     val todayDayOfWeekIndex = remember {
                         val cal = Calendar.getInstance()
                         (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
@@ -295,7 +296,7 @@ fun WeekTab(
                             .padding(horizontal = 14.dp)
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
-                            val step = size.width / (weekDayLabels.size - 1)
+                            val step = size.width / (WEEK_DAY_LABELS.size - 1)
                             val centerY = size.height / 2
 
                             // Base track line
@@ -308,7 +309,7 @@ fun WeekTab(
                             )
 
                             // 7 Day Nodes
-                            for (i in weekDayLabels.indices) {
+                            for (i in WEEK_DAY_LABELS.indices) {
                                 val x = i * step
                                 val isToday = i == todayDayOfWeekIndex
 
@@ -338,7 +339,7 @@ fun WeekTab(
                             .padding(horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        weekDayLabels.forEachIndexed { index, day ->
+                        WEEK_DAY_LABELS.forEachIndexed { index, day ->
                             val isToday = index == todayDayOfWeekIndex
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,

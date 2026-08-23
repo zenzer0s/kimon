@@ -49,11 +49,11 @@ fun DayTab(
     val scrollState = rememberScrollState()
     var selectedCalendar by remember { mutableStateOf(Calendar.getInstance()) }
 
-    val dayOfWeek = remember(selectedCalendar) {
+    val dayOfWeek = remember(selectedCalendar.timeInMillis) {
         SimpleDateFormat("EEE", Locale.getDefault()).format(selectedCalendar.time).uppercase()
     }
 
-    val formattedDate = remember(selectedCalendar) {
+    val formattedDate = remember(selectedCalendar.timeInMillis) {
         SimpleDateFormat("MM / dd / yyyy", Locale.getDefault()).format(selectedCalendar.time)
     }
 

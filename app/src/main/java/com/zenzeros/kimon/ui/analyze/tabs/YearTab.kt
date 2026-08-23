@@ -51,6 +51,17 @@ import java.text.DateFormatSymbols
 import java.util.Calendar
 import java.util.Locale
 
+private val MONTH_PAIRS = listOf(
+    Pair(0, 1),   // Jan, Feb
+    Pair(2, 3),   // Mar, Apr
+    Pair(4, 5),   // May, Jun
+    Pair(6, 7),   // Jul, Aug
+    Pair(8, 9),   // Sep, Oct
+    Pair(10, 11)  // Nov, Dec
+)
+
+private val HEATMAP_WEEK_DAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
 @Composable
 fun YearTab(
     modifier: Modifier = Modifier
@@ -285,22 +296,12 @@ fun YearTab(
 
 @Composable
 private fun YearlyHeatMapContent(year: Int) {
-    val monthPairs = listOf(
-        Pair(0, 1),   // Jan, Feb
-        Pair(2, 3),   // Mar, Apr
-        Pair(4, 5),   // May, Jun
-        Pair(6, 7),   // Jul, Aug
-        Pair(8, 9),   // Sep, Oct
-        Pair(10, 11)  // Nov, Dec
-    )
-
     val pagerState = rememberPagerState(
         initialPage = 2, // Default to May-June
-        pageCount = { monthPairs.size }
+        pageCount = { MONTH_PAIRS.size }
     )
 
     val monthNames = remember { DateFormatSymbols(Locale.getDefault()).months }
-    val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
     Column(
         modifier = Modifier.padding(11.dp)
@@ -315,9 +316,10 @@ private fun YearlyHeatMapContent(year: Int) {
         // Month-Pair Pager
         HorizontalPager(
             state = pagerState,
+            beyondViewportPageCount = 1,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            val (firstMonthIndex, secondMonthIndex) = monthPairs[page]
+            val (firstMonthIndex, secondMonthIndex) = MONTH_PAIRS[page]
 
             Row(
                 modifier = Modifier
@@ -330,7 +332,7 @@ private fun YearlyHeatMapContent(year: Int) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.padding(top = 28.dp)
                 ) {
-                    weekDays.forEach { day ->
+                    HEATMAP_WEEK_DAYS.forEach { day ->
                         Box(
                             modifier = Modifier
                                 .height(22.dp)
@@ -375,7 +377,7 @@ private fun YearlyHeatMapContent(year: Int) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            repeat(monthPairs.size) { index ->
+            repeat(MONTH_PAIRS.size) { index ->
                 val isSelected = pagerState.currentPage == index
                 Box(
                     modifier = Modifier
@@ -415,7 +417,9 @@ private fun MonthHeatMapColumn(
         (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
     }
 
-    val totalSlots = ((firstDayOfWeek + maxDays + 6) / 7) * 7
+    val totalSlots = remember(firstDayOfWeek, maxDays) {
+        ((firstDayOfWeek + maxDays + 6) / 7) * 7
+    }
     val totalCols = totalSlots / 7
 
     Column(
