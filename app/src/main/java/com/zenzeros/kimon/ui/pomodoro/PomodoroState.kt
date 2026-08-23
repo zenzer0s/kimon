@@ -16,6 +16,11 @@ enum class TimerStatus {
     PAUSED
 }
 
+enum class ClockStyle(val label: String) {
+    FLIP_CARD("Flip Card"),
+    CONCENTRIC("Concentric")
+}
+
 data class PomodoroTask(
     val id: String,
     val title: String,
@@ -26,6 +31,7 @@ data class PomodoroTask(
 data class PomodoroUiState(
     val currentMode: PomodoroMode = PomodoroMode.FOCUS,
     val timerStatus: TimerStatus = TimerStatus.IDLE,
+    val clockStyle: ClockStyle = ClockStyle.FLIP_CARD,
     val remainingSeconds: Int = 25 * 60,
     val totalSeconds: Int = 25 * 60,
     val currentSessionIndex: Int = 2,

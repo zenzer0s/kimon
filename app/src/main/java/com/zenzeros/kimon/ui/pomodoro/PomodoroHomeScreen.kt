@@ -3,6 +3,7 @@
 package com.zenzeros.kimon.ui.pomodoro
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -64,47 +65,70 @@ fun PomodoroHomeScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
+        val sidePadding = 20.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = sidePadding, vertical = sidePadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Concentric Clock
-            ConcentricPomodoroDial(
-                remainingSeconds = state.remainingSeconds,
-                currentMode = state.currentMode
-            )
-
-            Spacer(modifier = Modifier.height(44.dp))
-
-            // Control Buttons: Reset, Start/Pause, Next
-            TimerControls(
-                status = state.timerStatus,
-                onStart = { state = state.copy(timerStatus = TimerStatus.RUNNING) },
-                onPause = { state = state.copy(timerStatus = TimerStatus.PAUSED) },
-                onReset = {
-                    state = state.copy(
-                        timerStatus = TimerStatus.IDLE,
-                        remainingSeconds = state.currentMode.durationMinutes * 60
-                    )
-                },
-                onNext = {
-                    val nextMode = when (state.currentMode) {
-                        PomodoroMode.FOCUS -> PomodoroMode.SHORT_BREAK
-                        PomodoroMode.SHORT_BREAK -> PomodoroMode.FOCUS
-                        PomodoroMode.LONG_BREAK -> PomodoroMode.FOCUS
+            // ~90% Upper Screen Area for Clock
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.89f),
+                contentAlignment = Alignment.Center
+            ) {
+                when (state.clockStyle) {
+                    ClockStyle.FLIP_CARD -> {
+                        FlipCardPomodoroClock(
+                            remainingSeconds = state.remainingSeconds,
+                            isRunning = state.timerStatus == TimerStatus.RUNNING,
+                            spacing = sidePadding
+                        )
                     }
-                    state = state.copy(
-                        currentMode = nextMode,
-                        remainingSeconds = nextMode.durationMinutes * 60,
-                        totalSeconds = nextMode.durationMinutes * 60,
-                        timerStatus = TimerStatus.IDLE
-                    )
+                    ClockStyle.CONCENTRIC -> {
+                        ConcentricPomodoroDial(
+                            remainingSeconds = state.remainingSeconds,
+                            currentMode = state.currentMode
+                        )
+                    }
                 }
-            )
+            }
+
+            // ~10% Lower Screen Area for Control Buttons (Reset, Start/Pause, Next)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.11f),
+                contentAlignment = Alignment.Center
+            ) {
+                TimerControls(
+                    status = state.timerStatus,
+                    onStart = { state = state.copy(timerStatus = TimerStatus.RUNNING) },
+                    onPause = { state = state.copy(timerStatus = TimerStatus.PAUSED) },
+                    onReset = {
+                        state = state.copy(
+                            timerStatus = TimerStatus.IDLE,
+                            remainingSeconds = state.currentMode.durationMinutes * 60
+                        )
+                    },
+                    onNext = {
+                        val nextMode = when (state.currentMode) {
+                            PomodoroMode.FOCUS -> PomodoroMode.SHORT_BREAK
+                            PomodoroMode.SHORT_BREAK -> PomodoroMode.FOCUS
+                            PomodoroMode.LONG_BREAK -> PomodoroMode.FOCUS
+                        }
+                        state = state.copy(
+                            currentMode = nextMode,
+                            remainingSeconds = nextMode.durationMinutes * 60,
+                            totalSeconds = nextMode.durationMinutes * 60,
+                            timerStatus = TimerStatus.IDLE
+                        )
+                    }
+                )
+            }
         }
     }
 }
