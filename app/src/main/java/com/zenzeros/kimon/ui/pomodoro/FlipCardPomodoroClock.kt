@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -38,12 +36,10 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.util.Locale
 
 @Composable
 fun FlipCardPomodoroClock(
     remainingSeconds: Int,
-    isRunning: Boolean = false,
     modifier: Modifier = Modifier,
     spacing: Dp = 20.dp
 ) {
@@ -133,7 +129,7 @@ private fun FlipCardTile(
 
             // Top Half (New Target Value)
             drawCardHalf(
-                text = String.format(Locale.getDefault(), "%02d", displayTargetValue),
+                text = String.format("%02d", displayTargetValue),
                 isTop = true,
                 width = w,
                 height = h,
@@ -147,7 +143,7 @@ private fun FlipCardTile(
 
             // Bottom Half (Old Previous Value)
             drawCardHalf(
-                text = String.format(Locale.getDefault(), "%02d", previousValue),
+                text = String.format("%02d", previousValue),
                 isTop = false,
                 width = w,
                 height = h,
@@ -182,7 +178,7 @@ private fun FlipCardTile(
                 val grooveH = 3.dp.toPx()
 
                 drawCardHalf(
-                    text = String.format(Locale.getDefault(), "%02d", previousValue),
+                    text = String.format("%02d", previousValue),
                     isTop = true,
                     width = w,
                     height = h,
@@ -215,7 +211,7 @@ private fun FlipCardTile(
                 val grooveH = 3.dp.toPx()
 
                 drawCardHalf(
-                    text = String.format(Locale.getDefault(), "%02d", displayTargetValue),
+                    text = String.format("%02d", displayTargetValue),
                     isTop = false,
                     width = w,
                     height = h,

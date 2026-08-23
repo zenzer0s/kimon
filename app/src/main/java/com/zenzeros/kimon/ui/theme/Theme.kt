@@ -31,10 +31,13 @@ fun KimonTheme(
         else -> getPaletteColorScheme(palette = palette, darkTheme = darkTheme)
     }
 
-    CompositionLocalProvider(LocalThemePalette provides palette) {
+    CompositionLocalProvider(
+        LocalThemePalette provides palette,
+        LocalAppFonts provides getAppFonts()
+    ) {
         MaterialExpressiveTheme(
             colorScheme = colorScheme,
-            typography = Typography,
+            typography = typography(),
             content = content
         )
     }

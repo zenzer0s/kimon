@@ -84,14 +84,12 @@ fun PomodoroHomeScreen(
                     ClockStyle.FLIP_CARD -> {
                         FlipCardPomodoroClock(
                             remainingSeconds = state.remainingSeconds,
-                            isRunning = state.timerStatus == TimerStatus.RUNNING,
                             spacing = sidePadding
                         )
                     }
                     ClockStyle.CONCENTRIC -> {
                         ConcentricPomodoroDial(
-                            remainingSeconds = state.remainingSeconds,
-                            currentMode = state.currentMode
+                            remainingSeconds = state.remainingSeconds
                         )
                     }
                 }
