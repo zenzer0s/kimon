@@ -2,12 +2,9 @@
 
 package com.zenzeros.kimon.ui.analyze.tabs
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,16 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalToggleButton
-import androidx.compose.material3.FilledTonalToggleButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -36,14 +26,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
+import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
+import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -77,132 +70,53 @@ fun DayTab(
         Spacer(modifier = Modifier.height(4.dp))
 
         // 1. Navigation Header: [ Left: Combined Day & Date Pill ] ... [ Right: ButtonGroup with < and > ]
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 2.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        AnalyzeNavigationHeader(
+            onPreviousClick = {
+                val newCal = selectedCalendar.clone() as Calendar
+                newCal.add(Calendar.DAY_OF_YEAR, -1)
+                selectedCalendar = newCal
+            },
+            onNextClick = {
+                val newCal = selectedCalendar.clone() as Calendar
+                newCal.add(Calendar.DAY_OF_YEAR, 1)
+                selectedCalendar = newCal
+            }
         ) {
-            // Left: Combined Compact Day & Date Pill
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+            Text(
+                text = dayOfWeek,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    letterSpacing = 0.5.sp
                 ),
-                modifier = Modifier.height(36.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = dayOfWeek,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            letterSpacing = 0.5.sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                color = MaterialTheme.colorScheme.primary
+            )
 
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
-                        ),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+            Text(
+                text = "•",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp
+                ),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
 
-                    Text(
-                        text = formattedDate,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 11.5.sp,
-                            letterSpacing = 0.3.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+            Text(
+                text = formattedDate,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.5.sp,
+                    letterSpacing = 0.3.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-                    Icon(
-                        painter = painterResource(R.drawable.ic_calendar),
-                        contentDescription = "Calendar",
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Right: Connected ButtonGroup with < and > arrows
-            ButtonGroup(
-                overflowIndicator = { menuState ->
-                    ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
-                },
-                modifier = Modifier.wrapContentWidth(),
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-            ) {
-                // Previous Arrow Button
-                customItem(
-                    buttonGroupContent = {
-                        FilledTonalToggleButton(
-                            checked = false,
-                            onCheckedChange = {
-                                val newCal = selectedCalendar.clone() as Calendar
-                                newCal.add(Calendar.DAY_OF_YEAR, -1)
-                                selectedCalendar = newCal
-                            },
-                            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-                            colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.size(width = 42.dp, height = 36.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_left),
-                                contentDescription = "Previous Day",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    menuContent = {}
-                )
-
-                // Next Arrow Button
-                customItem(
-                    buttonGroupContent = {
-                        FilledTonalToggleButton(
-                            checked = false,
-                            onCheckedChange = {
-                                val newCal = selectedCalendar.clone() as Calendar
-                                newCal.add(Calendar.DAY_OF_YEAR, 1)
-                                selectedCalendar = newCal
-                            },
-                            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                            colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.size(width = 42.dp, height = 36.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = "Next Day",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    menuContent = {}
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_calendar),
+                contentDescription = "Calendar",
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -222,45 +136,24 @@ fun DayTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (🕒) Today's Focus ]
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_focus),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-
-                        Text(
-                            text = "Today's Focus",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    AnalyzeCardHeader(
+                        icon = R.drawable.ic_focus,
+                        title = "Today's Focus"
+                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // Horizontal Segmented Row: [ Total Focus ] [ Total Sessions ]
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         MetricTileCard(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 0, count = 2),
                             icon = R.drawable.ic_focus,
                             iconTint = MaterialTheme.colorScheme.primary,
@@ -273,7 +166,9 @@ fun DayTab(
                         )
 
                         MetricTileCard(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 1, count = 2),
                             icon = R.drawable.ic_bar_chart,
                             iconTint = MaterialTheme.colorScheme.secondary,
@@ -298,100 +193,18 @@ fun DayTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (🏷️) Focus Time by Tag ]
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_tag),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-
-                        Text(
-                            text = "Focus Time by Tag",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    AnalyzeCardHeader(
+                        icon = R.drawable.ic_tag,
+                        title = "Focus Time by Tag"
+                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Empty State Container
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        // Large Centered Tag Icon Badge
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_tag),
-                                contentDescription = null,
-                                modifier = Modifier.size(26.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "No focus sessions for this day.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Action Link: "Go here to start one →"
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { onNavigateToFocus() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Go here to start one",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                    AnalyzeEmptyState(
+                        icon = R.drawable.ic_tag,
+                        message = "No focus sessions for this day.",
+                        onActionClick = onNavigateToFocus
+                    )
                 }
             }
 
@@ -407,100 +220,20 @@ fun DayTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (📅) Daily Timeline ]
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.tertiaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_calendar),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-
-                        Text(
-                            text = "Daily Timeline",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    AnalyzeCardHeader(
+                        icon = R.drawable.ic_calendar,
+                        title = "Daily Timeline",
+                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        iconBg = MaterialTheme.colorScheme.tertiaryContainer
+                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Empty State Container
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        // Large Centered Clock Icon Badge
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_focus),
-                                contentDescription = null,
-                                modifier = Modifier.size(26.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "No focus sessions for this day.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Action Link: "Go here to start one →"
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { onNavigateToFocus() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Go here to start one",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                    AnalyzeEmptyState(
+                        icon = R.drawable.ic_focus,
+                        message = "No focus sessions for this day.",
+                        onActionClick = onNavigateToFocus
+                    )
                 }
             }
         }

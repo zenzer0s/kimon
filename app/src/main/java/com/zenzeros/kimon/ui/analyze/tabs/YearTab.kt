@@ -4,12 +4,10 @@ package com.zenzeros.kimon.ui.analyze.tabs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,11 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalToggleButton
-import androidx.compose.material3.FilledTonalToggleButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -44,14 +38,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
-import com.zenzeros.kimon.ui.theme.LocalAppFonts
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
+import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
+import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import java.text.DateFormatSymbols
 import java.util.Calendar
 import java.util.Locale
@@ -75,114 +70,27 @@ fun YearTab(
         Spacer(modifier = Modifier.height(4.dp))
 
         // 1. Navigation Header: [ Left: Compact Year Pill ] ... [ Right: ButtonGroup with < and > ]
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 2.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        AnalyzeNavigationHeader(
+            onPreviousClick = { selectedYear -= 1 },
+            onNextClick = { selectedYear += 1 }
         ) {
-            // Left: Compact Year Pill
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+            Text(
+                text = selectedYear.toString(),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    letterSpacing = 0.5.sp
                 ),
-                modifier = Modifier
-                    .height(36.dp)
-                    .weight(1f, fill = false)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = selectedYear.toString(),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            letterSpacing = 0.5.sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1
+            )
 
-                    Icon(
-                        painter = painterResource(R.drawable.ic_calendar),
-                        contentDescription = "Calendar",
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Right: Connected ButtonGroup with < and > arrows
-            ButtonGroup(
-                overflowIndicator = { menuState ->
-                    ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
-                },
-                modifier = Modifier.wrapContentWidth(),
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-            ) {
-                // Previous Year Arrow Button
-                customItem(
-                    buttonGroupContent = {
-                        FilledTonalToggleButton(
-                            checked = false,
-                            onCheckedChange = {
-                                selectedYear -= 1
-                            },
-                            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-                            colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.size(width = 42.dp, height = 36.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_left),
-                                contentDescription = "Previous Year",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    menuContent = {}
-                )
-
-                // Next Year Arrow Button
-                customItem(
-                    buttonGroupContent = {
-                        FilledTonalToggleButton(
-                            checked = false,
-                            onCheckedChange = {
-                                selectedYear += 1
-                            },
-                            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                            colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.size(width = 42.dp, height = 36.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = "Next Year",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    menuContent = {}
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_calendar),
+                contentDescription = "Calendar",
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -202,35 +110,10 @@ fun YearTab(
                 Column(
                     modifier = Modifier.padding(11.dp)
                 ) {
-                    // Header Row: [ (📈) Yearly Focus ]
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_trending_up),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-
-                        Text(
-                            text = "Yearly Focus",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    AnalyzeCardHeader(
+                        icon = R.drawable.ic_trending_up,
+                        title = "Yearly Focus"
+                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -412,7 +295,7 @@ private fun YearlyHeatMapContent(year: Int) {
     )
 
     val pagerState = rememberPagerState(
-        initialPage = 2, // Default to May-June (page 2)
+        initialPage = 2, // Default to May-June
         pageCount = { monthPairs.size }
     )
 
@@ -422,39 +305,14 @@ private fun YearlyHeatMapContent(year: Int) {
     Column(
         modifier = Modifier.padding(11.dp)
     ) {
-        // 1. Header Row: [ (🔥) Heat Map ]
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_streak),
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
-            Text(
-                text = "Heat Map",
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        AnalyzeCardHeader(
+            icon = R.drawable.ic_streak,
+            title = "Heat Map"
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 2. Month-Pair Pager
+        // Month-Pair Pager
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
@@ -511,7 +369,7 @@ private fun YearlyHeatMapContent(year: Int) {
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 3. Pager Dots Indicator
+        // Pager Dots Indicator
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -554,7 +412,6 @@ private fun MonthHeatMapColumn(
 
     val maxDays = remember(cal) { cal.getActualMaximum(Calendar.DAY_OF_MONTH) }
     val firstDayOfWeek = remember(cal) {
-        // Monday=0 ... Sunday=6
         (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
     }
 
@@ -589,7 +446,6 @@ private fun MonthHeatMapColumn(
                         val dayNumber = slotIndex - firstDayOfWeek + 1
 
                         if (dayNumber in 1..maxDays) {
-                            // Demo highlight on specific sample active days (e.g. day 2, day 6)
                             val isFocusedDay = (monthIndex == 4 && (dayNumber == 2 || dayNumber == 6))
                             Box(
                                 modifier = Modifier
@@ -622,7 +478,6 @@ private fun MonthHeatMapColumn(
                                 )
                             }
                         } else {
-                            // Invisible placeholder
                             Spacer(modifier = Modifier.size(22.dp))
                         }
                     }

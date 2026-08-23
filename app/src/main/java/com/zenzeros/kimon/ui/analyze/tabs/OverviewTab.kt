@@ -35,44 +35,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
-import com.zenzeros.kimon.ui.theme.LocalAppFonts
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
+import com.zenzeros.kimon.ui.analyze.components.CompactSummaryTile
+import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
+import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-
-internal fun horizontalSegmentedShape(
-    index: Int,
-    count: Int,
-    outerCornerRadius: Dp = 14.dp,
-    innerCornerRadius: Dp = 4.dp
-): Shape {
-    return when {
-        count <= 1 -> RoundedCornerShape(outerCornerRadius)
-        index == 0 -> RoundedCornerShape(
-            topStart = outerCornerRadius,
-            bottomStart = outerCornerRadius,
-            topEnd = innerCornerRadius,
-            bottomEnd = innerCornerRadius
-        )
-        index == count - 1 -> RoundedCornerShape(
-            topStart = innerCornerRadius,
-            bottomStart = innerCornerRadius,
-            topEnd = outerCornerRadius,
-            bottomEnd = outerCornerRadius
-        )
-        else -> RoundedCornerShape(innerCornerRadius)
-    }
-}
 
 @Composable
 fun OverviewTab(
@@ -105,61 +81,31 @@ fun OverviewTab(
             Column(
                 modifier = Modifier.padding(11.dp)
             ) {
-                // Header Row: [ (🕒) Today's Focus ] ... [ AUG 23 ]
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
+                AnalyzeCardHeader(
+                    icon = R.drawable.ic_focus,
+                    title = "Today's Focus",
+                    trailingContent = {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                            )
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_focus),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            Text(
+                                text = currentDate,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 9.sp,
+                                    letterSpacing = 0.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp)
                             )
                         }
-
-                        Text(
-                            text = "Today's Focus",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
                     }
-
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-                        )
-                    ) {
-                        Text(
-                            text = currentDate,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp,
-                                letterSpacing = 0.5.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp)
-                        )
-                    }
-                }
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -207,34 +153,12 @@ fun OverviewTab(
             Column(
                 modifier = Modifier.padding(11.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(7.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(26.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.tertiaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_streak),
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-
-                    Text(
-                        text = "Streaks",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                AnalyzeCardHeader(
+                    icon = R.drawable.ic_streak,
+                    title = "Streaks",
+                    iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    iconBg = MaterialTheme.colorScheme.tertiaryContainer
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -301,61 +225,31 @@ private fun LifetimeFocusContent() {
     Column(
         modifier = Modifier.padding(11.dp)
     ) {
-        // 1. Header Row: [ (✨) Lifetime Focus ] ... [ OVERVIEW ]
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(26.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
+        AnalyzeCardHeader(
+            icon = R.drawable.ic_sparkles,
+            title = "Lifetime Focus",
+            trailingContent = {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sparkles),
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    Text(
+                        text = "OVERVIEW",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.sp,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp)
                     )
                 }
-
-                Text(
-                    text = "Lifetime Focus",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
             }
-
-            Surface(
-                shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                )
-            ) {
-                Text(
-                    text = "OVERVIEW",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 9.sp,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp)
-                )
-            }
-        }
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -434,39 +328,14 @@ private fun ActivityLogContent() {
     Column(
         modifier = Modifier.padding(11.dp)
     ) {
-        // 1. Header Row: [ (📅) Activity Log ]
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_calendar),
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
-            Text(
-                text = "Activity Log",
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        AnalyzeCardHeader(
+            icon = R.drawable.ic_calendar,
+            title = "Activity Log"
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 2. Month Selector Navigation Row: [ < ] [ August 2026 ] [ > ]
+        // Month Selector Navigation Row: [ < ] [ August 2026 ] [ > ]
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -533,7 +402,7 @@ private fun ActivityLogContent() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 3. Weekday Labels: [ SUN  MON  TUE  WED  THU  FRI  SAT ]
+        // Weekday Labels: [ SUN  MON  TUE  WED  THU  FRI  SAT ]
         val weekDays = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -556,7 +425,7 @@ private fun ActivityLogContent() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 4. Calendar Days Grid (7 columns)
+        // Calendar Days Grid (7 columns)
         val cal = calendarMonth.clone() as Calendar
         cal.set(Calendar.DAY_OF_MONTH, 1)
         val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1 // 0 for Sunday
@@ -623,7 +492,7 @@ private fun ActivityLogContent() {
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 5. Bottom 3 Metric Tiles: Horizontal Expressive Segmented Group
+        // Bottom 3 Metric Tiles: Horizontal Expressive Segmented Group
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(3.dp)
@@ -659,137 +528,6 @@ private fun ActivityLogContent() {
                 valueColor = MaterialTheme.colorScheme.secondary,
                 cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                 cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun CompactSummaryTile(
-    label: String,
-    value: String,
-    valueColor: Color,
-    cardBg: Color,
-    cardBorder: Color,
-    shape: Shape,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        shape = shape,
-        color = cardBg,
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = cardBorder
-        ),
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 4.dp)
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 9.5.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    fontFamily = LocalAppFonts.current.topBarTitle
-                ),
-                color = valueColor
-            )
-        }
-    }
-}
-
-@Composable
-internal fun MetricTileCard(
-    icon: Int,
-    iconTint: Color,
-    iconBg: Color,
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    cardBg: Color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f),
-    cardBorder: Color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f),
-    valueColor: Color = MaterialTheme.colorScheme.onSurface,
-    shape: Shape = RoundedCornerShape(12.dp),
-    minLabelLines: Int = 1
-) {
-    Surface(
-        shape = shape,
-        color = cardBg,
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = cardBorder
-        ),
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 4.dp)
-        ) {
-            // Centered Circular Icon Badge
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(iconBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(13.dp),
-                    tint = iconTint
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Label Text (Uniform baseline across 1 or 2 lines)
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 10.sp,
-                    lineHeight = 12.5.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                minLines = minLabelLines,
-                maxLines = 2
-            )
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            // Metric Value
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp,
-                    fontFamily = LocalAppFonts.current.topBarTitle
-                ),
-                color = valueColor,
-                textAlign = TextAlign.Center,
-                maxLines = 1
             )
         }
     }
