@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.analyze.AnalyzeScreen
 import com.zenzeros.kimon.ui.components.KimonFloatingToolbar
 import com.zenzeros.kimon.ui.components.KimonTab
 import com.zenzeros.kimon.ui.focus.FocusScreen
@@ -255,7 +256,7 @@ fun KimonApp(
                                     PlanScreen()
                                 }
                                 KimonTab.ANALYZE -> {
-                                    // Analyze Tab Canvas Placeholder
+                                    AnalyzeScreen()
                                 }
                             }
                         }
