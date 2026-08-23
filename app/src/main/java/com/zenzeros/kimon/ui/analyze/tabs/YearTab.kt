@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
@@ -311,7 +312,7 @@ private fun YearlyHeatMapContent(year: Int) {
             title = "Heat Map"
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Month-Pair Pager
         HorizontalPager(
@@ -324,47 +325,47 @@ private fun YearlyHeatMapContent(year: Int) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Left Weekday Labels Column
+                // Left Weekday Labels Column (Aligned with 7 rows of days)
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.padding(top = 28.dp)
+                    modifier = Modifier.padding(top = 26.dp)
                 ) {
                     HEATMAP_WEEK_DAYS.forEach { day ->
                         Box(
                             modifier = Modifier
-                                .height(22.dp)
-                                .wrapContentWidth(),
+                                .height(21.dp)
+                                .padding(end = 4.dp),
                             contentAlignment = Alignment.CenterStart
                         ) {
                             Text(
                                 text = day,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Medium,
-                                    fontSize = 10.sp
+                                    fontSize = 9.5.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         }
+                        Spacer(modifier = Modifier.height(3.dp))
                     }
                 }
 
-                // First Month Grid
+                // First Month Grid (6 Columns x 7 Rows)
                 MonthHeatMapColumn(
                     year = year,
                     monthIndex = firstMonthIndex,
                     monthName = monthNames[firstMonthIndex],
-                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+                    modifier = Modifier.weight(1f)
                 )
 
-                // Second Month Grid
+                // Second Month Grid (6 Columns x 7 Rows)
                 MonthHeatMapColumn(
                     year = year,
                     monthIndex = secondMonthIndex,
                     monthName = monthNames[secondMonthIndex],
-                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -417,10 +418,8 @@ private fun MonthHeatMapColumn(
         (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
     }
 
-    val totalSlots = remember(firstDayOfWeek, maxDays) {
-        ((firstDayOfWeek + maxDays + 6) / 7) * 7
-    }
-    val totalCols = totalSlots / 7
+    // Always 6 columns to guarantee day 30 and 31 in 6th week are rendered
+    val totalCols = 6
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -431,19 +430,21 @@ private fun MonthHeatMapColumn(
             text = monthName,
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 12.5.sp
+                fontSize = 12.sp
             ),
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 6.dp)
         )
 
-        // 7 Rows (Mon to Sun) x N Columns Grid
+        // 7 Rows (Mon to Sun) x 6 Columns Grid
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             for (row in 0 until 7) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     for (col in 0 until totalCols) {
                         val slotIndex = col * 7 + row
@@ -453,8 +454,9 @@ private fun MonthHeatMapColumn(
                             val isFocusedDay = (monthIndex == 4 && (dayNumber == 2 || dayNumber == 6))
                             Box(
                                 modifier = Modifier
-                                    .size(22.dp)
-                                    .clip(RoundedCornerShape(6.dp))
+                                    .weight(1f)
+                                    .height(21.dp)
+                                    .clip(RoundedCornerShape(5.dp))
                                     .then(
                                         if (isFocusedDay) {
                                             Modifier
@@ -462,7 +464,7 @@ private fun MonthHeatMapColumn(
                                                 .border(
                                                     width = 1.dp,
                                                     color = MaterialTheme.colorScheme.primary,
-                                                    shape = RoundedCornerShape(6.dp)
+                                                    shape = RoundedCornerShape(5.dp)
                                                 )
                                         } else {
                                             Modifier.background(
@@ -476,13 +478,21 @@ private fun MonthHeatMapColumn(
                                     text = dayNumber.toString(),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = if (isFocusedDay) FontWeight.Bold else FontWeight.Normal,
-                                        fontSize = 10.sp
+                                        fontSize = 9.5.sp,
+                                        lineHeight = 11.sp
                                     ),
-                                    color = if (isFocusedDay) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                                    color = if (isFocusedDay) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1
                                 )
                             }
                         } else {
-                            Spacer(modifier = Modifier.size(22.dp))
+                            // Blank slot preserving exact column width & row height
+                            Spacer(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(21.dp)
+                            )
                         }
                     }
                 }

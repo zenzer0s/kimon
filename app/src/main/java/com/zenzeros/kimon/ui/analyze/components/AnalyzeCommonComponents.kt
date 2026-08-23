@@ -211,8 +211,12 @@ fun AnalyzeNavigationHeader(
                         onCheckedChange = { onPreviousClick() },
                         shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                             contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
                         ),
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(width = 42.dp, height = 36.dp)
@@ -235,8 +239,12 @@ fun AnalyzeNavigationHeader(
                         onCheckedChange = { onNextClick() },
                         shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                             contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
                         ),
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(width = 42.dp, height = 36.dp)

@@ -4,24 +4,31 @@ package com.zenzeros.kimon.ui.analyze.tabs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalToggleButton
+import androidx.compose.material3.FilledTonalToggleButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -37,11 +44,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
+import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.CompactSummaryTile
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
@@ -50,7 +57,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val OVERVIEW_WEEK_DAYS = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
+private val ACTIVITY_LOG_WEEK_DAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 @Composable
 fun OverviewTab(
@@ -320,7 +327,7 @@ private fun ActivityLogContent() {
     }
 
     val currentFormattedMonth = remember(calendarMonth.timeInMillis) {
-        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(calendarMonth.time)
+        SimpleDateFormat("MMM", Locale.getDefault()).format(calendarMonth.time).uppercase()
     }
 
     val todayCalendar = remember { Calendar.getInstance() }
@@ -331,123 +338,194 @@ private fun ActivityLogContent() {
     Column(
         modifier = Modifier.padding(11.dp)
     ) {
-        AnalyzeCardHeader(
-            icon = R.drawable.ic_calendar,
-            title = "Activity Log"
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Month Selector Navigation Row: [ < ] [ August 2026 ] [ > ]
+        // Single Combined Header Row: [ (📅) Activity Log ] ... [ [ AUG ] [ < > ] ]
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        val newCal = calendarMonth.clone() as Calendar
-                        newCal.add(Calendar.MONTH, -1)
-                        calendarMonth = newCal
-                    },
-                contentAlignment = Alignment.Center
+            // Left: Title with Icon Badge
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_chevron_left),
-                    contentDescription = "Previous Month",
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+                Box(
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_calendar),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
 
-            // Month-Year Pill Badge
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                )
-            ) {
                 Text(
-                    text = currentFormattedMonth,
-                    style = MaterialTheme.typography.labelMedium.copy(
+                    text = "Activity Log",
+                    style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp
+                        fontSize = 14.sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        val newCal = calendarMonth.clone() as Calendar
-                        newCal.add(Calendar.MONTH, 1)
-                        calendarMonth = newCal
-                    },
-                contentAlignment = Alignment.Center
+            // Right: [ Month Pill (No icon) ] [ < > Connected ButtonGroup ]
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = "Next Month",
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // Month Pill (without icon, compact)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                    ),
+                    modifier = Modifier.height(30.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(horizontal = 9.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = currentFormattedMonth,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // < > Connected ButtonGroup
+                ButtonGroup(
+                    overflowIndicator = { menuState ->
+                        ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+                    },
+                    modifier = Modifier.wrapContentWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                ) {
+                    customItem(
+                        buttonGroupContent = {
+                            FilledTonalToggleButton(
+                                checked = false,
+                                onCheckedChange = {
+                                    val newCal = calendarMonth.clone() as Calendar
+                                    newCal.add(Calendar.MONTH, -1)
+                                    calendarMonth = newCal
+                                },
+                                shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                                colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                ),
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier.size(width = 34.dp, height = 30.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_chevron_left),
+                                    contentDescription = "Previous Month",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        },
+                        menuContent = {}
+                    )
+
+                    customItem(
+                        buttonGroupContent = {
+                            FilledTonalToggleButton(
+                                checked = false,
+                                onCheckedChange = {
+                                    val newCal = calendarMonth.clone() as Calendar
+                                    newCal.add(Calendar.MONTH, 1)
+                                    calendarMonth = newCal
+                                },
+                                shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                ),
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier.size(width = 34.dp, height = 30.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_chevron_right),
+                                    contentDescription = "Next Month",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        },
+                        menuContent = {}
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Weekday Labels: [ SUN  MON  TUE  WED  THU  FRI  SAT ]
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            OVERVIEW_WEEK_DAYS.forEach { day ->
-                Text(
-                    text = day,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 9.5.sp,
-                        letterSpacing = 0.3.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Calendar Days Grid (7 columns)
+        // Vertical Weekday Calendar Heatmap (7 Rows: Mon-Sun x 6 Columns)
         val cal = remember(calendarMonth.timeInMillis) {
             val c = calendarMonth.clone() as Calendar
             c.set(Calendar.DAY_OF_MONTH, 1)
             c
         }
-        val firstDayOfWeek = remember(cal) { cal.get(Calendar.DAY_OF_WEEK) - 1 }
+        val firstDayOfWeek = remember(cal) {
+            (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7 // Monday = 0 ... Sunday = 6
+        }
         val maxDaysInMonth = remember(cal) { cal.getActualMaximum(Calendar.DAY_OF_MONTH) }
-        val totalGridSlots = ((firstDayOfWeek + maxDaysInMonth + 6) / 7) * 7
+        val totalCols = 6
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            verticalArrangement = Arrangement.spacedBy(2.5.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 26.dp)
         ) {
-            for (row in 0 until totalGridSlots / 7) {
+            for (row in 0 until 7) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
+                    horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    for (col in 0 until 7) {
-                        val slotIndex = row * 7 + col
+                    // Left Weekday Label
+                    Box(
+                        modifier = Modifier
+                            .width(22.dp)
+                            .aspectRatio(1f),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = ACTIVITY_LOG_WEEK_DAYS[row],
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 9.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    // 6 Columns of Day Cells (1:1 Compact Squares)
+                    for (col in 0 until totalCols) {
+                        val slotIndex = col * 7 + row
                         val dayNumber = slotIndex - firstDayOfWeek + 1
 
                         if (dayNumber in 1..maxDaysInMonth) {
@@ -455,20 +533,21 @@ private fun ActivityLogContent() {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(28.dp)
-                                    .padding(horizontal = 2.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(4.5.dp))
                                     .then(
                                         if (isToday) {
                                             Modifier
                                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                                 .border(
-                                                    width = 1.5.dp,
+                                                    width = 1.2.dp,
                                                     color = MaterialTheme.colorScheme.primary,
-                                                    shape = RoundedCornerShape(8.dp)
+                                                    shape = RoundedCornerShape(4.5.dp)
                                                 )
                                         } else {
-                                            Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f))
+                                            Modifier.background(
+                                                MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+                                            )
                                         }
                                     ),
                                 contentAlignment = Alignment.Center
@@ -476,18 +555,18 @@ private fun ActivityLogContent() {
                                 Text(
                                     text = dayNumber.toString(),
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 11.sp
+                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 9.sp
                                     ),
                                     color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         } else {
-                            // Blank slot
+                            // Blank slot maintaining perfect square aspect ratio
                             Spacer(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(28.dp)
+                                    .aspectRatio(1f)
                             )
                         }
                     }
@@ -507,7 +586,7 @@ private fun ActivityLogContent() {
                 modifier = Modifier.weight(1f),
                 shape = horizontalSegmentedShape(index = 0, count = 3, outerCornerRadius = 10.dp),
                 label = "Days Focused",
-                value = "0 of 31",
+                value = "0 of $maxDaysInMonth",
                 valueColor = MaterialTheme.colorScheme.primary,
                 cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                 cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
