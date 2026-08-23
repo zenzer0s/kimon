@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.ui.analyze.tabs.DayTab
 import com.zenzeros.kimon.ui.analyze.tabs.OverviewTab
 import com.zenzeros.kimon.ui.analyze.tabs.WeekTab
+import com.zenzeros.kimon.ui.analyze.tabs.YearTab
 import kotlinx.coroutines.launch
 
 enum class AnalyzeTimeRange(val label: String) {
@@ -122,9 +123,7 @@ fun AnalyzeScreen(
                         WeekTab()
                     }
                     AnalyzeTimeRange.YEAR -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            // Year Tab Placeholder
-                        }
+                        YearTab()
                     }
                 }
             }
