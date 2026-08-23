@@ -3,6 +3,7 @@
 package com.zenzeros.kimon.ui.pomodoro
 
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import com.zenzeros.kimon.data.local.entity.TagEntity
 
 enum class PomodoroMode(val label: String, val durationMinutes: Int) {
     FOCUS("Focus", 25),
@@ -31,19 +32,15 @@ data class PomodoroTask(
 data class PomodoroUiState(
     val currentMode: PomodoroMode = PomodoroMode.FOCUS,
     val timerStatus: TimerStatus = TimerStatus.IDLE,
-    val clockStyle: ClockStyle = ClockStyle.FLIP_CARD,
+    val clockStyle: ClockStyle = ClockStyle.CONCENTRIC,
     val remainingSeconds: Int = 25 * 60,
     val totalSeconds: Int = 25 * 60,
-    val currentSessionIndex: Int = 2,
-    val totalDailySessions: Int = 8,
-    val currentTask: PomodoroTask = PomodoroTask(
-        id = "1",
-        title = "Core Architecture & Design System",
-        totalSessions = 4,
-        completedSessions = 2
-    ),
-    val totalFocusMinutesToday: Int = 50,
-    val streakDays: Int = 5
+    val currentSessionIndex: Int = 0,
+    val totalDailySessions: Int = 4,
+    val currentTask: PomodoroTask? = null,
+    val selectedTag: TagEntity? = null,
+    val totalFocusMinutesToday: Int = 0,
+    val streakDays: Int = 0
 ) {
     val progress: Float
         get() = if (totalSeconds > 0) (totalSeconds - remainingSeconds).toFloat() / totalSeconds.toFloat() else 0f

@@ -2,7 +2,9 @@
 
 package com.zenzeros.kimon.ui.analyze.tabs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -14,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -22,16 +26,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.domain.model.DayStats
+import com.zenzeros.kimon.ui.analyze.AnalyzeViewModel
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
@@ -39,15 +46,19 @@ import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 @Composable
 fun DayTab(
+    stats: DayStats = DayStats(),
+    selectedCalendar: Calendar = remember { Calendar.getInstance() },
+    onPreviousDay: () -> Unit = {},
+    onNextDay: () -> Unit = {},
     onNavigateToFocus: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var selectedCalendar by remember { mutableStateOf(Calendar.getInstance()) }
 
     val dayOfWeek = remember(selectedCalendar.timeInMillis) {
         SimpleDateFormat("EEE", Locale.getDefault()).format(selectedCalendar.time).uppercase()
@@ -71,16 +82,8 @@ fun DayTab(
 
         // 1. Navigation Header: [ Left: Combined Day & Date Pill ] ... [ Right: ButtonGroup with < and > ]
         AnalyzeNavigationHeader(
-            onPreviousClick = {
-                val newCal = selectedCalendar.clone() as Calendar
-                newCal.add(Calendar.DAY_OF_YEAR, -1)
-                selectedCalendar = newCal
-            },
-            onNextClick = {
-                val newCal = selectedCalendar.clone() as Calendar
-                newCal.add(Calendar.DAY_OF_YEAR, 1)
-                selectedCalendar = newCal
-            }
+            onPreviousClick = onPreviousDay,
+            onNextClick = onNextDay
         ) {
             Text(
                 text = dayOfWeek,
@@ -138,7 +141,7 @@ fun DayTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_focus,
-                        title = "Today's Focus"
+                        title = stringResource(R.string.title_todays_focus)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -161,8 +164,8 @@ fun DayTab(
                             cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
-                            label = "Total Focus",
-                            value = "0m"
+                            label = stringResource(R.string.label_total_focus),
+                            value = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds)
                         )
 
                         MetricTileCard(
@@ -176,8 +179,8 @@ fun DayTab(
                             cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
-                            label = "Total Sessions",
-                            value = "0"
+                            label = stringResource(R.string.label_total_sessions),
+                            value = stats.totalSessions.toString()
                         )
                     }
                 }
@@ -195,16 +198,79 @@ fun DayTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_tag,
-                        title = "Focus Time by Tag"
+                        title = stringResource(R.string.title_focus_time_by_tag)
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    AnalyzeEmptyState(
-                        icon = R.drawable.ic_tag,
-                        message = "No focus sessions for this day.",
-                        onActionClick = onNavigateToFocus
-                    )
+                    if (stats.tagDistributions.isEmpty()) {
+                        AnalyzeEmptyState(
+                            icon = R.drawable.ic_tag,
+                            message = stringResource(R.string.empty_no_focus_sessions_day),
+                            actionText = stringResource(R.string.action_start_focus),
+                            onActionClick = onNavigateToFocus
+                        )
+                    } else {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        ) {
+                            stats.tagDistributions.forEach { item ->
+                                val tagColor = remember(item.tag?.colorHex) {
+                                    try {
+                                        Color(android.graphics.Color.parseColor(item.tag?.colorHex ?: "#7C4DFF"))
+                                    } catch (e: Exception) {
+                                        Color(0xFF7C4DFF)
+                                    }
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(12.dp)
+                                                    .clip(CircleShape)
+                                                    .background(tagColor)
+                                            )
+                                            Text(
+                                                text = item.tag?.name ?: "Untagged",
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 13.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+
+                                        Text(
+                                            text = AnalyzeViewModel.formatDuration(item.totalDurationSeconds),
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.5.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -222,18 +288,73 @@ fun DayTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_calendar,
-                        title = "Daily Timeline",
+                        title = stringResource(R.string.title_daily_timeline),
                         iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                         iconBg = MaterialTheme.colorScheme.tertiaryContainer
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    AnalyzeEmptyState(
-                        icon = R.drawable.ic_focus,
-                        message = "No focus sessions for this day.",
-                        onActionClick = onNavigateToFocus
-                    )
+                    if (stats.timelineSessions.isEmpty()) {
+                        AnalyzeEmptyState(
+                            icon = R.drawable.ic_focus,
+                            message = stringResource(R.string.empty_no_focus_sessions_day),
+                            actionText = stringResource(R.string.action_start_focus),
+                            onActionClick = onNavigateToFocus
+                        )
+                    } else {
+                        val timeFormat = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        ) {
+                            stats.timelineSessions.forEach { item ->
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = item.tag?.name ?: item.session.sessionType.replace("_", " "),
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 13.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "${timeFormat.format(Date(item.session.startTimeEpochMs))} - ${timeFormat.format(Date(item.session.endTimeEpochMs))}",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontSize = 11.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+
+                                        Text(
+                                            text = AnalyzeViewModel.formatDuration(item.session.actualDurationSeconds.toLong()),
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.5.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

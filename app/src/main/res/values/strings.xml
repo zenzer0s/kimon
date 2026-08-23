@@ -1,3 +1,103 @@
 <resources>
-    <string name="app_name">kimon</string>
+    <!-- App & Navigation -->
+    <string name="app_name">Kimon</string>
+    <string name="tab_focus">Focus</string>
+    <string name="tab_plan">Plan</string>
+    <string name="tab_analyze">Analyze</string>
+    <string name="profile">Profile</string>
+
+    <!-- Analyze Navigation Tabs -->
+    <string name="analyze_tab_overview">Overview</string>
+    <string name="analyze_tab_day">Day</string>
+    <string name="analyze_tab_week">Week</string>
+    <string name="analyze_tab_year">Year</string>
+
+    <!-- Overview Tab -->
+    <string name="title_todays_focus">Today\'s Focus</string>
+    <string name="label_focus_time">Focus Time</string>
+    <string name="label_sessions">Sessions</string>
+    <string name="title_streaks">Streaks</string>
+    <string name="label_current_streak">Current Streak</string>
+    <string name="label_best_streak">Best Streak</string>
+    <string name="title_activity_log">Activity Log</string>
+    <string name="label_days_focused">Days Focused</string>
+    <string name="label_avg_focus_day">Avg Focus Day</string>
+    <string name="label_total_focus">Total Focus</string>
+    <string name="title_lifetime_focus">Lifetime Focus</string>
+    <string name="badge_overview">OVERVIEW</string>
+    <string name="label_total_focus_time">Total Focus Time</string>
+    <string name="label_total_sessions">Total Sessions</string>
+    <string name="label_focus_days">Focus Days</string>
+
+    <!-- Day Tab -->
+    <string name="title_focus_time_by_tag">Focus Time by Tag</string>
+    <string name="title_daily_timeline">Daily Timeline</string>
+    <string name="empty_no_focus_sessions_day">No focus sessions for this day.</string>
+    <string name="action_start_focus">Start Focusing</string>
+
+    <!-- Week Tab -->
+    <string name="title_weekly_focus">Weekly Focus</string>
+    <string name="label_total_time">Total Time</string>
+    <string name="title_focus_distribution">Focus Distribution</string>
+    <string name="label_total">Total</string>
+    <string name="empty_no_focus_data_week">No focus data available yet.</string>
+    <string name="title_focus_trends">Focus Trends</string>
+
+    <!-- Year Tab -->
+    <string name="title_yearly_focus">Yearly Focus</string>
+    <string name="label_avg_session">Avg Session</string>
+    <string name="label_best_day">Best Day</string>
+    <string name="label_best_week">Best Week</string>
+    <string name="label_best_month">Best Month</string>
+    <string name="title_heat_map">Heat Map</string>
+
+    <!-- Navigation Actions & Common -->
+    <string name="action_previous">Previous</string>
+    <string name="action_next">Next</string>
+    <string name="action_previous_month">Previous Month</string>
+    <string name="action_next_month">Next Month</string>
+    <string name="action_previous_day">Previous Day</string>
+    <string name="action_next_day">Next Day</string>
+    <string name="action_previous_week">Previous Week</string>
+    <string name="action_next_week">Next Week</string>
+    <string name="action_previous_year">Previous Year</string>
+    <string name="action_next_year">Next Year</string>
+    <string name="empty_action_default">Go here to start one</string>
+    <string name="calendar">Calendar</string>
+
+    <!-- Plan Screen -->
+    <string name="plan_placeholder_new_task">What are you focusing on?</string>
+    <string name="plan_empty_tasks">No tasks yet. Tap + below to add your first task!</string>
+    <string name="plan_action_add_task">Add Task</string>
+    <string name="plan_content_desc_completed">Completed</string>
+    <string name="task_add_title">New Task</string>
+    <string name="task_estimated_sessions">Estimated Sessions</string>
+    <string name="task_category_label">Category</string>
+
+    <!-- Tags -->
+    <string name="tag_choose_button">Choose Tag</string>
+    <string name="tag_no_tag">No Tag</string>
+    <string name="tag_select_title">Select Tag</string>
+    <string name="tag_create_new">Create New Tag</string>
+    <string name="tag_name_placeholder">Tag name</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_create">Create</string>
+
+    <!-- Pomodoro & Timer -->
+    <string name="mode_focus">Focus</string>
+    <string name="mode_short_break">Short Break</string>
+    <string name="mode_long_break">Long Break</string>
+    <string name="clock_style_flip_card">Flip Card</string>
+    <string name="clock_style_concentric">Concentric</string>
+    <string name="timer_start">Start</string>
+    <string name="timer_pause">Pause</string>
+    <string name="timer_resume">Resume</string>
+    <string name="timer_restart">Restart</string>
+
+    <!-- Notifications -->
+    <string name="notification_timer_title">Kimon Pomodoro</string>
+    <string name="notification_session_completed">%1$s session completed!</string>
+    <string name="notification_time_remaining">%1$s • %2$s remaining</string>
+    <string name="notification_channel_name">Pomodoro Timer</string>
+    <string name="notification_channel_desc">Shows live countdown timer during focus and break sessions</string>
 </resources>

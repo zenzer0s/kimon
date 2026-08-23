@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -223,7 +224,7 @@ fun AnalyzeNavigationHeader(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_left),
-                            contentDescription = "Previous",
+                            contentDescription = stringResource(R.string.action_previous),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -251,7 +252,7 @@ fun AnalyzeNavigationHeader(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_right),
-                            contentDescription = "Next",
+                            contentDescription = stringResource(R.string.action_next),
                             modifier = Modifier.size(20.dp)
                         )
                     }

@@ -35,42 +35,45 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.analyze.AnalyzeScreen
 import com.zenzeros.kimon.ui.components.KimonFloatingToolbar
 import com.zenzeros.kimon.ui.components.KimonTab
 import com.zenzeros.kimon.ui.focus.FocusScreen
 import com.zenzeros.kimon.ui.plan.PlanScreen
+import com.zenzeros.kimon.ui.pomodoro.PomodoroViewModel
+import com.zenzeros.kimon.ui.pomodoro.TimerStatus
 import com.zenzeros.kimon.ui.theme.KimonTheme
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import com.zenzeros.kimon.ui.theme.ThemePalette
-import kotlinx.coroutines.delay
 
 @Composable
 fun KimonApp(
     palette: ThemePalette = ThemePalette.DYNAMIC,
     dynamicColor: Boolean = true
 ) {
-    var selectedTab by remember { mutableStateOf(KimonTab.FOCUS) }
-    var remainingSeconds by remember { mutableIntStateOf(25 * 60) }
-    var isRunning by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val kimonApp = context.applicationContext as KimonApplication
+    val pomodoroViewModel: PomodoroViewModel = viewModel(
+        factory = PomodoroViewModel.Factory(
+            sessionRepository = kimonApp.sessionRepository,
+            tagRepository = kimonApp.tagRepository,
+            userSettingsRepository = kimonApp.userSettingsRepository
+        )
+    )
+    val pomodoroUiState by pomodoroViewModel.uiState.collectAsStateWithLifecycle()
+    val allTags by pomodoroViewModel.allTags.collectAsStateWithLifecycle()
 
-    // Countdown timer active when running
-    LaunchedEffect(isRunning) {
-        if (isRunning) {
-            while (isRunning && remainingSeconds > 0) {
-                delay(1000L)
-                remainingSeconds--
-            }
-            if (remainingSeconds == 0) {
-                isRunning = false
-            }
-        }
-    }
+    var selectedTab by remember { mutableStateOf(KimonTab.FOCUS) }
 
     KimonTheme(palette = palette, dynamicColor = dynamicColor) {
         Scaffold(
@@ -87,13 +90,13 @@ fun KimonApp(
                         icon = {
                             Icon(
                                 painter = painterResource(R.drawable.ic_plan),
-                                contentDescription = "Plan",
+                                contentDescription = stringResource(R.string.tab_plan),
                                 modifier = Modifier.size(24.dp)
                             )
                         },
                         label = {
                             Text(
-                                text = "Plan",
+                                text = stringResource(R.string.tab_plan),
                                 fontWeight = if (selectedTab == KimonTab.PLAN) FontWeight.SemiBold else FontWeight.Normal
                             )
                         },
@@ -112,13 +115,13 @@ fun KimonApp(
                         icon = {
                             Icon(
                                 painter = painterResource(R.drawable.ic_focus),
-                                contentDescription = "Focus",
+                                contentDescription = stringResource(R.string.tab_focus),
                                 modifier = Modifier.size(24.dp)
                             )
                         },
                         label = {
                             Text(
-                                text = "Focus",
+                                text = stringResource(R.string.tab_focus),
                                 fontWeight = if (selectedTab == KimonTab.FOCUS) FontWeight.SemiBold else FontWeight.Normal
                             )
                         },
@@ -137,13 +140,13 @@ fun KimonApp(
                         icon = {
                             Icon(
                                 painter = painterResource(R.drawable.ic_analyze),
-                                contentDescription = "Analyze",
+                                contentDescription = stringResource(R.string.tab_analyze),
                                 modifier = Modifier.size(24.dp)
                             )
                         },
                         label = {
                             Text(
-                                text = "Analyze",
+                                text = stringResource(R.string.tab_analyze),
                                 fontWeight = if (selectedTab == KimonTab.ANALYZE) FontWeight.SemiBold else FontWeight.Normal
                             )
                         },
@@ -181,7 +184,7 @@ fun KimonApp(
                             horizontalArrangement = Arrangement.spacedBy(3.5.dp)
                         ) {
                             Text(
-                                text = "Kimon",
+                                text = stringResource(R.string.app_name),
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontFamily = LocalAppFonts.current.topBarTitle,
                                     fontSize = 24.sp,
@@ -215,7 +218,7 @@ fun KimonApp(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_profile),
-                                contentDescription = "Profile",
+                                contentDescription = stringResource(R.string.profile),
                                 modifier = Modifier.size(19.dp),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
@@ -242,21 +245,24 @@ fun KimonApp(
                             when (selectedTab) {
                                 KimonTab.FOCUS -> {
                                     FocusScreen(
-                                        remainingSeconds = remainingSeconds,
-                                        isRunning = isRunning,
-                                        onStart = { isRunning = true },
-                                        onPause = { isRunning = false },
-                                        onRestart = {
-                                            remainingSeconds = 25 * 60
-                                            isRunning = false
-                                        }
+                                        remainingSeconds = pomodoroUiState.remainingSeconds,
+                                        isRunning = pomodoroUiState.timerStatus == TimerStatus.RUNNING,
+                                        selectedTag = pomodoroUiState.selectedTag,
+                                        tags = allTags,
+                                        onSelectTag = { tag -> pomodoroViewModel.selectTag(tag) },
+                                        onCreateTag = { name, colorHex -> pomodoroViewModel.createTag(name, colorHex) },
+                                        onStart = { pomodoroViewModel.startTimer(context) },
+                                        onPause = { pomodoroViewModel.pauseTimer(context) },
+                                        onRestart = { pomodoroViewModel.stopTimer(context) }
                                     )
                                 }
                                 KimonTab.PLAN -> {
                                     PlanScreen()
                                 }
                                 KimonTab.ANALYZE -> {
-                                    AnalyzeScreen()
+                                    AnalyzeScreen(
+                                        onNavigateToFocus = { selectedTab = KimonTab.FOCUS }
+                                    )
                                 }
                             }
                         }

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -31,24 +30,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.domain.model.YearStats
+import com.zenzeros.kimon.ui.analyze.AnalyzeViewModel
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import java.text.DateFormatSymbols
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
@@ -65,10 +65,13 @@ private val HEATMAP_WEEK_DAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
 
 @Composable
 fun YearTab(
+    stats: YearStats = YearStats(),
+    selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
+    onPreviousYear: () -> Unit = {},
+    onNextYear: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var selectedYear by remember { mutableStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
 
     val totalSectionsGroup = 2
     val yearlyFocusShapes = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
@@ -83,8 +86,8 @@ fun YearTab(
 
         // 1. Navigation Header: [ Left: Compact Year Pill ] ... [ Right: ButtonGroup with < and > ]
         AnalyzeNavigationHeader(
-            onPreviousClick = { selectedYear -= 1 },
-            onNextClick = { selectedYear += 1 }
+            onPreviousClick = onPreviousYear,
+            onNextClick = onNextYear
         ) {
             Text(
                 text = selectedYear.toString(),
@@ -124,7 +127,7 @@ fun YearTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_trending_up,
-                        title = "Yearly Focus"
+                        title = stringResource(R.string.title_yearly_focus)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -139,8 +142,8 @@ fun YearTab(
                         cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                         cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                         valueColor = MaterialTheme.colorScheme.primary,
-                        label = "Total Focus Time",
-                        value = "10h 3m"
+                        label = stringResource(R.string.label_total_focus_time),
+                        value = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds)
                     )
 
                     Spacer(modifier = Modifier.height(3.5.dp))
@@ -163,8 +166,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
-                            label = "Sessions",
-                            value = "4"
+                            label = stringResource(R.string.label_sessions),
+                            value = stats.totalSessions.toString()
                         )
 
                         MetricTileCard(
@@ -178,8 +181,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.tertiary,
-                            label = "Avg Session",
-                            value = "2h 31m"
+                            label = stringResource(R.string.label_avg_session),
+                            value = AnalyzeViewModel.formatDuration(stats.avgSessionSeconds)
                         )
                     }
 
@@ -203,8 +206,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
-                            label = "Focus Days",
-                            value = "2d"
+                            label = stringResource(R.string.label_focus_days),
+                            value = "${stats.focusDaysCount}d"
                         )
 
                         MetricTileCard(
@@ -218,8 +221,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.tertiary,
-                            label = "Best Streak",
-                            value = "1d"
+                            label = stringResource(R.string.label_best_streak),
+                            value = "${stats.bestStreakDays}d"
                         )
                     }
 
@@ -243,8 +246,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
-                            label = "Best Day",
-                            value = "10h"
+                            label = stringResource(R.string.label_best_day),
+                            value = AnalyzeViewModel.formatDuration(stats.bestDaySeconds)
                         )
 
                         MetricTileCard(
@@ -258,8 +261,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
-                            label = "Best Week",
-                            value = "10h 3m"
+                            label = stringResource(R.string.label_best_week),
+                            value = AnalyzeViewModel.formatDuration(stats.bestWeekSeconds)
                         )
 
                         MetricTileCard(
@@ -273,8 +276,8 @@ fun YearTab(
                             cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.tertiary,
-                            label = "Best Month",
-                            value = "10h 3m"
+                            label = stringResource(R.string.label_best_month),
+                            value = AnalyzeViewModel.formatDuration(stats.bestMonthSeconds)
                         )
                     }
                 }
@@ -289,16 +292,25 @@ fun YearTab(
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
             ) {
-                YearlyHeatMapContent(year = selectedYear)
+                YearlyHeatMapContent(
+                    year = selectedYear,
+                    activeDaysSet = stats.activeDaysSet
+                )
             }
         }
     }
 }
 
 @Composable
-private fun YearlyHeatMapContent(year: Int) {
+private fun YearlyHeatMapContent(
+    year: Int,
+    activeDaysSet: Set<String>
+) {
+    val currentMonth = remember { Calendar.getInstance().get(Calendar.MONTH) }
+    val initialPage = remember(currentMonth) { currentMonth / 2 }
+
     val pagerState = rememberPagerState(
-        initialPage = 2, // Default to May-June
+        initialPage = initialPage,
         pageCount = { MONTH_PAIRS.size }
     )
 
@@ -309,7 +321,7 @@ private fun YearlyHeatMapContent(year: Int) {
     ) {
         AnalyzeCardHeader(
             icon = R.drawable.ic_streak,
-            title = "Heat Map"
+            title = stringResource(R.string.title_heat_map)
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -328,7 +340,7 @@ private fun YearlyHeatMapContent(year: Int) {
                     .padding(horizontal = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Left Weekday Labels Column (Aligned with 7 rows of days)
+                // Left Weekday Labels Column
                 Column(
                     modifier = Modifier.padding(top = 26.dp)
                 ) {
@@ -352,19 +364,21 @@ private fun YearlyHeatMapContent(year: Int) {
                     }
                 }
 
-                // First Month Grid (6 Columns x 7 Rows)
+                // First Month Grid
                 MonthHeatMapColumn(
                     year = year,
                     monthIndex = firstMonthIndex,
                     monthName = monthNames[firstMonthIndex],
+                    activeDaysSet = activeDaysSet,
                     modifier = Modifier.weight(1f)
                 )
 
-                // Second Month Grid (6 Columns x 7 Rows)
+                // Second Month Grid
                 MonthHeatMapColumn(
                     year = year,
                     monthIndex = secondMonthIndex,
                     monthName = monthNames[secondMonthIndex],
+                    activeDaysSet = activeDaysSet,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -403,6 +417,7 @@ private fun MonthHeatMapColumn(
     year: Int,
     monthIndex: Int,
     monthName: String,
+    activeDaysSet: Set<String>,
     modifier: Modifier = Modifier
 ) {
     val cal = remember(year, monthIndex) {
@@ -418,8 +433,8 @@ private fun MonthHeatMapColumn(
         (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
     }
 
-    // Always 6 columns to guarantee day 30 and 31 in 6th week are rendered
     val totalCols = 6
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -451,7 +466,15 @@ private fun MonthHeatMapColumn(
                         val dayNumber = slotIndex - firstDayOfWeek + 1
 
                         if (dayNumber in 1..maxDays) {
-                            val isFocusedDay = (monthIndex == 4 && (dayNumber == 2 || dayNumber == 6))
+                            val dayKey = remember(year, monthIndex, dayNumber) {
+                                val dCal = Calendar.getInstance()
+                                dCal.set(Calendar.YEAR, year)
+                                dCal.set(Calendar.MONTH, monthIndex)
+                                dCal.set(Calendar.DAY_OF_MONTH, dayNumber)
+                                dateFormat.format(dCal.time)
+                            }
+                            val isFocusedDay = activeDaysSet.contains(dayKey)
+
                             Box(
                                 modifier = Modifier
                                     .weight(1f)

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -27,21 +28,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.domain.model.WeekStats
+import com.zenzeros.kimon.ui.analyze.AnalyzeViewModel
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
@@ -55,15 +57,18 @@ private val WEEK_DAY_LABELS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "
 
 @Composable
 fun WeekTab(
+    stats: WeekStats = WeekStats(),
+    selectedWeekStart: Calendar = remember {
+        Calendar.getInstance().apply {
+            firstDayOfWeek = Calendar.MONDAY
+            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        }
+    },
+    onPreviousWeek: () -> Unit = {},
+    onNextWeek: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var selectedWeekStart by remember {
-        val cal = Calendar.getInstance()
-        cal.firstDayOfWeek = Calendar.MONDAY
-        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-        mutableStateOf(cal)
-    }
 
     val weekEndCal = remember(selectedWeekStart.timeInMillis) {
         val end = selectedWeekStart.clone() as Calendar
@@ -90,16 +95,8 @@ fun WeekTab(
 
         // 1. Navigation Header: [ Left: Combined Week Range Pill ] ... [ Right: ButtonGroup with < and > ]
         AnalyzeNavigationHeader(
-            onPreviousClick = {
-                val newCal = selectedWeekStart.clone() as Calendar
-                newCal.add(Calendar.DAY_OF_YEAR, -7)
-                selectedWeekStart = newCal
-            },
-            onNextClick = {
-                val newCal = selectedWeekStart.clone() as Calendar
-                newCal.add(Calendar.DAY_OF_YEAR, 7)
-                selectedWeekStart = newCal
-            }
+            onPreviousClick = onPreviousWeek,
+            onNextClick = onNextWeek
         ) {
             Text(
                 text = weekRangeText,
@@ -139,7 +136,7 @@ fun WeekTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_focus,
-                        title = "Weekly Focus"
+                        title = stringResource(R.string.title_weekly_focus)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -162,8 +159,8 @@ fun WeekTab(
                             cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
-                            label = "Total Time",
-                            value = "0m"
+                            label = stringResource(R.string.label_total_time),
+                            value = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds)
                         )
 
                         MetricTileCard(
@@ -177,8 +174,8 @@ fun WeekTab(
                             cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                             cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
-                            label = "Sessions",
-                            value = "0"
+                            label = stringResource(R.string.label_sessions),
+                            value = stats.totalSessions.toString()
                         )
                     }
                 }
@@ -196,21 +193,23 @@ fun WeekTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_pie_chart,
-                        title = "Focus Distribution"
+                        title = stringResource(R.string.title_focus_distribution)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Donut Ring Chart Row: [ Donut ]  [ Text: No focus data available yet. ]
+                    // Donut Ring Chart Row: [ Donut ]  [ Breakdown ]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 12.dp, horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        horizontalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
                         // Donut Ring
                         val ringTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)
+                        val primaryColor = MaterialTheme.colorScheme.primary
+
                         Box(
                             modifier = Modifier.size(110.dp),
                             contentAlignment = Alignment.Center
@@ -220,6 +219,25 @@ fun WeekTab(
                                     color = ringTrackColor,
                                     style = Stroke(width = 14.dp.toPx(), cap = StrokeCap.Round)
                                 )
+
+                                // Draw tag segments if available
+                                var startAngle = -90f
+                                for (dist in stats.tagDistributions) {
+                                    val sweep = dist.percentage * 360f
+                                    val segColor = try {
+                                        Color(android.graphics.Color.parseColor(dist.tag?.colorHex ?: "#7C4DFF"))
+                                    } catch (e: Exception) {
+                                        primaryColor
+                                    }
+                                    drawArc(
+                                        color = segColor,
+                                        startAngle = startAngle,
+                                        sweepAngle = sweep,
+                                        useCenter = false,
+                                        style = Stroke(width = 14.dp.toPx(), cap = StrokeCap.Round)
+                                    )
+                                    startAngle += sweep
+                                }
                             }
 
                             Column(
@@ -227,16 +245,16 @@ fun WeekTab(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    text = "0m",
+                                    text = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds),
                                     style = MaterialTheme.typography.titleLarge.copy(
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 20.sp,
+                                        fontSize = 18.sp,
                                         fontFamily = LocalAppFonts.current.topBarTitle
                                     ),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Total",
+                                    text = stringResource(R.string.label_total),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium
@@ -246,15 +264,67 @@ fun WeekTab(
                             }
                         }
 
-                        // Right description
-                        Text(
-                            text = "No focus data available yet.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Right description or tag list
+                        if (stats.tagDistributions.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.empty_no_focus_data_week),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Normal
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                stats.tagDistributions.take(3).forEach { item ->
+                                    val segColor = remember(item.tag?.colorHex) {
+                                        try {
+                                            Color(android.graphics.Color.parseColor(item.tag?.colorHex ?: "#7C4DFF"))
+                                        } catch (e: Exception) {
+                                            primaryColor
+                                        }
+                                    }
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(10.dp)
+                                                    .clip(CircleShape)
+                                                    .background(segColor)
+                                            )
+                                            Text(
+                                                text = item.tag?.name ?: "Focus",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 11.5.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+
+                                        Text(
+                                            text = "${(item.percentage * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 11.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -273,7 +343,7 @@ fun WeekTab(
                 ) {
                     AnalyzeCardHeader(
                         icon = R.drawable.ic_trending_up,
-                        title = "Focus Trends",
+                        title = stringResource(R.string.title_focus_trends),
                         iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                         iconBg = MaterialTheme.colorScheme.tertiaryContainer
                     )
@@ -312,17 +382,18 @@ fun WeekTab(
                             for (i in WEEK_DAY_LABELS.indices) {
                                 val x = i * step
                                 val isToday = i == todayDayOfWeekIndex
+                                val hasFocus = stats.dailyMinutes.getOrElse(i) { 0 } > 0
 
                                 // Outer circle
                                 drawCircle(
-                                    color = if (isToday) timelineColor else timelineColor.copy(alpha = 0.7f),
+                                    color = if (hasFocus || isToday) timelineColor else timelineColor.copy(alpha = 0.5f),
                                     radius = if (isToday) 6.dp.toPx() else 4.5.dp.toPx(),
                                     center = androidx.compose.ui.geometry.Offset(x, centerY)
                                 )
 
                                 // Inner core
                                 drawCircle(
-                                    color = surfaceContainerHigh,
+                                    color = if (hasFocus) timelineColor else surfaceContainerHigh,
                                     radius = if (isToday) 2.5.dp.toPx() else 1.8.dp.toPx(),
                                     center = androidx.compose.ui.geometry.Offset(x, centerY)
                                 )
