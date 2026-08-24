@@ -115,6 +115,43 @@ class PomodoroViewModel(
         }
     }
 
+    private var dndActivatedByTimer: Boolean = false
+
+    private fun applyDndIfEnabled(context: Context?) {
+        context?.let { ctx ->
+            viewModelScope.launch {
+                val isDndEnabled = userSettingsRepository.dndEnabled.first()
+                if (isDndEnabled && _uiState.value.currentMode == PomodoroMode.FOCUS) {
+                    val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                    if (notificationManager != null && notificationManager.isNotificationPolicyAccessGranted) {
+                        try {
+                            notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                            dndActivatedByTimer = true
+                        } catch (e: Exception) {
+                            // SecurityException or unsupported
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun restoreDnd(context: Context?) {
+        if (dndActivatedByTimer) {
+            context?.let { ctx ->
+                val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                if (notificationManager != null && notificationManager.isNotificationPolicyAccessGranted) {
+                    try {
+                        notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_ALL)
+                    } catch (e: Exception) {
+                        // Ignored
+                    }
+                }
+            }
+            dndActivatedByTimer = false
+        }
+    }
+
     fun startTimer(context: Context? = null) {
         if (_uiState.value.timerStatus == TimerStatus.RUNNING) return
 
@@ -124,6 +161,8 @@ class PomodoroViewModel(
 
         val currentState = _uiState.value
         _uiState.update { it.copy(timerStatus = TimerStatus.RUNNING) }
+
+        applyDndIfEnabled(context)
 
         context?.let { ctx ->
             PomodoroTimerService.startTimer(
@@ -150,6 +189,7 @@ class PomodoroViewModel(
 
     fun pauseTimer(context: Context? = null) {
         timerJob?.cancel()
+        restoreDnd(context)
         _uiState.update { it.copy(timerStatus = TimerStatus.PAUSED) }
         context?.let { ctx ->
             PomodoroTimerService.pauseTimer(ctx)
@@ -158,6 +198,7 @@ class PomodoroViewModel(
 
     fun stopTimer(context: Context? = null) {
         timerJob?.cancel()
+        restoreDnd(context)
         context?.let { ctx ->
             PomodoroTimerService.stopTimer(ctx)
         }
@@ -187,6 +228,7 @@ class PomodoroViewModel(
 
     private fun onTimerFinished(context: Context? = null) {
         timerJob?.cancel()
+        restoreDnd(context)
         context?.let { ctx ->
             PomodoroTimerService.stopTimer(ctx)
         }
@@ -230,6 +272,16 @@ class PomodoroViewModel(
                     totalSeconds = nextDurationSecs,
                     currentSessionIndex = if (currentState.currentMode == PomodoroMode.FOCUS) it.currentSessionIndex + 1 else it.currentSessionIndex
                 )
+            }
+
+            // Check auto-start settings and start next mode automatically
+            val shouldAutoStart = when (nextMode) {
+                PomodoroMode.FOCUS -> userSettingsRepository.autoStartPomodoros.first()
+                PomodoroMode.SHORT_BREAK, PomodoroMode.LONG_BREAK -> userSettingsRepository.autoStartBreaks.first()
+            }
+
+            if (shouldAutoStart) {
+                startTimer(context)
             }
         }
     }

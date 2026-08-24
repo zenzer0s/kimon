@@ -2,6 +2,8 @@
 
 package com.zenzeros.kimon.ui
 
+import android.app.Activity
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -41,6 +43,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -110,6 +113,18 @@ fun KimonApp() {
     }
 
     CustomColors.black = isDark && settingsState.amoledBlack
+
+    val activity = context as? Activity
+    DisposableEffect(settingsState.keepScreenOn, pomodoroUiState.timerStatus) {
+        if (settingsState.keepScreenOn && pomodoroUiState.timerStatus == TimerStatus.RUNNING) {
+            activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     // Pre-warmed Root Tabs Pager (0 = Plan, 1 = Focus, 2 = Analyze)
     val mainTabPagerState = rememberPagerState(

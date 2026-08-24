@@ -106,6 +106,8 @@ fun TimerSettingsScreen(
         }
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     val switchItems = remember(
         state.autoStartBreaks,
         state.autoStartPomodoros,
@@ -115,31 +117,43 @@ fun TimerSettingsScreen(
         listOf(
             SettingsSwitchItem(
                 checked = state.autoStartBreaks,
-                icon = R.drawable.ic_start,
+                icon = R.drawable.ic_auto_break,
                 label = R.string.settings_auto_start_breaks,
                 description = R.string.settings_auto_start_breaks_desc,
                 onClick = onToggleAutoStartBreaks
             ),
             SettingsSwitchItem(
                 checked = state.autoStartPomodoros,
-                icon = R.drawable.ic_focus,
+                icon = R.drawable.ic_auto_focus,
                 label = R.string.settings_auto_start_pomodoros,
                 description = R.string.settings_auto_start_pomodoros_desc,
                 onClick = onToggleAutoStartPomodoros
             ),
             SettingsSwitchItem(
                 checked = state.keepScreenOn,
-                icon = R.drawable.ic_calendar,
+                icon = R.drawable.ic_screen_awake,
                 label = R.string.settings_keep_screen_on,
                 description = R.string.settings_keep_screen_on_desc,
                 onClick = onToggleKeepScreenOn
             ),
             SettingsSwitchItem(
                 checked = state.dndEnabled,
-                icon = R.drawable.ic_pie_chart,
+                icon = R.drawable.ic_dnd,
                 label = R.string.settings_dnd,
                 description = R.string.settings_dnd_desc,
-                onClick = onToggleDnd
+                onClick = { enabled ->
+                    if (enabled) {
+                        val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                        if (notificationManager != null && !notificationManager.isNotificationPolicyAccessGranted) {
+                            try {
+                                context.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                            } catch (e: Exception) {
+                                // Ignored
+                            }
+                        }
+                    }
+                    onToggleDnd(enabled)
+                }
             )
         )
     }
@@ -419,15 +433,21 @@ fun TimerSettingsScreen(
             )
 
             switchItems.forEachIndexed { index, item ->
-                ListItem(
+                SegmentedListItem(
                     leadingContent = {
                         Icon(
-                            painterResource(item.icon),
+                            painter = painterResource(item.icon),
                             contentDescription = null,
-                            modifier = Modifier.padding(top = 4.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     },
-                    supportingContent = { Text(stringResource(item.description)) },
+                    supportingContent = {
+                        Text(
+                            text = stringResource(item.description),
+                            fontSize = 12.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     trailingContent = {
                         Switch(
                             checked = item.checked,
@@ -439,16 +459,20 @@ fun TimerSettingsScreen(
                             colors = switchColors
                         )
                     },
+                    shapes = segmentedListItemShapes(index, switchItems.size),
                     colors = listItemColors,
-                    modifier = Modifier.clip(
-                        when (index) {
-                            0 -> topListItemShape
-                            switchItems.size - 1 -> bottomListItemShape
-                            else -> middleListItemShape
+                    onClick = {
+                        if (item.enabled) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            item.onClick(!item.checked)
                         }
-                    )
+                    }
                 ) {
-                    Text(stringResource(item.label))
+                    Text(
+                        text = stringResource(item.label),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp
+                    )
                 }
             }
 
