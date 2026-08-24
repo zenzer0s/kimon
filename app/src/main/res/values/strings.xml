@@ -105,10 +105,18 @@
 
     <!-- Settings -->
     <string name="title_settings">Settings</string>
+    <string name="title_focus_settings">Focus Settings</string>
+    <string name="section_adjust_durations">Adjust durations</string>
+    <string name="section_configuration">Configuration</string>
+    <string name="label_pomodoros">Pomodoros</string>
+    <string name="label_long_break">Long break</string>
+    <string name="section_session_preview">Session preview</string>
+    <string name="label_total_time_preview">Total time</string>
+    <string name="label_end_time_preview">End time</string>
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="action_reset">Reset</string>
-    <string name="settings_section_timer">Timer Durations</string>
+    <string name="settings_section_timer">Focus Settings</string>
     <string name="settings_work_duration">Focus Duration</string>
     <string name="settings_short_break">Short Break Duration</string>
     <string name="settings_long_break">Long Break Duration</string>

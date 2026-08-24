@@ -2,8 +2,13 @@
 
 package com.zenzeros.kimon.ui.settings.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,53 +20,61 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.settings.SettingsSwitchItem
 import com.zenzeros.kimon.ui.settings.SettingsUiState
-import com.zenzeros.kimon.ui.settings.components.MinuteInputField
-import com.zenzeros.kimon.ui.settings.components.MinutesInputTransformation3Digits
-import com.zenzeros.kimon.ui.settings.components.SliderListItem
+import com.zenzeros.kimon.ui.settings.components.FocusDurationWheelPicker
+import com.zenzeros.kimon.ui.settings.components.SessionPreviewCard
+import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
-import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.PANE_MAX_WIDTH
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
-import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.cardShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
+
+enum class FocusDurationType {
+    FOCUS,
+    SHORT_BREAK,
+    LONG_BREAK
+}
 
 @Composable
 fun TimerSettingsScreen(
@@ -78,32 +91,9 @@ fun TimerSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
-    val focusTimeState = rememberTextFieldState(state.workDurationMinutes.toString())
-    val shortBreakState = rememberTextFieldState(state.shortBreakMinutes.toString())
-    val longBreakState = rememberTextFieldState(state.longBreakMinutes.toString())
-
-    LaunchedEffect(focusTimeState.text) {
-        val num = focusTimeState.text.toString().toIntOrNull()
-        if (num != null && num != state.workDurationMinutes) {
-            onSetWorkDuration(num)
-        }
-    }
-
-    LaunchedEffect(shortBreakState.text) {
-        val num = shortBreakState.text.toString().toIntOrNull()
-        if (num != null && num != state.shortBreakMinutes) {
-            onSetShortBreak(num)
-        }
-    }
-
-    LaunchedEffect(longBreakState.text) {
-        val num = longBreakState.text.toString().toIntOrNull()
-        if (num != null && num != state.longBreakMinutes) {
-            onSetLongBreak(num)
-        }
-    }
+    val haptic = LocalHapticFeedback.current
+    var activeDurationType by remember { mutableStateOf<FocusDurationType?>(FocusDurationType.FOCUS) }
+    var isLongBreakEnabled by remember { mutableStateOf(true) }
 
     val switchItems = remember(
         state.autoStartBreaks,
@@ -148,22 +138,29 @@ fun TimerSettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.settings_section_timer),
+                        text = stringResource(R.string.title_focus_settings),
                         fontFamily = LocalAppFonts.current.topBarTitle,
-                        fontSize = 22.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
-                navigationIcon = {
+                actions = {
                     FilledTonalIconButton(
                         onClick = onBack,
+                        shape = CircleShape,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = listItemColors.containerColor
-                        )
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(38.dp)
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_chevron_left),
-                            contentDescription = stringResource(R.string.back)
+                            painter = painterResource(R.drawable.ic_close),
+                            contentDescription = stringResource(R.string.back),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 },
@@ -180,164 +177,402 @@ fun TimerSettingsScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
+            item { Spacer(Modifier.height(6.dp)) }
+
+            // ==========================================
+            // 1. SECTION: Adjust durations
+            // ==========================================
             item {
-                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.section_adjust_durations),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp, top = 2.dp)
+                )
             }
 
-                // 1. Triple Minute Input Field (Focus, Short Break, Long Break)
-                item {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.mode_focus),
-                                style = typography.titleSmall
-                            )
-                            MinuteInputField(
-                                state = focusTimeState,
-                                enabled = true,
-                                shape = RoundedCornerShape(
-                                    topStart = topListItemShape.topStart,
-                                    bottomStart = topListItemShape.topStart,
-                                    topEnd = topListItemShape.bottomStart,
-                                    bottomEnd = topListItemShape.bottomStart
-                                ),
-                                inputTransformation = MinutesInputTransformation3Digits,
-                                imeAction = ImeAction.Next
-                            )
-                        }
-
-                        Spacer(Modifier.width(4.dp))
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.mode_short_break),
-                                style = typography.titleSmall
-                            )
-                            MinuteInputField(
-                                state = shortBreakState,
-                                enabled = true,
-                                shape = RoundedCornerShape(middleListItemShape.topStart),
-                                imeAction = ImeAction.Next
-                            )
-                        }
-
-                        Spacer(Modifier.width(4.dp))
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.mode_long_break),
-                                style = typography.titleSmall
-                            )
-                            MinuteInputField(
-                                state = longBreakState,
-                                enabled = true,
-                                shape = RoundedCornerShape(
-                                    topStart = bottomListItemShape.topStart,
-                                    bottomStart = bottomListItemShape.topStart,
-                                    topEnd = bottomListItemShape.bottomStart,
-                                    bottomEnd = bottomListItemShape.bottomStart
-                                ),
-                                imeAction = ImeAction.Done
-                            )
-                        }
-                    }
-                }
-
-                item {
-                    Spacer(Modifier.height(14.dp))
-                }
-
-                // 2. Session Length Slider
-                item {
-                    Column(Modifier.background(listItemColors.containerColor, topListItemShape)) {
-                        ListItem(
-                            leadingContent = {
-                                Icon(painterResource(R.drawable.ic_bar_chart), null)
-                            },
-                            headlineContent = {
-                                Text(stringResource(R.string.settings_long_break_interval))
-                            },
-                            supportingContent = {
-                                Text("Every ${state.sessionsBeforeLongBreak} sessions")
-                            },
-                            colors = listItemColors,
-                            modifier = Modifier.clip(cardShape)
+            // 1.1 Focus Row
+            item {
+                val isSelected = activeDurationType == FocusDurationType.FOCUS
+                SegmentedListItem(
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF3B82F6))
                         )
-                        Slider(
-                            value = state.sessionsBeforeLongBreak.toFloat(),
-                            valueRange = 1f..8f,
-                            steps = 6,
-                            onValueChange = { onSetSessionsBeforeLongBreak(it.toInt()) },
-                            modifier = Modifier.padding(start = 56.dp, end = 16.dp, bottom = 12.dp)
-                        )
-                    }
-                }
-
-                // 3. Daily Focus Goal Slider
-                item {
-                    SliderListItem(
-                        value = state.dailyGoalMinutes.toFloat(),
-                        valueRange = 0f..480f,
-                        enabled = true,
-                        label = stringResource(R.string.settings_daily_goal),
-                        trailingLabel = { mins ->
-                            val m = mins.toInt()
-                            "${m / 60}h ${m % 60}m"
-                        },
-                        icon = { Icon(painterResource(R.drawable.ic_target), null) },
-                        shape = bottomListItemShape,
-                        onValueChangeFinished = { onSetDailyGoal(it.toInt()) }
-                    )
-                }
-
-                item { Spacer(Modifier.height(14.dp)) }
-
-                // 4. Automation Switch Items
-                itemsIndexed(switchItems) { index, item ->
-                    ListItem(
-                        leadingContent = {
+                    },
+                    trailingContent = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "${state.workDurationMinutes}m",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                ),
+                                color = if (isSelected) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Icon(
-                                painterResource(item.icon),
+                                painter = painterResource(R.drawable.ic_chevron_right),
                                 contentDescription = null,
-                                modifier = Modifier.padding(top = 4.dp)
+                                modifier = Modifier
+                                    .rotate(if (isSelected) -90f else 90f)
+                                    .size(16.dp),
+                                tint = if (isSelected) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        },
-                        headlineContent = { Text(stringResource(item.label)) },
-                        supportingContent = { Text(stringResource(item.description)) },
-                        trailingContent = {
-                            Switch(
-                                checked = item.checked,
-                                enabled = item.enabled,
-                                onCheckedChange = { item.onClick(it) },
-                                colors = switchColors
-                            )
-                        },
-                        colors = listItemColors,
-                        modifier = Modifier.clip(
-                            when (index) {
-                                0 -> topListItemShape
-                                switchItems.size - 1 -> bottomListItemShape
-                                else -> middleListItemShape
-                            }
-                        )
+                        }
+                    },
+                    shapes = segmentedListItemShapes(0, 3),
+                    colors = listItemColors,
+                    onClick = {
+                        activeDurationType = if (isSelected) null else FocusDurationType.FOCUS
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.mode_focus),
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                     )
                 }
-
-                item { Spacer(Modifier.height(24.dp)) }
             }
+
+            // 1.2 Short Break Row
+            item {
+                val isSelected = activeDurationType == FocusDurationType.SHORT_BREAK
+                SegmentedListItem(
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF10B981))
+                        )
+                    },
+                    trailingContent = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "${state.shortBreakMinutes}m",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                ),
+                                color = if (isSelected) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_chevron_right),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .rotate(if (isSelected) -90f else 90f)
+                                    .size(16.dp),
+                                tint = if (isSelected) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    shapes = segmentedListItemShapes(1, 3),
+                    colors = listItemColors,
+                    onClick = {
+                        activeDurationType = if (isSelected) null else FocusDurationType.SHORT_BREAK
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.mode_short_break),
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                    )
+                }
+            }
+
+            // 1.3 Long Break Row
+            item {
+                val isSelected = activeDurationType == FocusDurationType.LONG_BREAK
+                SegmentedListItem(
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF8B5CF6))
+                        )
+                    },
+                    trailingContent = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "${state.longBreakMinutes}m",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                ),
+                                color = if (isSelected) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_chevron_right),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .rotate(if (isSelected) -90f else 90f)
+                                    .size(16.dp),
+                                tint = if (isSelected) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    shapes = segmentedListItemShapes(2, 3),
+                    colors = listItemColors,
+                    onClick = {
+                        activeDurationType = if (isSelected) null else FocusDurationType.LONG_BREAK
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.mode_long_break),
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                    )
+                }
+            }
+
+            // 1.4 Active Duration Interactive Wheel Picker
+            item {
+                AnimatedVisibility(
+                    visible = activeDurationType != null,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(modifier = Modifier.padding(top = 10.dp)) {
+                        when (activeDurationType) {
+                            FocusDurationType.FOCUS -> {
+                                FocusDurationWheelPicker(
+                                    totalMinutes = state.workDurationMinutes,
+                                    onMinutesChanged = onSetWorkDuration,
+                                    maxMinutes = 180,
+                                    minMinutes = 1
+                                )
+                            }
+                            FocusDurationType.SHORT_BREAK -> {
+                                FocusDurationWheelPicker(
+                                    totalMinutes = state.shortBreakMinutes,
+                                    onMinutesChanged = onSetShortBreak,
+                                    maxMinutes = 60,
+                                    minMinutes = 1
+                                )
+                            }
+                            FocusDurationType.LONG_BREAK -> {
+                                FocusDurationWheelPicker(
+                                    totalMinutes = state.longBreakMinutes,
+                                    onMinutesChanged = onSetLongBreak,
+                                    maxMinutes = 90,
+                                    minMinutes = 1
+                                )
+                            }
+                            null -> Unit
+                        }
+                    }
+                }
+            }
+
+            item { Spacer(Modifier.height(14.dp)) }
+
+            // ==========================================
+            // 2. SECTION: Configuration (Pomodoros stepper & Long break switch)
+            // ==========================================
+            item {
+                Text(
+                    text = stringResource(R.string.section_configuration),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+                )
+            }
+
+            // 2.1 Pomodoros Stepper Item
+            item {
+                SegmentedListItem(
+                    trailingContent = {
+                        // Stepper Container: [ -   4   + ]
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f))
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    if (state.sessionsBeforeLongBreak > 1) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        onSetSessionsBeforeLongBreak(state.sessionsBeforeLongBreak - 1)
+                                    }
+                                },
+                                enabled = state.sessionsBeforeLongBreak > 1,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_remove),
+                                    contentDescription = "Decrease",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (state.sessionsBeforeLongBreak > 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+
+                            Text(
+                                text = state.sessionsBeforeLongBreak.toString(),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+
+                            IconButton(
+                                onClick = {
+                                    if (state.sessionsBeforeLongBreak < 12) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        onSetSessionsBeforeLongBreak(state.sessionsBeforeLongBreak + 1)
+                                    }
+                                },
+                                enabled = state.sessionsBeforeLongBreak < 12,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_add),
+                                    contentDescription = "Increase",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (state.sessionsBeforeLongBreak < 12) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+                        }
+                    },
+                    shapes = segmentedListItemShapes(0, 2),
+                    colors = listItemColors,
+                    onClick = {}
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_pomodoros),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+
+            // 2.2 Long Break Switch Item
+            item {
+                SegmentedListItem(
+                    trailingContent = {
+                        Switch(
+                            checked = isLongBreakEnabled,
+                            onCheckedChange = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                isLongBreakEnabled = it
+                            },
+                            colors = switchColors
+                        )
+                    },
+                    shapes = segmentedListItemShapes(1, 2),
+                    colors = listItemColors,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        isLongBreakEnabled = !isLongBreakEnabled
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_long_break),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(14.dp)) }
+
+            // ==========================================
+            // 3. SECTION: Session preview
+            // ==========================================
+            item {
+                Text(
+                    text = stringResource(R.string.section_session_preview),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+                )
+            }
+
+            item {
+                SessionPreviewCard(
+                    pomodoros = state.sessionsBeforeLongBreak,
+                    focusMinutes = state.workDurationMinutes,
+                    shortBreakMinutes = state.shortBreakMinutes,
+                    longBreakMinutes = state.longBreakMinutes,
+                    isLongBreakEnabled = isLongBreakEnabled
+                )
+            }
+
+            item { Spacer(Modifier.height(18.dp)) }
+
+            // ==========================================
+            // 4. SECTION: Automation & Behavior
+            // ==========================================
+            item {
+                Text(
+                    text = stringResource(R.string.settings_section_automation),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+                )
+            }
+
+            itemsIndexed(switchItems) { index, item ->
+                ListItem(
+                    leadingContent = {
+                        Icon(
+                            painterResource(item.icon),
+                            contentDescription = null,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    },
+                    supportingContent = { Text(stringResource(item.description)) },
+                    trailingContent = {
+                        Switch(
+                            checked = item.checked,
+                            enabled = item.enabled,
+                            onCheckedChange = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                item.onClick(it)
+                            },
+                            colors = switchColors
+                        )
+                    },
+                    colors = listItemColors,
+                    modifier = Modifier.clip(
+                        when (index) {
+                            0 -> topListItemShape
+                            switchItems.size - 1 -> bottomListItemShape
+                            else -> middleListItemShape
+                        }
+                    )
+                ) {
+                    Text(stringResource(item.label))
+                }
+            }
+
+            item { Spacer(Modifier.height(28.dp)) }
         }
+    }
 }

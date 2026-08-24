@@ -75,7 +75,7 @@ fun SettingsMainScreen(
                 key = KimonNavKey.TimerSettings,
                 icon = R.drawable.ic_focus,
                 title = R.string.settings_section_timer,
-                subtitle = "Durations, DND, Always on display, Goals"
+                subtitle = "Durations, configuration, preview, automation"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.AlarmSettings,
