@@ -44,11 +44,11 @@ fun SessionPreviewCard(
     isLongBreakEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val focusColor = Color(0xFF3B82F6) // Material Blue
-    val shortBreakColor = Color(0xFF10B981) // Material Emerald Green
-    val longBreakColor = Color(0xFF8B5CF6) // Material Purple
+    val focusColor = MaterialTheme.colorScheme.primary
+    val shortBreakColor = MaterialTheme.colorScheme.secondary
+    val longBreakColor = MaterialTheme.colorScheme.tertiary
 
-    val segments = remember(pomodoros, focusMinutes, shortBreakMinutes, longBreakMinutes, isLongBreakEnabled) {
+    val segments = remember(pomodoros, focusMinutes, shortBreakMinutes, longBreakMinutes, isLongBreakEnabled, focusColor, shortBreakColor, longBreakColor) {
         val list = mutableListOf<SessionSegment>()
         for (i in 1..pomodoros) {
             list.add(SessionSegment("FOCUS", focusMinutes, focusColor))
