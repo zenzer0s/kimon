@@ -31,7 +31,7 @@ object CustomColors {
             )
 
     val cardContainerColor: Color
-        @Composable get() = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh
+        @Composable get() = if (!black) colorScheme.surfaceContainerLowest else colorScheme.surfaceContainerHigh
 
     val listItemColors: ListItemColors
         @Composable get() =
