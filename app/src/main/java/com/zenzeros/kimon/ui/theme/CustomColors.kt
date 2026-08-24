@@ -17,13 +17,30 @@ object CustomColors {
     var black = false
 
     val topBarColors: TopAppBarColors
-        @Composable get() = TopAppBarDefaults.topAppBarColors()
+        @Composable get() =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface,
+                scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
+            )
 
     val detailPaneTopBarColors: TopAppBarColors
-        @Composable get() = TopAppBarDefaults.topAppBarColors()
+        @Composable get() =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface,
+                scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
+            )
 
     val listItemColors: ListItemColors
-        @Composable get() = ListItemDefaults.segmentedColors()
+        @Composable get() =
+            ListItemDefaults.segmentedColors(
+                containerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
+                disabledContainerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
+                selectedContainerColor = colorScheme.surfaceContainerLow,
+                contentColor = colorScheme.onSurface,
+                leadingContentColor = colorScheme.primary,
+                trailingContentColor = colorScheme.onSurfaceVariant,
+                supportingContentColor = colorScheme.onSurfaceVariant
+            )
 
     val switchColors: SwitchColors
         @Composable get() = SwitchDefaults.colors(

@@ -121,13 +121,13 @@ fun SettingsMainScreen(
                 colors = topBarColors
             )
         },
-        modifier = modifier
+        containerColor = topBarColors.containerColor,
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(2.dp),
             contentPadding = innerPadding,
             modifier = Modifier
-                .background(topBarColors.containerColor)
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
