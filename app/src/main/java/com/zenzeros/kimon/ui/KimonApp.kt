@@ -116,21 +116,20 @@ fun KimonApp() {
     )
 
     // Settings Navigation Stack
-    val backStack = rememberNavBackStack(KimonNavKey.Focus)
-    val currentKey = backStack.lastOrNull() ?: KimonNavKey.Focus
-    val isSettingsOpen = currentKey is KimonNavKey.SettingsMain ||
-            currentKey is KimonNavKey.TimerSettings ||
-            currentKey is KimonNavKey.AlarmSettings ||
-            currentKey is KimonNavKey.AppearanceSettings ||
-            currentKey is KimonNavKey.AboutSettings
+    val settingsBackStack = rememberNavBackStack()
+    val isSettingsOpen = settingsBackStack.isNotEmpty()
 
     val navigateBack: () -> Unit = {
-        if (backStack.size > 1) {
-            backStack.removeAt(backStack.lastIndex)
+        if (settingsBackStack.size > 1) {
+            settingsBackStack.removeAt(settingsBackStack.lastIndex)
         } else {
-            backStack.clear()
-            backStack.add(KimonNavKey.Focus)
+            settingsBackStack.clear()
         }
+    }
+
+    // Handle system back press when Settings is open
+    BackHandler(enabled = isSettingsOpen) {
+        navigateBack()
     }
 
     // Handle back press from Plan/Analyze to return to Focus
@@ -140,13 +139,16 @@ fun KimonApp() {
         }
     }
 
-    // Dedicated Settings Entry Provider (Only updates when settingsState changes, avoiding 1-sec timer invalidations)
+    // Dedicated Settings Entry Provider
     val settingsEntryProvider = remember(settingsState) {
         entryProvider<NavKey> {
+            entry<KimonNavKey.Focus> { Box(Modifier.fillMaxSize()) }
+            entry<KimonNavKey.Plan> { Box(Modifier.fillMaxSize()) }
+            entry<KimonNavKey.Analyze> { Box(Modifier.fillMaxSize()) }
             entry<KimonNavKey.SettingsMain> {
                 SettingsMainScreen(
                     state = settingsState,
-                    onNavigate = { key -> backStack.add(key) },
+                    onNavigate = { key -> settingsBackStack.add(key) },
                     onBack = navigateBack,
                     onResetData = { settingsViewModel.resetAllData() }
                 )
@@ -350,7 +352,7 @@ fun KimonApp() {
                             // Settings Action Button with Expressive Circle Shape
                             FilledTonalIconButton(
                                 onClick = {
-                                    backStack.add(KimonNavKey.SettingsMain)
+                                    settingsBackStack.add(KimonNavKey.SettingsMain)
                                 },
                                 modifier = Modifier.size(38.dp),
                                 shape = CircleShape,
@@ -360,9 +362,9 @@ fun KimonApp() {
                                 )
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_profile),
+                                    painter = painterResource(R.drawable.ic_settings),
                                     contentDescription = stringResource(R.string.title_settings),
-                                    modifier = Modifier.size(19.dp),
+                                    modifier = Modifier.size(20.dp),
                                     tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
@@ -418,7 +420,7 @@ fun KimonApp() {
                         .padding(bottom = innerPadding.calculateBottomPadding())
                 ) {
                     NavDisplay(
-                        backStack = backStack,
+                        backStack = settingsBackStack,
                         entryProvider = settingsEntryProvider,
                         modifier = Modifier.fillMaxSize()
                     )
