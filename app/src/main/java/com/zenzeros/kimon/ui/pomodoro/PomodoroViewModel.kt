@@ -1,6 +1,13 @@
 package com.zenzeros.kimon.ui.pomodoro
 
 import android.content.Context
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
+import android.media.RingtoneManager
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -152,6 +159,71 @@ class PomodoroViewModel(
         }
     }
 
+    private fun playAlarmAndVibration(context: Context?) {
+        context?.let { ctx ->
+            viewModelScope.launch {
+                val sound = userSettingsRepository.soundEnabled.first()
+                val vibration = userSettingsRepository.vibrationEnabled.first()
+                val headphoneOnly = userSettingsRepository.mediaVolumeForAlarm.first()
+
+                if (vibration) {
+                    try {
+                        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            val manager = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                            manager?.defaultVibrator
+                        } else {
+                            @Suppress("DEPRECATION")
+                            ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator?.vibrate(
+                                VibrationEffect.createWaveform(
+                                    longArrayOf(0, 400, 200, 400),
+                                    -1
+                                )
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator?.vibrate(longArrayOf(0, 400, 200, 400), -1)
+                        }
+                    } catch (e: Exception) {
+                        // Ignored
+                    }
+                }
+
+                if (sound) {
+                    try {
+                        val audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                        val isHeadphonesConnected = audioManager?.let { am ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                val devices = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                                devices.any {
+                                    it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                                    it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                                    it.type == AudioDeviceInfo.TYPE_USB_HEADSET
+                                }
+                            } else {
+                                @Suppress("DEPRECATION")
+                                am.isWiredHeadsetOn || am.isBluetoothA2dpOn
+                            }
+                        } ?: false
+
+                        if (!headphoneOnly || isHeadphonesConnected) {
+                            val alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                            val ringtone = RingtoneManager.getRingtone(ctx, alertUri)
+                            ringtone?.play()
+                        }
+                    } catch (e: Exception) {
+                        // Ignored
+                    }
+                }
+            }
+        }
+    }
+
     fun startTimer(context: Context? = null) {
         if (_uiState.value.timerStatus == TimerStatus.RUNNING) return
 
@@ -245,6 +317,8 @@ class PomodoroViewModel(
         )
 
         sessionStartTimeMs = 0L
+
+        playAlarmAndVibration(context)
 
         // Auto switch mode: FOCUS -> SHORT_BREAK (or LONG_BREAK)
         viewModelScope.launch {

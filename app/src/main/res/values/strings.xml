@@ -132,12 +132,12 @@
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_desc">Silence notifications while focusing</string>
     <string name="settings_section_sound">Sound &amp; Vibration</string>
-    <string name="settings_sound_enabled">Alarm Sound</string>
-    <string name="settings_sound_enabled_desc">Play chime when session completes</string>
+    <string name="settings_sound_enabled">Sound</string>
+    <string name="settings_sound_enabled_desc">Ring alarm when a timer completes</string>
     <string name="settings_vibration_enabled">Vibration</string>
-    <string name="settings_vibration_enabled_desc">Vibrate device on timer completion</string>
-    <string name="settings_media_volume">Media Volume for Alarm</string>
-    <string name="settings_media_volume_desc">Use media audio stream instead of alarm stream</string>
+    <string name="settings_vibration_enabled_desc">Vibrate when a timer completes</string>
+    <string name="settings_headphone_mode">Headphone mode</string>
+    <string name="settings_headphone_mode_desc">Plays on headphones only. If headphones are disconnected, alarm will be silent.</string>
     <string name="settings_section_appearance">Appearance &amp; Theme</string>
     <string name="settings_theme_mode">Theme Mode</string>
     <string name="theme_system">System</string>
