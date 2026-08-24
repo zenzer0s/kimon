@@ -75,7 +75,7 @@
     <string name="task_category_label">Category</string>
 
     <!-- Tags -->
-    <string name="tag_choose_button">Choose Tag</string>
+    <string name="tag_choose_button">Tag</string>
     <string name="tag_no_tag">No Tag</string>
     <string name="tag_select_title">Select Tag</string>
     <string name="tag_create_new">Create New Tag</string>

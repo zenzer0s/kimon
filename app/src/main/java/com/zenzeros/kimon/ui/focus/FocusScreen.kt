@@ -91,84 +91,7 @@ fun FocusScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        // 1. Choosing Tag Button / Pill
-        Surface(
-            onClick = { isTagSheetOpen = true },
-            shape = CircleShape,
-            color = if (selectedTag != null) {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
-            },
-            border = BorderStroke(
-                width = 1.dp,
-                color = if (selectedTag != null) {
-                    val tagColor = try {
-                        Color(android.graphics.Color.parseColor(selectedTag.colorHex))
-                    } catch (e: Exception) {
-                        MaterialTheme.colorScheme.primary
-                    }
-                    tagColor.copy(alpha = 0.45f)
-                } else {
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                }
-            ),
-            modifier = Modifier.padding(top = 4.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                if (selectedTag != null) {
-                    val tagColor = remember(selectedTag.colorHex) {
-                        try {
-                            Color(android.graphics.Color.parseColor(selectedTag.colorHex))
-                        } catch (e: Exception) {
-                            Color(0xFF6366F1)
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(9.dp)
-                            .clip(CircleShape)
-                            .background(tagColor)
-                    )
-                    Text(
-                        text = selectedTag.name,
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_tag),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.tag_choose_button),
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 13.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Icon(
-                    painter = painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.size(13.dp)
-                )
-            }
-        }
-
-        // 2. Concentric Chrono Dial Clock Face
+        // 1. Concentric Chrono Dial Clock Face with integrated Center Tag Pill
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.Center
@@ -176,6 +99,78 @@ fun FocusScreen(
             ConcentricPomodoroDial(
                 remainingSeconds = remainingSeconds
             )
+
+            // Integrated Center Tag Complication (Below big minutes text)
+            Surface(
+                onClick = { isTagSheetOpen = true },
+                shape = CircleShape,
+                color = if (selectedTag != null) {
+                    MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+                },
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (selectedTag != null) {
+                        val tagColor = try {
+                            Color(android.graphics.Color.parseColor(selectedTag.colorHex))
+                        } catch (e: Exception) {
+                            MaterialTheme.colorScheme.primary
+                        }
+                        tagColor.copy(alpha = 0.5f)
+                    } else {
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                    }
+                ),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(top = 96.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 4.5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    if (selectedTag != null) {
+                        val tagColor = remember(selectedTag.colorHex) {
+                            try {
+                                Color(android.graphics.Color.parseColor(selectedTag.colorHex))
+                            } catch (e: Exception) {
+                                Color(0xFF6366F1)
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(tagColor)
+                        )
+                        Text(
+                            text = selectedTag.name,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tag),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.size(11.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.tag_choose_button),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 11.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
         }
 
         // 3. 3-State Expressive Button (Start / Pause / Resume) + Animated Circle Restart Button
