@@ -138,7 +138,7 @@
     <string name="settings_vibration_enabled">Vibration</string>
     <string name="settings_vibration_enabled_desc">Vibrate when a timer completes</string>
     <string name="settings_headphone_mode">Headphone mode</string>
-    <string name="settings_headphone_mode_desc">Plays on headphones only. If headphones are disconnected, alarm will be silent.</string>
+    <string name="settings_headphone_mode_desc">Plays through headphones when connected, otherwise rings on device speaker.</string>
     <string name="settings_section_appearance">Appearance &amp; Theme</string>
     <string name="settings_theme_mode">Theme Mode</string>
     <string name="theme_system">System</string>

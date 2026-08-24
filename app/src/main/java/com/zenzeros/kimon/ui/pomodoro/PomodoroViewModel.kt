@@ -222,30 +222,28 @@ class PomodoroViewModel(
                         }
                     } ?: false
 
-                    if (headphoneOnly) {
-                        // Plays ONLY if headphones are connected, on USAGE_MEDIA (STREAM_MUSIC) to never bleed into speaker
-                        if (isHeadphonesConnected) {
-                            val alertUri = if (customSoundUri.isNotEmpty()) {
-                                Uri.parse(customSoundUri)
-                            } else {
-                                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                            }
-                            MediaPlayer().apply {
-                                setAudioAttributes(
-                                    AudioAttributes.Builder()
-                                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                        .build()
-                                )
-                                setDataSource(ctx, alertUri)
-                                prepare()
-                                start()
-                                setOnCompletionListener { release() }
-                            }
+                    if (headphoneOnly && isHeadphonesConnected) {
+                        // When headphones are connected: play on USAGE_MEDIA (STREAM_MUSIC) to stay inside headphones
+                        val alertUri = if (customSoundUri.isNotEmpty()) {
+                            Uri.parse(customSoundUri)
+                        } else {
+                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        }
+                        MediaPlayer().apply {
+                            setAudioAttributes(
+                                AudioAttributes.Builder()
+                                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .build()
+                            )
+                            setDataSource(ctx, alertUri)
+                            prepare()
+                            start()
+                            setOnCompletionListener { release() }
                         }
                     } else {
-                        // Standard alarm: plays on USAGE_ALARM
+                        // When headphones are not connected (or headphone mode is off): play on standard alarm stream
                         val alertUri = if (customSoundUri.isNotEmpty()) {
                             Uri.parse(customSoundUri)
                         } else {
