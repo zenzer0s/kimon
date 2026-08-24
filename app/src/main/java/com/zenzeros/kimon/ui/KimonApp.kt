@@ -305,110 +305,101 @@ fun KimonApp() {
             }
         ) { innerPadding ->
             if (!isSettingsOpen) {
-                Surface(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(bottom = innerPadding.calculateBottomPadding())
-                        .windowInsetsPadding(WindowInsets.statusBars),
-                    color = MaterialTheme.colorScheme.surface
+                        .windowInsetsPadding(WindowInsets.statusBars)
                 ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        // 1. Balanced Top App Header (Kimon Brand + Settings/Profile Icon)
+                    // 1. Balanced Top App Header (Kimon Brand + Settings/Profile Icon)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 22.dp, vertical = 5.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Expressive App Brand Header
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 22.dp, vertical = 5.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.5.dp)
                         ) {
-                            // Expressive App Brand Header
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(3.5.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.app_name),
-                                    style = MaterialTheme.typography.headlineSmall.copy(
-                                        fontFamily = LocalAppFonts.current.topBarTitle,
-                                        fontSize = 24.sp,
-                                        letterSpacing = (-0.3).sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontFamily = LocalAppFonts.current.topBarTitle,
+                                    fontSize = 24.sp,
+                                    letterSpacing = (-0.3).sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
 
-                                // Expressive Brand Accent Dot
-                                Box(
-                                    modifier = Modifier
-                                        .size(5.dp)
-                                        .align(Alignment.Bottom)
-                                        .padding(bottom = 4.5.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary,
-                                            shape = CircleShape
-                                        )
-                                )
-                            }
-
-                            // Settings Action Button with Expressive Circle Shape
-                            FilledTonalIconButton(
-                                onClick = {
-                                    settingsBackStack.add(KimonNavKey.SettingsMain)
-                                },
-                                modifier = Modifier.size(38.dp),
-                                shape = CircleShape,
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_settings),
-                                    contentDescription = stringResource(R.string.title_settings),
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
+                            // Expressive Brand Accent Dot
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .align(Alignment.Bottom)
+                                    .padding(bottom = 4.5.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = CircleShape
+                                    )
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // 2. Pre-warmed Main Root Content Tabs (Plan, Focus, Analyze)
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLow
+                        // Settings Action Button with Expressive Circle Shape
+                        FilledTonalIconButton(
+                            onClick = {
+                                settingsBackStack.add(KimonNavKey.SettingsMain)
+                            },
+                            modifier = Modifier.size(38.dp),
+                            shape = CircleShape,
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
-                            HorizontalPager(
-                                state = mainTabPagerState,
-                                beyondViewportPageCount = 2,
-                                userScrollEnabled = false,
-                                modifier = Modifier.fillMaxSize()
-                            ) { page ->
-                                when (page) {
-                                    0 -> PlanScreen()
-                                    1 -> FocusScreen(
-                                        remainingSeconds = pomodoroUiState.remainingSeconds,
-                                        isRunning = pomodoroUiState.timerStatus == TimerStatus.RUNNING,
-                                        selectedTag = pomodoroUiState.selectedTag,
-                                        tags = allTags,
-                                        onSelectTag = { tag -> pomodoroViewModel.selectTag(tag) },
-                                        onCreateTag = { name, colorHex -> pomodoroViewModel.createTag(name, colorHex) },
-                                        onDeleteTag = { tag -> pomodoroViewModel.deleteTag(tag) },
-                                        onStart = { pomodoroViewModel.startTimer(context) },
-                                        onPause = { pomodoroViewModel.pauseTimer(context) },
-                                        onRestart = { pomodoroViewModel.stopTimer(context) }
-                                    )
-                                    2 -> AnalyzeScreen(
-                                        onNavigateToFocus = {
-                                            coroutineScope.launch {
-                                                mainTabPagerState.scrollToPage(1)
-                                            }
-                                        }
-                                    )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_settings),
+                                contentDescription = stringResource(R.string.title_settings),
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 2. Pre-warmed Main Root Content Tabs (Plan, Focus, Analyze)
+                    HorizontalPager(
+                        state = mainTabPagerState,
+                        beyondViewportPageCount = 2,
+                        userScrollEnabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) { page ->
+                        when (page) {
+                            0 -> PlanScreen()
+                            1 -> FocusScreen(
+                                remainingSeconds = pomodoroUiState.remainingSeconds,
+                                isRunning = pomodoroUiState.timerStatus == TimerStatus.RUNNING,
+                                selectedTag = pomodoroUiState.selectedTag,
+                                tags = allTags,
+                                onSelectTag = { tag -> pomodoroViewModel.selectTag(tag) },
+                                onCreateTag = { name, colorHex -> pomodoroViewModel.createTag(name, colorHex) },
+                                onDeleteTag = { tag -> pomodoroViewModel.deleteTag(tag) },
+                                onStart = { pomodoroViewModel.startTimer(context) },
+                                onPause = { pomodoroViewModel.pauseTimer(context) },
+                                onRestart = { pomodoroViewModel.stopTimer(context) }
+                            )
+                            2 -> AnalyzeScreen(
+                                onNavigateToFocus = {
+                                    coroutineScope.launch {
+                                        mainTabPagerState.scrollToPage(1)
+                                    }
                                 }
-                            }
+                            )
                         }
                     }
                 }
