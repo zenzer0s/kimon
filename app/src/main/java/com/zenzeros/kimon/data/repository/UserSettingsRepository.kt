@@ -40,6 +40,7 @@ class UserSettingsRepository(private val context: Context) {
         // Appearance
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val THEME_PALETTE = stringPreferencesKey("theme_palette")
+        val THEME_COLOR = stringPreferencesKey("theme_color")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
     }
 
@@ -110,6 +111,10 @@ class UserSettingsRepository(private val context: Context) {
 
     val themePalette: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[PreferencesKeys.THEME_PALETTE] ?: "DYNAMIC"
+    }
+
+    val themeColor: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.THEME_COLOR] ?: "Color.White"
     }
 
     val amoledBlack: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -188,6 +193,10 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setThemePalette(palette: String) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.THEME_PALETTE] = palette }
+    }
+
+    suspend fun setThemeColor(colorString: String) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.THEME_COLOR] = colorString }
     }
 
     suspend fun setAmoledBlack(enabled: Boolean) {

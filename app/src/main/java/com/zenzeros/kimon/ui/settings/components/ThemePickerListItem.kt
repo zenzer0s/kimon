@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -18,6 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zenzeros.kimon.R
@@ -34,20 +36,19 @@ fun ThemePickerListItem(
 ) {
     val themeMap: Map<String, Pair<Int, Int>> = remember {
         mapOf(
-            "SYSTEM" to Pair(R.drawable.ic_profile, R.string.theme_system),
-            "LIGHT" to Pair(R.drawable.ic_sparkles, R.string.theme_light),
-            "DARK" to Pair(R.drawable.ic_focus, R.string.theme_dark)
+            "SYSTEM" to Pair(R.drawable.brightness_auto, R.string.theme_system),
+            "LIGHT" to Pair(R.drawable.light_mode, R.string.theme_light),
+            "DARK" to Pair(R.drawable.dark_mode, R.string.theme_dark)
         )
     }
 
     SegmentedListItem(
         onClick = {},
         leadingContent = {
-            AnimatedContent(themeMap[theme]?.first ?: R.drawable.ic_profile) { iconRes ->
+            AnimatedContent(themeMap[theme]?.first ?: R.drawable.brightness_auto) { iconRes ->
                 Icon(
                     painter = painterResource(iconRes),
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
                 )
             }
         },
@@ -65,7 +66,14 @@ fun ThemePickerListItem(
                     ToggleButton(
                         checked = isSelected,
                         onCheckedChange = { onThemeChange(modeKey) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .semantics { role = Role.RadioButton },
+                        shapes = when (optIndex) {
+                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                            options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                        }
                     ) {
                         Text(
                             stringResource(pair.second),
@@ -76,8 +84,8 @@ fun ThemePickerListItem(
                 }
             }
         },
-        shapes = segmentedListItemShapes(index, items),
         colors = listItemColors,
+        shapes = segmentedListItemShapes(index, items),
         modifier = modifier
     )
 }

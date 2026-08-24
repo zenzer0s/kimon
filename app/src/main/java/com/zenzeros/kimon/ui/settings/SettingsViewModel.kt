@@ -1,5 +1,6 @@
 package com.zenzeros.kimon.ui.settings
 
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+fun String.toColor(): Color {
+    return when {
+        this.isEmpty() || this == "Color.White" || this == "DYNAMIC" -> Color.White
+        this.startsWith("Color(") -> {
+            try {
+                val comma1 = this.indexOf(',')
+                val comma2 = this.indexOf(',', comma1 + 1)
+                val comma3 = this.indexOf(',', comma2 + 1)
+                val comma4 = this.indexOf(',', comma3 + 1)
+                val r = this.substringAfter('(').substringBefore(',').trim().toFloat()
+                val g = this.slice(comma1 + 1..<comma2).trim().toFloat()
+                val b = this.slice(comma2 + 1..<comma3).trim().toFloat()
+                val a = this.slice(comma3 + 1..<comma4).trim().toFloat()
+                Color(r, g, b, a)
+            } catch (_: Exception) {
+                Color.White
+            }
+        }
+        else -> {
+            try {
+                Color(this.toULong())
+            } catch (_: Exception) {
+                Color.White
+            }
+        }
+    }
+}
 
 data class SettingsUiState(
     val workDurationMinutes: Int = 25,
@@ -31,6 +60,7 @@ data class SettingsUiState(
     val alarmSoundTitle: String = "Default",
     val themeMode: String = "SYSTEM",
     val themePalette: String = "DYNAMIC",
+    val themeColor: Color = Color.White,
     val amoledBlack: Boolean = false
 )
 
@@ -71,9 +101,10 @@ class SettingsViewModel(
         combine(
             userSettingsRepository.themeMode,
             userSettingsRepository.themePalette,
+            userSettingsRepository.themeColor,
             userSettingsRepository.amoledBlack
-        ) { mode, palette, amoled ->
-            mode to (palette to amoled)
+        ) { mode, palette, colorStr, amoled ->
+            mode to (palette to (colorStr to amoled))
         }
     ) { (work, rest1), (aBreaks, rest2), soundGroup, (mode, rest4) ->
         val (sBreak, rest1b) = rest1
@@ -85,7 +116,8 @@ class SettingsViewModel(
 
         val (sound, vibration, soundMeta) = soundGroup
         val (hMode, soundUri, soundTitle) = soundMeta
-        val (palette, amoled) = rest4
+        val (palette, rest4b) = rest4
+        val (colorStr, amoled) = rest4b
 
         SettingsUiState(
             workDurationMinutes = work,
@@ -105,6 +137,7 @@ class SettingsViewModel(
             alarmSoundTitle = soundTitle,
             themeMode = mode,
             themePalette = palette,
+            themeColor = colorStr.toColor(),
             amoledBlack = amoled
         )
     }.stateIn(
@@ -175,6 +208,10 @@ class SettingsViewModel(
 
     fun setThemePalette(palette: String) = viewModelScope.launch {
         userSettingsRepository.setThemePalette(palette)
+    }
+
+    fun setThemeColor(color: Color) = viewModelScope.launch {
+        userSettingsRepository.setThemeColor(color.toString())
     }
 
     fun toggleAmoledBlack(enabled: Boolean) = viewModelScope.launch {

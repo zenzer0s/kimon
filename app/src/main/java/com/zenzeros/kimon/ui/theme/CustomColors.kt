@@ -11,7 +11,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 object CustomColors {
     var isDark = false
@@ -20,31 +19,25 @@ object CustomColors {
     val topBarColors: TopAppBarColors
         @Composable get() =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer,
-                scrolledContainerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer
+                containerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface,
+                scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
             )
 
     val detailPaneTopBarColors: TopAppBarColors
         @Composable get() =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer,
-                scrolledContainerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer
+                containerColor = if (!black) colorScheme.surfaceContainerLow else colorScheme.surface,
+                scrolledContainerColor = if (!black) colorScheme.surfaceContainerLow else colorScheme.surface
             )
 
-    val cardContainerColor: Color
-        @Composable get() =
-            if (isDark) colorScheme.surfaceContainerHigh else colorScheme.surfaceContainerLowest
+    val cardContainerColor: androidx.compose.ui.graphics.Color
+        @Composable get() = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh
 
     val listItemColors: ListItemColors
         @Composable get() =
             ListItemDefaults.segmentedColors(
-                containerColor = cardContainerColor,
-                disabledContainerColor = cardContainerColor,
-                selectedContainerColor = colorScheme.surfaceContainerLow,
-                contentColor = colorScheme.onSurface,
-                leadingContentColor = colorScheme.primary,
-                trailingContentColor = colorScheme.onSurfaceVariant,
-                supportingContentColor = colorScheme.onSurfaceVariant
+                containerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
+                disabledContainerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
             )
 
     val switchColors: SwitchColors

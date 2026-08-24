@@ -200,7 +200,7 @@ fun KimonApp() {
                 AppearanceSettingsScreen(
                     state = settingsState,
                     onSetThemeMode = { settingsViewModel.setThemeMode(it) },
-                    onSetThemePalette = { settingsViewModel.setThemePalette(it) },
+                    onSetThemeColor = { settingsViewModel.setThemeColor(it) },
                     onToggleAmoledBlack = { settingsViewModel.toggleAmoledBlack(it) },
                     onBack = navigateBack
                 )
@@ -215,8 +215,8 @@ fun KimonApp() {
 
     KimonTheme(
         darkTheme = isDark,
-        dynamicColor = settingsState.themePalette == "DYNAMIC",
-        palette = settingsState.themePalette,
+        seedColor = settingsState.themeColor,
+        dynamicColor = settingsState.themeColor == androidx.compose.ui.graphics.Color.White,
         blackTheme = settingsState.amoledBlack
     ) {
         Scaffold(
