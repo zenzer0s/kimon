@@ -318,7 +318,7 @@ private fun SwipeToRevealTaskItem(
                     }
                 },
                 shapes = shapes,
-                colors = ListItemDefaults.segmentedColors(),
+                colors = CustomColors.listItemColors,
                 verticalAlignment = Alignment.CenterVertically,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                 leadingContent = {
