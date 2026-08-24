@@ -6,7 +6,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -304,11 +306,15 @@ fun KimonApp() {
                 }
             }
         ) { innerPadding ->
-            if (!isSettingsOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = innerPadding.calculateBottomPadding())
+            ) {
+                // 1. Persistent Main Content (Zero allocation / destruction when opening settings)
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = innerPadding.calculateBottomPadding())
                         .windowInsetsPadding(WindowInsets.statusBars)
                 ) {
                     // 1. Balanced Top App Header (Kimon Brand + Settings/Profile Icon)
@@ -403,18 +409,27 @@ fun KimonApp() {
                         }
                     }
                 }
-            } else {
-                // Fullscreen Settings Container (No nested double status bar or double insets)
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = innerPadding.calculateBottomPadding())
+
+                // 2. Instant Settings Overlay (Slides in without tearing down main tabs)
+                AnimatedVisibility(
+                    visible = isSettingsOpen,
+                    enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                    exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    NavDisplay(
-                        backStack = settingsBackStack,
-                        entryProvider = settingsEntryProvider,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(CustomColors.topBarColors.containerColor)
+                    ) {
+                        if (settingsBackStack.isNotEmpty()) {
+                            NavDisplay(
+                                backStack = settingsBackStack,
+                                entryProvider = settingsEntryProvider,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
                 }
             }
         }
