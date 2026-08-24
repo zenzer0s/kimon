@@ -88,6 +88,7 @@ fun KimonApp() {
 
     val pomodoroViewModel: PomodoroViewModel = viewModel(
         factory = PomodoroViewModel.Factory(
+            appContext = kimonApp.applicationContext,
             sessionRepository = kimonApp.sessionRepository,
             tagRepository = kimonApp.tagRepository,
             userSettingsRepository = kimonApp.userSettingsRepository
@@ -191,6 +192,7 @@ fun KimonApp() {
                     onToggleSound = { settingsViewModel.toggleSound(it) },
                     onToggleVibration = { settingsViewModel.toggleVibration(it) },
                     onToggleMediaVolume = { settingsViewModel.toggleMediaVolume(it) },
+                    onSetAlarmSound = { uri, title -> settingsViewModel.setAlarmSound(uri, title) },
                     onBack = navigateBack
                 )
             }

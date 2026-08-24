@@ -33,6 +33,9 @@ class UserSettingsRepository(private val context: Context) {
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val VIBRATION_ENABLED = booleanPreferencesKey("vibration_enabled")
         val MEDIA_VOLUME_FOR_ALARM = booleanPreferencesKey("media_volume_for_alarm")
+        val HEADPHONE_MODE = booleanPreferencesKey("headphone_mode")
+        val ALARM_SOUND_URI = stringPreferencesKey("alarm_sound_uri")
+        val ALARM_SOUND_TITLE = stringPreferencesKey("alarm_sound_title")
 
         // Appearance
         val THEME_MODE = stringPreferencesKey("theme_mode")
@@ -86,7 +89,19 @@ class UserSettingsRepository(private val context: Context) {
     }
 
     val mediaVolumeForAlarm: Flow<Boolean> = context.dataStore.data.map { prefs ->
-        prefs[PreferencesKeys.MEDIA_VOLUME_FOR_ALARM] ?: false
+        prefs[PreferencesKeys.HEADPHONE_MODE] ?: prefs[PreferencesKeys.MEDIA_VOLUME_FOR_ALARM] ?: false
+    }
+
+    val headphoneMode: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.HEADPHONE_MODE] ?: prefs[PreferencesKeys.MEDIA_VOLUME_FOR_ALARM] ?: false
+    }
+
+    val alarmSoundUri: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.ALARM_SOUND_URI] ?: ""
+    }
+
+    val alarmSoundTitle: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.ALARM_SOUND_TITLE] ?: "Default"
     }
 
     val themeMode: Flow<String> = context.dataStore.data.map { prefs ->
@@ -147,7 +162,24 @@ class UserSettingsRepository(private val context: Context) {
     }
 
     suspend fun setMediaVolumeForAlarm(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[PreferencesKeys.MEDIA_VOLUME_FOR_ALARM] = enabled }
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.MEDIA_VOLUME_FOR_ALARM] = enabled
+            prefs[PreferencesKeys.HEADPHONE_MODE] = enabled
+        }
+    }
+
+    suspend fun setHeadphoneMode(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.HEADPHONE_MODE] = enabled
+            prefs[PreferencesKeys.MEDIA_VOLUME_FOR_ALARM] = enabled
+        }
+    }
+
+    suspend fun setAlarmSound(uri: String, title: String) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.ALARM_SOUND_URI] = uri
+            prefs[PreferencesKeys.ALARM_SOUND_TITLE] = title
+        }
     }
 
     suspend fun setThemeMode(mode: String) {

@@ -26,6 +26,9 @@ data class SettingsUiState(
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val mediaVolumeForAlarm: Boolean = false,
+    val headphoneMode: Boolean = false,
+    val alarmSoundUri: String = "",
+    val alarmSoundTitle: String = "Default",
     val themeMode: String = "SYSTEM",
     val themePalette: String = "DYNAMIC",
     val amoledBlack: Boolean = false
@@ -59,9 +62,11 @@ class SettingsViewModel(
         combine(
             userSettingsRepository.soundEnabled,
             userSettingsRepository.vibrationEnabled,
-            userSettingsRepository.mediaVolumeForAlarm
-        ) { sound, vibration, mediaVol ->
-            sound to (vibration to mediaVol)
+            userSettingsRepository.headphoneMode,
+            userSettingsRepository.alarmSoundUri,
+            userSettingsRepository.alarmSoundTitle
+        ) { sound, vibration, hMode, soundUri, soundTitle ->
+            Triple(sound, vibration, Triple(hMode, soundUri, soundTitle))
         },
         combine(
             userSettingsRepository.themeMode,
@@ -70,7 +75,7 @@ class SettingsViewModel(
         ) { mode, palette, amoled ->
             mode to (palette to amoled)
         }
-    ) { (work, rest1), (aBreaks, rest2), (sound, rest3), (mode, rest4) ->
+    ) { (work, rest1), (aBreaks, rest2), soundGroup, (mode, rest4) ->
         val (sBreak, rest1b) = rest1
         val (lBreak, rest1c) = rest1b
         val (sessions, goal) = rest1c
@@ -78,7 +83,8 @@ class SettingsViewModel(
         val (aPomodoros, rest2b) = rest2
         val (keepScreen, dnd) = rest2b
 
-        val (vibration, mediaVol) = rest3
+        val (sound, vibration, soundMeta) = soundGroup
+        val (hMode, soundUri, soundTitle) = soundMeta
         val (palette, amoled) = rest4
 
         SettingsUiState(
@@ -93,7 +99,10 @@ class SettingsViewModel(
             dndEnabled = dnd,
             soundEnabled = sound,
             vibrationEnabled = vibration,
-            mediaVolumeForAlarm = mediaVol,
+            mediaVolumeForAlarm = hMode,
+            headphoneMode = hMode,
+            alarmSoundUri = soundUri,
+            alarmSoundTitle = soundTitle,
             themeMode = mode,
             themePalette = palette,
             amoledBlack = amoled
@@ -149,7 +158,15 @@ class SettingsViewModel(
     }
 
     fun toggleMediaVolume(enabled: Boolean) = viewModelScope.launch {
-        userSettingsRepository.setMediaVolumeForAlarm(enabled)
+        userSettingsRepository.setHeadphoneMode(enabled)
+    }
+
+    fun toggleHeadphoneMode(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setHeadphoneMode(enabled)
+    }
+
+    fun setAlarmSound(uri: String, title: String) = viewModelScope.launch {
+        userSettingsRepository.setAlarmSound(uri, title)
     }
 
     fun setThemeMode(mode: String) = viewModelScope.launch {

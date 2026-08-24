@@ -132,6 +132,7 @@
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_desc">Silence notifications while focusing</string>
     <string name="settings_section_sound">Sound &amp; Vibration</string>
+    <string name="settings_alarm_sound_picker">Alarm sound</string>
     <string name="settings_sound_enabled">Sound</string>
     <string name="settings_sound_enabled_desc">Ring alarm when a timer completes</string>
     <string name="settings_vibration_enabled">Vibration</string>
