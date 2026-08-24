@@ -35,8 +35,10 @@ fun KimonTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val isAmoled = blackTheme && darkTheme
+
     CustomColors.isDark = darkTheme
-    CustomColors.black = blackTheme && darkTheme
+    CustomColors.black = isAmoled
 
     val baseScheme: ColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -52,13 +54,29 @@ fun KimonTheme(
             else -> seedColor
         },
         isDark = darkTheme,
-        specVersion = if (blackTheme && darkTheme) ColorSpec.SpecVersion.SPEC_2021 else ColorSpec.SpecVersion.SPEC_2025,
-        isAmoled = blackTheme && darkTheme
+        specVersion = if (isAmoled) ColorSpec.SpecVersion.SPEC_2021 else ColorSpec.SpecVersion.SPEC_2025,
+        isAmoled = isAmoled
     )
 
-    val scheme =
-        if (seedColor == Color.White && !(blackTheme && darkTheme)) baseScheme
+    val baseFinalScheme =
+        if (seedColor == Color.White && !isAmoled) baseScheme
         else dynamicColorScheme
+
+    val scheme = if (isAmoled) {
+        baseFinalScheme.copy(
+            background = Color.Black,
+            surface = Color.Black,
+            surfaceDim = Color.Black,
+            surfaceBright = Color(0xFF181818),
+            surfaceContainerLowest = Color.Black,
+            surfaceContainerLow = Color.Black,
+            surfaceContainer = Color.Black,
+            surfaceContainerHigh = Color(0xFF141414),
+            surfaceContainerHighest = Color(0xFF1E1E1E)
+        )
+    } else {
+        baseFinalScheme
+    }
 
     CompositionLocalProvider(
         LocalAppFonts provides getAppFonts()
