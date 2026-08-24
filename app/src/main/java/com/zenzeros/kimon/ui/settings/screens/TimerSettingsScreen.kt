@@ -140,27 +140,21 @@ fun TimerSettingsScreen(
                     Text(
                         text = stringResource(R.string.title_focus_settings),
                         fontFamily = LocalAppFonts.current.topBarTitle,
-                        fontSize = 24.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 },
-                actions = {
+                navigationIcon = {
                     FilledTonalIconButton(
                         onClick = onBack,
-                        shape = CircleShape,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(38.dp)
+                            containerColor = listItemColors.containerColor
+                        )
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_close),
-                            contentDescription = stringResource(R.string.back),
-                            modifier = Modifier.size(18.dp)
+                            painter = painterResource(R.drawable.ic_chevron_left),
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },

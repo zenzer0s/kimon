@@ -1,21 +1,14 @@
 package com.zenzeros.kimon.ui.settings.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -64,14 +56,12 @@ fun FocusDurationWheelPicker(
         shape = RoundedCornerShape(22.dp),
         color = CustomColors.cardContainerColor,
         tonalElevation = 1.dp,
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
+        modifier = modifier.fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 28.dp, horizontal = 16.dp),
+                .padding(vertical = 16.dp, horizontal = 12.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -79,7 +69,7 @@ fun FocusDurationWheelPicker(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // --- 1. Hours Wheel Column ---
+                // --- 1. Hours Column ---
                 WheelColumn(
                     value = hours,
                     range = 0..3,
@@ -96,14 +86,14 @@ fun FocusDurationWheelPicker(
                 Text(
                     text = ":",
                     style = MaterialTheme.typography.displaySmall.copy(
-                        fontSize = 42.sp,
+                        fontSize = 40.sp,
                         fontWeight = FontWeight.Light
                     ),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(horizontal = 4.dp)
                 )
 
-                // --- 2. Minutes Wheel Column ---
+                // --- 2. Minutes Column ---
                 WheelColumn(
                     value = minutes,
                     range = 0..59,
@@ -122,11 +112,11 @@ fun FocusDurationWheelPicker(
                 Text(
                     text = ":",
                     style = MaterialTheme.typography.displaySmall.copy(
-                        fontSize = 42.sp,
+                        fontSize = 40.sp,
                         fontWeight = FontWeight.Light
                     ),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(horizontal = 4.dp)
                 )
 
                 // --- 3. Seconds Column (Fixed 00) ---
@@ -149,18 +139,18 @@ private fun WheelColumn(
 ) {
     val haptic = LocalHapticFeedback.current
     var dragAccumulator by remember { mutableFloatStateOf(0f) }
-    val dragThreshold = 36f
+    val stepDragDistancePx = 36f
 
     val minVal = range.first
     val maxVal = range.last
     val canStep = minVal != maxVal
 
-    val prevVal = if (canStep) {
-        if (value - 1 < minVal) maxVal else value - 1
+    val upperValue = if (canStep) {
+        if (value + 1 > maxVal) minVal else value + 1
     } else value
 
-    val nextVal = if (canStep) {
-        if (value + 1 > maxVal) minVal else value + 1
+    val lowerValue = if (canStep) {
+        if (value - 1 < minVal) maxVal else value - 1
     } else value
 
     Column(
@@ -171,57 +161,60 @@ private fun WheelColumn(
             .pointerInput(value, canStep) {
                 if (!canStep) return@pointerInput
                 detectVerticalDragGestures(
+                    onDragStart = { dragAccumulator = 0f },
                     onDragEnd = { dragAccumulator = 0f },
                     onDragCancel = { dragAccumulator = 0f },
                     onVerticalDrag = { change, dragAmount ->
+                        // Consume pointer change completely to lock parent surface scrolling
                         change.consume()
                         dragAccumulator += dragAmount
-                        if (abs(dragAccumulator) >= dragThreshold) {
+                        while (abs(dragAccumulator) >= stepDragDistancePx) {
                             if (dragAccumulator < 0) {
-                                // Dragged up -> increment
-                                onValueChange(nextVal)
+                                // Dragged up -> increment value
+                                val next = if (value + 1 > maxVal) minVal else value + 1
+                                onValueChange(next)
+                                dragAccumulator += stepDragDistancePx
                             } else {
-                                // Dragged down -> decrement
-                                onValueChange(prevVal)
+                                // Dragged down -> decrement value
+                                val prev = if (value - 1 < minVal) maxVal else value - 1
+                                onValueChange(prev)
+                                dragAccumulator -= stepDragDistancePx
                             }
-                            dragAccumulator = 0f
                         }
                     }
                 )
             }
     ) {
-        // Upper faint preview number & arrow
+        // Upper preview number + arrow
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .alpha(if (canStep) 0.35f else 0.08f)
+            modifier = Modifier.alpha(if (canStep) 0.35f else 0.08f)
         ) {
             if (canStep) {
                 IconButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onValueChange(nextVal)
+                        onValueChange(upperValue)
                     },
-                    modifier = Modifier.height(28.dp)
+                    modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_chevron_right),
                         contentDescription = "Increment",
                         modifier = Modifier
                             .rotate(-90f)
-                            .height(14.dp),
+                            .size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             } else {
-                Box(Modifier.height(28.dp))
+                Box(Modifier.size(24.dp))
             }
 
             Text(
-                text = String.format("%02d", prevVal),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 24.sp,
+                text = String.format("%02d", upperValue),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Medium
                 ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -229,44 +222,28 @@ private fun WheelColumn(
             )
         }
 
-        // Active center number
-        AnimatedContent(
-            targetState = value,
-            transitionSpec = {
-                if (targetState > initialState) {
-                    slideInVertically { height -> height } + fadeIn() togetherWith
-                            slideOutVertically { height -> -height } + fadeOut()
-                } else {
-                    slideInVertically { height -> -height } + fadeIn() togetherWith
-                            slideOutVertically { height -> height } + fadeOut()
-                }
-            },
-            label = "WheelNumberAnimation"
-        ) { targetVal ->
-            Text(
-                text = String.format("%02d", targetVal),
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.5).sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-        }
+        // Active center number (instant response, bold, high contrast, no shadow lag)
+        Text(
+            text = String.format("%02d", value),
+            style = MaterialTheme.typography.displayMedium.copy(
+                fontSize = 46.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.5).sp
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(vertical = 4.dp)
+        )
 
-        // Lower faint preview number & arrow
+        // Lower preview number + arrow
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .alpha(if (canStep) 0.35f else 0.08f)
+            modifier = Modifier.alpha(if (canStep) 0.35f else 0.08f)
         ) {
             Text(
-                text = String.format("%02d", nextVal),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 24.sp,
+                text = String.format("%02d", lowerValue),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Medium
                 ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -277,21 +254,21 @@ private fun WheelColumn(
                 IconButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onValueChange(prevVal)
+                        onValueChange(lowerValue)
                     },
-                    modifier = Modifier.height(28.dp)
+                    modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_chevron_right),
                         contentDescription = "Decrement",
                         modifier = Modifier
                             .rotate(90f)
-                            .height(14.dp),
+                            .size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             } else {
-                Box(Modifier.height(28.dp))
+                Box(Modifier.size(24.dp))
             }
         }
     }
