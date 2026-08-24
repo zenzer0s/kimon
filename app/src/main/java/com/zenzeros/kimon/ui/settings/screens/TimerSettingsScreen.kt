@@ -2,15 +2,9 @@
 
 package com.zenzeros.kimon.ui.settings.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,8 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
@@ -31,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
@@ -39,6 +33,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,21 +41,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.settings.SettingsSwitchItem
 import com.zenzeros.kimon.ui.settings.SettingsUiState
-import com.zenzeros.kimon.ui.settings.components.FocusDurationWheelPicker
+import com.zenzeros.kimon.ui.settings.components.MinuteInputField
+import com.zenzeros.kimon.ui.settings.components.MinutesInputTransformation3Digits
 import com.zenzeros.kimon.ui.settings.components.SessionPreviewCard
-import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
@@ -69,12 +63,6 @@ import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
-
-enum class FocusDurationType {
-    FOCUS,
-    SHORT_BREAK,
-    LONG_BREAK
-}
 
 @Composable
 fun TimerSettingsScreen(
@@ -92,8 +80,32 @@ fun TimerSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
-    var activeDurationType by remember { mutableStateOf<FocusDurationType?>(FocusDurationType.FOCUS) }
     var isLongBreakEnabled by remember { mutableStateOf(true) }
+
+    val focusTimeState = rememberTextFieldState(state.workDurationMinutes.toString())
+    val shortBreakState = rememberTextFieldState(state.shortBreakMinutes.toString())
+    val longBreakState = rememberTextFieldState(state.longBreakMinutes.toString())
+
+    LaunchedEffect(focusTimeState.text) {
+        val num = focusTimeState.text.toString().toIntOrNull()
+        if (num != null && num != state.workDurationMinutes) {
+            onSetWorkDuration(num)
+        }
+    }
+
+    LaunchedEffect(shortBreakState.text) {
+        val num = shortBreakState.text.toString().toIntOrNull()
+        if (num != null && num != state.shortBreakMinutes) {
+            onSetShortBreak(num)
+        }
+    }
+
+    LaunchedEffect(longBreakState.text) {
+        val num = longBreakState.text.toString().toIntOrNull()
+        if (num != null && num != state.longBreakMinutes) {
+            onSetLongBreak(num)
+        }
+    }
 
     val switchItems = remember(
         state.autoStartBreaks,
@@ -174,204 +186,96 @@ fun TimerSettingsScreen(
             item { Spacer(Modifier.height(6.dp)) }
 
             // ==========================================
-            // 1. SECTION: Adjust durations
+            // 1. Triple Horizontal Minute Input Fields
             // ==========================================
             item {
-                Text(
-                    text = stringResource(R.string.section_adjust_durations),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp, top = 2.dp)
-                )
-            }
-
-            // 1.1 Focus Row
-            item {
-                val isSelected = activeDurationType == FocusDurationType.FOCUS
-                SegmentedListItem(
-                    leadingContent = {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF3B82F6))
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    // 1.1 Focus Duration
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.mode_focus),
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    trailingContent = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "${state.workDurationMinutes}m",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp
-                                ),
-                                color = if (isSelected) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .rotate(if (isSelected) -90f else 90f)
-                                    .size(16.dp),
-                                tint = if (isSelected) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    shapes = segmentedListItemShapes(0, 3),
-                    colors = listItemColors,
-                    onClick = {
-                        activeDurationType = if (isSelected) null else FocusDurationType.FOCUS
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.mode_focus),
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                    )
-                }
-            }
-
-            // 1.2 Short Break Row
-            item {
-                val isSelected = activeDurationType == FocusDurationType.SHORT_BREAK
-                SegmentedListItem(
-                    leadingContent = {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF10B981))
+                        MinuteInputField(
+                            state = focusTimeState,
+                            enabled = true,
+                            shape = RoundedCornerShape(
+                                topStart = topListItemShape.topStart,
+                                bottomStart = topListItemShape.topStart,
+                                topEnd = topListItemShape.bottomStart,
+                                bottomEnd = topListItemShape.bottomStart
+                            ),
+                            inputTransformation = MinutesInputTransformation3Digits,
+                            imeAction = ImeAction.Next
                         )
-                    },
-                    trailingContent = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "${state.shortBreakMinutes}m",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp
-                                ),
-                                color = if (isSelected) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .rotate(if (isSelected) -90f else 90f)
-                                    .size(16.dp),
-                                tint = if (isSelected) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    shapes = segmentedListItemShapes(1, 3),
-                    colors = listItemColors,
-                    onClick = {
-                        activeDurationType = if (isSelected) null else FocusDurationType.SHORT_BREAK
                     }
-                ) {
-                    Text(
-                        text = stringResource(R.string.mode_short_break),
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                    )
-                }
-            }
 
-            // 1.3 Long Break Row
-            item {
-                val isSelected = activeDurationType == FocusDurationType.LONG_BREAK
-                SegmentedListItem(
-                    leadingContent = {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF8B5CF6))
+                    Spacer(Modifier.width(6.dp))
+
+                    // 1.2 Short Break Duration
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.mode_short_break),
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    trailingContent = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "${state.longBreakMinutes}m",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp
-                                ),
-                                color = if (isSelected) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_chevron_right),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .rotate(if (isSelected) -90f else 90f)
-                                    .size(16.dp),
-                                tint = if (isSelected) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    shapes = segmentedListItemShapes(2, 3),
-                    colors = listItemColors,
-                    onClick = {
-                        activeDurationType = if (isSelected) null else FocusDurationType.LONG_BREAK
+                        MinuteInputField(
+                            state = shortBreakState,
+                            enabled = true,
+                            shape = RoundedCornerShape(middleListItemShape.topStart),
+                            imeAction = ImeAction.Next
+                        )
                     }
-                ) {
-                    Text(
-                        text = stringResource(R.string.mode_long_break),
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                    )
-                }
-            }
 
-            // 1.4 Active Duration Interactive Wheel Picker
-            item {
-                AnimatedVisibility(
-                    visible = activeDurationType != null,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    Column(modifier = Modifier.padding(top = 10.dp)) {
-                        when (activeDurationType) {
-                            FocusDurationType.FOCUS -> {
-                                FocusDurationWheelPicker(
-                                    totalMinutes = state.workDurationMinutes,
-                                    onMinutesChanged = onSetWorkDuration,
-                                    maxMinutes = 180,
-                                    minMinutes = 1
-                                )
-                            }
-                            FocusDurationType.SHORT_BREAK -> {
-                                FocusDurationWheelPicker(
-                                    totalMinutes = state.shortBreakMinutes,
-                                    onMinutesChanged = onSetShortBreak,
-                                    maxMinutes = 60,
-                                    minMinutes = 1
-                                )
-                            }
-                            FocusDurationType.LONG_BREAK -> {
-                                FocusDurationWheelPicker(
-                                    totalMinutes = state.longBreakMinutes,
-                                    onMinutesChanged = onSetLongBreak,
-                                    maxMinutes = 90,
-                                    minMinutes = 1
-                                )
-                            }
-                            null -> Unit
-                        }
+                    Spacer(Modifier.width(6.dp))
+
+                    // 1.3 Long Break Duration
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.mode_long_break),
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        MinuteInputField(
+                            state = longBreakState,
+                            enabled = true,
+                            shape = RoundedCornerShape(
+                                topStart = bottomListItemShape.topStart,
+                                bottomStart = bottomListItemShape.topStart,
+                                topEnd = bottomListItemShape.bottomStart,
+                                bottomEnd = bottomListItemShape.bottomStart
+                            ),
+                            imeAction = ImeAction.Done
+                        )
                     }
                 }
             }
 
-            item { Spacer(Modifier.height(14.dp)) }
+            item { Spacer(Modifier.height(18.dp)) }
 
             // ==========================================
             // 2. SECTION: Configuration (Pomodoros stepper & Long break switch)
