@@ -55,11 +55,13 @@ import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.data.local.entity.TagEntity
 import com.zenzeros.kimon.ui.pomodoro.ConcentricPomodoroDial
+import com.zenzeros.kimon.ui.pomodoro.FlipCardPomodoroClock
 
 @Composable
 fun FocusScreen(
     remainingSeconds: Int,
     isRunning: Boolean,
+    clockStyle: String = "DIAL",
     selectedTag: TagEntity? = null,
     tags: List<TagEntity> = emptyList(),
     onSelectTag: (TagEntity?) -> Unit = {},
@@ -91,83 +93,172 @@ fun FocusScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        // 1. Concentric Chrono Dial Clock Face with integrated Center Tag Pill
+        // 1. Clock Face (Concentric Dial or Flip Card) with Tag Complication
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            ConcentricPomodoroDial(
-                remainingSeconds = remainingSeconds
-            )
-
-            // Integrated Center Tag Complication (Below big minutes text)
-            Surface(
-                onClick = { isTagSheetOpen = true },
-                shape = CircleShape,
-                color = if (selectedTag != null) {
-                    MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f)
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
-                },
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = if (selectedTag != null) {
-                        val tagColor = try {
-                            Color(android.graphics.Color.parseColor(selectedTag.colorHex))
-                        } catch (e: Exception) {
-                            MaterialTheme.colorScheme.primary
-                        }
-                        tagColor.copy(alpha = 0.5f)
-                    } else {
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                    }
-                ),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(top = 96.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 4.5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+            if (clockStyle == "FLIP") {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    if (selectedTag != null) {
-                        val tagColor = remember(selectedTag.colorHex) {
-                            try {
-                                Color(android.graphics.Color.parseColor(selectedTag.colorHex))
-                            } catch (e: Exception) {
-                                Color(0xFF6366F1)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        FlipCardPomodoroClock(
+                            remainingSeconds = remainingSeconds
+                        )
+                    }
+
+                    // Tag complication pill below flip card
+                    Surface(
+                        onClick = { isTagSheetOpen = true },
+                        shape = CircleShape,
+                        color = if (selectedTag != null) {
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+                        },
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = if (selectedTag != null) {
+                                val tagColor = try {
+                                    Color(android.graphics.Color.parseColor(selectedTag.colorHex))
+                                } catch (e: Exception) {
+                                    MaterialTheme.colorScheme.primary
+                                }
+                                tagColor.copy(alpha = 0.5f)
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                            }
+                        ),
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (selectedTag != null) {
+                                val tagColor = remember(selectedTag.colorHex) {
+                                    try {
+                                        Color(android.graphics.Color.parseColor(selectedTag.colorHex))
+                                    } catch (e: Exception) {
+                                        Color(0xFF6366F1)
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(tagColor)
+                                )
+                                Text(
+                                    text = selectedTag.name,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.5.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_tag),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.tag_choose_button),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 12.5.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                )
                             }
                         }
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .clip(CircleShape)
-                                .background(tagColor)
-                        )
-                        Text(
-                            text = selectedTag.name,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                    }
+                }
+            } else {
+                ConcentricPomodoroDial(
+                    remainingSeconds = remainingSeconds
+                )
+
+                // Integrated Center Tag Complication (Below big minutes text)
+                Surface(
+                    onClick = { isTagSheetOpen = true },
+                    shape = CircleShape,
+                    color = if (selectedTag != null) {
+                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f)
                     } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tag),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.size(11.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.tag_choose_button),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 11.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
+                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+                    },
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (selectedTag != null) {
+                            val tagColor = try {
+                                Color(android.graphics.Color.parseColor(selectedTag.colorHex))
+                            } catch (e: Exception) {
+                                MaterialTheme.colorScheme.primary
+                            }
+                            tagColor.copy(alpha = 0.5f)
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                        }
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(top = 96.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 4.5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        if (selectedTag != null) {
+                            val tagColor = remember(selectedTag.colorHex) {
+                                try {
+                                    Color(android.graphics.Color.parseColor(selectedTag.colorHex))
+                                } catch (e: Exception) {
+                                    Color(0xFF6366F1)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(tagColor)
+                            )
+                            Text(
+                                text = selectedTag.name,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_tag),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.tag_choose_button),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 12.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                            )
+                        }
                     }
                 }
             }

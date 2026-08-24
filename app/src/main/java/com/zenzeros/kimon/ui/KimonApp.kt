@@ -178,6 +178,7 @@ fun KimonApp() {
                     onSetLongBreak = { settingsViewModel.setLongBreak(it) },
                     onSetSessionsBeforeLongBreak = { settingsViewModel.setSessionsBeforeLongBreak(it) },
                     onSetDailyGoal = { settingsViewModel.setDailyGoal(it) },
+                    onSetClockStyle = { settingsViewModel.setClockStyle(it) },
                     onToggleAutoStartBreaks = { settingsViewModel.toggleAutoStartBreaks(it) },
                     onToggleAutoStartPomodoros = { settingsViewModel.toggleAutoStartPomodoros(it) },
                     onToggleKeepScreenOn = { settingsViewModel.toggleKeepScreenOn(it) },
@@ -404,6 +405,7 @@ fun KimonApp() {
                             1 -> FocusScreen(
                                 remainingSeconds = pomodoroUiState.remainingSeconds,
                                 isRunning = pomodoroUiState.timerStatus == TimerStatus.RUNNING,
+                                clockStyle = settingsState.clockStyle,
                                 selectedTag = pomodoroUiState.selectedTag,
                                 tags = allTags,
                                 onSelectTag = { tag -> pomodoroViewModel.selectTag(tag) },

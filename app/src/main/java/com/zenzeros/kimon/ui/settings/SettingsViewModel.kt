@@ -52,6 +52,7 @@ data class SettingsUiState(
     val autoStartPomodoros: Boolean = false,
     val keepScreenOn: Boolean = false,
     val dndEnabled: Boolean = false,
+    val clockStyle: String = "DIAL",
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val mediaVolumeForAlarm: Boolean = false,
@@ -85,9 +86,10 @@ class SettingsViewModel(
             userSettingsRepository.autoStartBreaks,
             userSettingsRepository.autoStartPomodoros,
             userSettingsRepository.keepScreenOn,
-            userSettingsRepository.dndEnabled
-        ) { aBreaks, aPomodoros, keepScreen, dnd ->
-            aBreaks to (aPomodoros to (keepScreen to dnd))
+            userSettingsRepository.dndEnabled,
+            userSettingsRepository.clockStyle
+        ) { aBreaks, aPomodoros, keepScreen, dnd, clockStyle ->
+            aBreaks to (aPomodoros to (keepScreen to (dnd to clockStyle)))
         },
         combine(
             userSettingsRepository.soundEnabled,
@@ -112,7 +114,8 @@ class SettingsViewModel(
         val (sessions, goal) = rest1c
 
         val (aPomodoros, rest2b) = rest2
-        val (keepScreen, dnd) = rest2b
+        val (keepScreen, rest2c) = rest2b
+        val (dnd, clockStyle) = rest2c
 
         val (sound, vibration, soundMeta) = soundGroup
         val (hMode, soundUri, soundTitle) = soundMeta
@@ -129,6 +132,7 @@ class SettingsViewModel(
             autoStartPomodoros = aPomodoros,
             keepScreenOn = keepScreen,
             dndEnabled = dnd,
+            clockStyle = clockStyle,
             soundEnabled = sound,
             vibrationEnabled = vibration,
             mediaVolumeForAlarm = hMode,
@@ -180,6 +184,10 @@ class SettingsViewModel(
 
     fun toggleDnd(enabled: Boolean) = viewModelScope.launch {
         userSettingsRepository.setDndEnabled(enabled)
+    }
+
+    fun setClockStyle(style: String) = viewModelScope.launch {
+        userSettingsRepository.setClockStyle(style)
     }
 
     fun toggleSound(enabled: Boolean) = viewModelScope.launch {

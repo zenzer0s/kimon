@@ -62,6 +62,12 @@ import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.cardShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ToggleButton
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 
 @Composable
@@ -72,6 +78,7 @@ fun TimerSettingsScreen(
     onSetLongBreak: (Int) -> Unit,
     onSetSessionsBeforeLongBreak: (Int) -> Unit,
     onSetDailyGoal: (Int) -> Unit,
+    onSetClockStyle: (String) -> Unit,
     onToggleAutoStartBreaks: (Boolean) -> Unit,
     onToggleAutoStartPomodoros: (Boolean) -> Unit,
     onToggleKeepScreenOn: (Boolean) -> Unit,
@@ -286,7 +293,71 @@ fun TimerSettingsScreen(
                 }
             }
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(14.dp))
+
+            // ==========================================
+            // Clock Style Selector (Dial vs Flip Card)
+            // ==========================================
+            Text(
+                text = "Clock style",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+            )
+
+            val clockOptions = listOf("DIAL" to "Dial", "FLIP" to "Flip clock")
+            val currentClockIndex = clockOptions.indexOfFirst { it.first == state.clockStyle }.coerceAtLeast(0)
+
+            SegmentedListItem(
+                onClick = {},
+                leadingContent = {
+                    Icon(
+                        painter = painterResource(
+                            if (state.clockStyle == "FLIP") R.drawable.ic_plan else R.drawable.ic_focus
+                        ),
+                        contentDescription = null
+                    )
+                },
+                content = { Text("Display mode") },
+                supportingContent = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        clockOptions.forEachIndexed { optIndex, (styleKey, title) ->
+                            val isSelected = currentClockIndex == optIndex
+                            ToggleButton(
+                                checked = isSelected,
+                                onCheckedChange = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onSetClockStyle(styleKey)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .semantics { role = Role.RadioButton },
+                                shapes = when (optIndex) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    clockOptions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                }
+                            ) {
+                                Text(
+                                    title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                },
+                colors = listItemColors,
+                shapes = segmentedListItemShapes(0, 1)
+            )
+
+            Spacer(Modifier.height(14.dp))
 
             // ==========================================
             // 2. SECTION: Configuration (Pomodoros stepper & Long break switch)

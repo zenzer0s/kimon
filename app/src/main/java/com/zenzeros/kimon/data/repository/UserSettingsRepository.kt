@@ -42,6 +42,7 @@ class UserSettingsRepository(private val context: Context) {
         val THEME_PALETTE = stringPreferencesKey("theme_palette")
         val THEME_COLOR = stringPreferencesKey("theme_color")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
+        val CLOCK_STYLE = stringPreferencesKey("clock_style")
     }
 
     // --- Flows ---
@@ -79,6 +80,10 @@ class UserSettingsRepository(private val context: Context) {
 
     val dndEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[PreferencesKeys.DND_ENABLED] ?: false
+    }
+
+    val clockStyle: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.CLOCK_STYLE] ?: "DIAL"
     }
 
     val soundEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -201,6 +206,10 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setAmoledBlack(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.AMOLED_BLACK] = enabled }
+    }
+
+    suspend fun setClockStyle(style: String) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.CLOCK_STYLE] = style }
     }
 
     suspend fun clearAllSettings() {
