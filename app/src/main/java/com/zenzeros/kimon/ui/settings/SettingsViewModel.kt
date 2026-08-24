@@ -7,7 +7,6 @@ import com.zenzeros.kimon.data.repository.SessionRepository
 import com.zenzeros.kimon.data.repository.TagRepository
 import com.zenzeros.kimon.data.repository.TaskRepository
 import com.zenzeros.kimon.data.repository.UserSettingsRepository
-import com.zenzeros.kimon.ui.theme.ThemePalette
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine

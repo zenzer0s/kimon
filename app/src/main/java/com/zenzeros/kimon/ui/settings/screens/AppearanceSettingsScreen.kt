@@ -33,20 +33,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.settings.SettingsUiState
-import com.zenzeros.kimon.ui.settings.components.ColorSchemePickerListItem
 import com.zenzeros.kimon.ui.settings.components.ThemePickerListItem
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
-import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.PANE_MAX_WIDTH
-import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 
 @Composable
 fun AppearanceSettingsScreen(
     state: SettingsUiState,
     onSetThemeMode: (String) -> Unit,
-    onSetThemePalette: (String) -> Unit,
     onToggleAmoledBlack: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -96,25 +92,15 @@ fun AppearanceSettingsScreen(
             item {
                 ThemePickerListItem(
                     theme = state.themeMode,
-                    items = 2,
+                    items = 1,
                     index = 0,
                     onThemeChange = onSetThemeMode
                 )
             }
 
-            // 2. Color Palette & Dynamic Color Picker
-            item {
-                ColorSchemePickerListItem(
-                    paletteName = state.themePalette,
-                    items = 2,
-                    index = 1,
-                    onPaletteChange = onSetThemePalette
-                )
-            }
-
             item { Spacer(Modifier.height(8.dp)) }
 
-            // 3. AMOLED Black Theme Switch
+            // 2. AMOLED Black Theme Switch
             item {
                 ListItem(
                     leadingContent = {
@@ -134,7 +120,7 @@ fun AppearanceSettingsScreen(
                         )
                     },
                     colors = listItemColors,
-                    modifier = Modifier.clip(bottomListItemShape)
+                    modifier = Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
                 )
             }
 

@@ -71,6 +71,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
+import com.zenzeros.kimon.ui.theme.CustomColors
 
 @Composable
 fun PlanScreen(
@@ -317,16 +318,7 @@ private fun SwipeToRevealTaskItem(
                     }
                 },
                 shapes = shapes,
-                colors = ListItemDefaults.segmentedColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    leadingContentColor = MaterialTheme.colorScheme.primary,
-                    selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    selectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                    selectedSupportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    selectedLeadingContentColor = MaterialTheme.colorScheme.primary
-                ),
+                colors = ListItemDefaults.segmentedColors(),
                 verticalAlignment = Alignment.CenterVertically,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                 leadingContent = {

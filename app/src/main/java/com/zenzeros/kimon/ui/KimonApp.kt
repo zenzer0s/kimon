@@ -73,14 +73,10 @@ import com.zenzeros.kimon.ui.settings.screens.TimerSettingsScreen
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.KimonTheme
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
-import com.zenzeros.kimon.ui.theme.ThemePalette
 import kotlinx.coroutines.launch
 
 @Composable
-fun KimonApp(
-    palette: ThemePalette = ThemePalette.DYNAMIC,
-    dynamicColor: Boolean = true
-) {
+fun KimonApp() {
     val context = LocalContext.current
     val kimonApp = context.applicationContext as KimonApplication
     val coroutineScope = rememberCoroutineScope()
@@ -104,15 +100,6 @@ fun KimonApp(
         )
     )
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-
-    // Settings & Live Theme Observation
-    val activePalette = remember(settingsState.themePalette) {
-        try {
-            ThemePalette.valueOf(settingsState.themePalette)
-        } catch (e: Exception) {
-            ThemePalette.DYNAMIC
-        }
-    }
 
     val isDark = when (settingsState.themeMode) {
         "LIGHT" -> false
@@ -192,7 +179,6 @@ fun KimonApp(
                 AppearanceSettingsScreen(
                     state = settingsState,
                     onSetThemeMode = { settingsViewModel.setThemeMode(it) },
-                    onSetThemePalette = { settingsViewModel.setThemePalette(it) },
                     onToggleAmoledBlack = { settingsViewModel.toggleAmoledBlack(it) },
                     onBack = navigateBack
                 )
@@ -206,13 +192,12 @@ fun KimonApp(
     }
 
     KimonTheme(
-        palette = activePalette,
-        dynamicColor = activePalette == ThemePalette.DYNAMIC,
-        darkTheme = isDark
+        darkTheme = isDark,
+        blackTheme = settingsState.amoledBlack
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = MaterialTheme.colorScheme.surface,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 AnimatedVisibility(
@@ -220,10 +205,7 @@ fun KimonApp(
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
-                    NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        tonalElevation = 3.dp
-                    ) {
+                    NavigationBar {
                         NavigationBarItem(
                             selected = mainTabPagerState.currentPage == 0,
                             onClick = {
@@ -326,7 +308,7 @@ fun KimonApp(
                         .fillMaxSize()
                         .padding(bottom = innerPadding.calculateBottomPadding())
                         .windowInsetsPadding(WindowInsets.statusBars),
-                    color = MaterialTheme.colorScheme.surfaceContainer
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         // 1. Balanced Top App Header (Kimon Brand + Settings/Profile Icon)
@@ -394,7 +376,7 @@ fun KimonApp(
                                 .fillMaxWidth()
                                 .weight(1f),
                             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                            color = MaterialTheme.colorScheme.background
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
                         ) {
                             HorizontalPager(
                                 state = mainTabPagerState,
