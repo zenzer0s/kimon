@@ -78,8 +78,8 @@ fun DayTab(
 
     val totalSectionsGroup = 3
     val todayFocusShapesGroup = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
-    val dailyTimelineShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
-    val hourlyFocusShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
+    val hourlyFocusShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
+    val dailyTimelineShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
 
     Column(
         modifier = modifier
@@ -194,12 +194,196 @@ fun DayTab(
                 }
             }
 
-            // --- Card 2: Daily Timeline ---
+            // --- Card 2: Hourly Focus (Bar Graph of 24 lines for 24 hours) ---
+            Surface(
+                shape = hourlyFocusShapesGroup.shape,
+                color = CustomColors.cardContainerColor,
+                tonalElevation = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(11.dp)
+                ) {
+                    AnalyzeCardHeader(
+                        icon = R.drawable.ic_bar_chart,
+                        title = stringResource(R.string.title_hourly_focus),
+                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        iconBg = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    val isSelectedDayToday = remember(selectedCalendar.timeInMillis) {
+                        val now = Calendar.getInstance()
+                        now.get(Calendar.YEAR) == selectedCalendar.get(Calendar.YEAR) &&
+                                now.get(Calendar.DAY_OF_YEAR) == selectedCalendar.get(Calendar.DAY_OF_YEAR)
+                    }
+
+                    val currentHour = if (isSelectedDayToday) Calendar.getInstance().get(Calendar.HOUR_OF_DAY) else -1
+
+                    val rawMaxMinutes = stats.hourlyMinutes.maxOrNull() ?: 0
+                    val maxTotalMinutes = if (rawMaxMinutes <= 60) 60 else (((rawMaxMinutes + 14) / 15) * 15)
+                    val stepMinutes = maxTotalMinutes / 4
+                    val yLabels = listOf(
+                        "${4 * stepMinutes}m",
+                        "${3 * stepMinutes}m",
+                        "${2 * stepMinutes}m",
+                        "${1 * stepMinutes}m",
+                        "0m"
+                    )
+
+                    val primaryColor = MaterialTheme.colorScheme.primary
+                    val secondaryColor = MaterialTheme.colorScheme.secondary
+                    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
+
+                    // Main Chart Container: [ Y-Axis Labels | Canvas Bar Graph ]
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 6.dp)
+                    ) {
+                        // Y-Axis Labels Column (5 points from top to 0m)
+                        Column(
+                            modifier = Modifier
+                                .height(130.dp)
+                                .width(28.dp)
+                                .padding(end = 4.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            yLabels.forEach { label ->
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.5.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Chart Area: Canvas + X-Axis
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Canvas(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(130.dp)
+                            ) {
+                                val chartWidth = size.width
+                                val chartHeight = size.height
+                                val topPadding = 8.dp.toPx()
+                                val bottomPadding = 8.dp.toPx()
+                                val usableHeight = chartHeight - topPadding - bottomPadding
+
+                                val yTop = topPadding
+                                val yBottom = chartHeight - bottomPadding
+
+                                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
+
+                                // 1. Horizontal Y-Axis Grid Lines (5 levels)
+                                for (level in 0..4) {
+                                    val yLevel = yTop + (level / 4f) * usableHeight
+                                    val isBaseLine = level == 4
+                                    drawLine(
+                                        color = if (isBaseLine) gridColor.copy(alpha = 0.6f) else gridColor,
+                                        start = Offset(0f, yLevel),
+                                        end = Offset(chartWidth, yLevel),
+                                        strokeWidth = if (isBaseLine) 1.5.dp.toPx() else 1.dp.toPx(),
+                                        pathEffect = if (isBaseLine) null else dashEffect
+                                    )
+                                }
+
+                                // 2. 24 Hourly Bar Lines
+                                val numBars = 24
+                                val barSlotWidth = chartWidth / numBars
+                                val barStrokeWidth = (barSlotWidth * 0.45f).coerceIn(3.dp.toPx(), 6.dp.toPx())
+
+                                for (h in 0 until numBars) {
+                                    val mins = stats.hourlyMinutes.getOrElse(h) { 0 }
+                                    val isCurrent = h == currentHour
+                                    val x = (h + 0.5f) * barSlotWidth
+
+                                    // Background full track line
+                                    drawLine(
+                                        color = if (isCurrent) primaryColor.copy(alpha = 0.15f) else trackColor,
+                                        start = Offset(x, yTop),
+                                        end = Offset(x, yBottom),
+                                        strokeWidth = barStrokeWidth,
+                                        cap = StrokeCap.Round
+                                    )
+
+                                    // Active Focus Bar
+                                    if (mins > 0) {
+                                        val fraction = (mins.toFloat() / maxTotalMinutes).coerceIn(0f, 1f)
+                                        val barHeight = (fraction * usableHeight).coerceAtLeast(barStrokeWidth)
+                                        val barYTop = yBottom - barHeight
+
+                                        drawLine(
+                                            brush = Brush.verticalGradient(
+                                                colors = if (isCurrent) {
+                                                    listOf(secondaryColor, primaryColor)
+                                                } else {
+                                                    listOf(primaryColor, primaryColor.copy(alpha = 0.75f))
+                                                },
+                                                startY = barYTop,
+                                                endY = yBottom
+                                            ),
+                                            start = Offset(x, barYTop),
+                                            end = Offset(x, yBottom),
+                                            strokeWidth = barStrokeWidth,
+                                            cap = StrokeCap.Round
+                                        )
+                                    }
+
+                                    // Current Hour Marker Dot at baseline
+                                    if (isCurrent) {
+                                        drawCircle(
+                                            color = primaryColor,
+                                            radius = 2.dp.toPx(),
+                                            center = Offset(x, yBottom + 5.dp.toPx())
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // X-Axis Time Labels Row (Key hour markers across 24h)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                val timeAxisLabels = listOf("00:00", "06:00", "12:00", "18:00", "23:00")
+                                timeAxisLabels.forEach { timeLabel ->
+                                    Text(
+                                        text = timeLabel,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 10.5.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+
+            // --- Card 3: Daily Timeline ---
             Surface(
                 shape = dailyTimelineShapesGroup.shape,
                 color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(11.dp)
@@ -376,190 +560,6 @@ fun DayTab(
                             }
                         }
                     }
-                }
-            }
-
-            // --- Card 3: Hourly Focus (Bar Graph of 24 lines for 24 hours) ---
-            Surface(
-                shape = hourlyFocusShapesGroup.shape,
-                color = CustomColors.cardContainerColor,
-                tonalElevation = 1.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(11.dp)
-                ) {
-                    AnalyzeCardHeader(
-                        icon = R.drawable.ic_bar_chart,
-                        title = stringResource(R.string.title_hourly_focus),
-                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        iconBg = MaterialTheme.colorScheme.tertiaryContainer
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    val isSelectedDayToday = remember(selectedCalendar.timeInMillis) {
-                        val now = Calendar.getInstance()
-                        now.get(Calendar.YEAR) == selectedCalendar.get(Calendar.YEAR) &&
-                                now.get(Calendar.DAY_OF_YEAR) == selectedCalendar.get(Calendar.DAY_OF_YEAR)
-                    }
-
-                    val currentHour = if (isSelectedDayToday) Calendar.getInstance().get(Calendar.HOUR_OF_DAY) else -1
-
-                    val rawMaxMinutes = stats.hourlyMinutes.maxOrNull() ?: 0
-                    val maxTotalMinutes = if (rawMaxMinutes <= 60) 60 else (((rawMaxMinutes + 14) / 15) * 15)
-                    val stepMinutes = maxTotalMinutes / 4
-                    val yLabels = listOf(
-                        "${4 * stepMinutes}m",
-                        "${3 * stepMinutes}m",
-                        "${2 * stepMinutes}m",
-                        "${1 * stepMinutes}m",
-                        "0m"
-                    )
-
-                    val primaryColor = MaterialTheme.colorScheme.primary
-                    val secondaryColor = MaterialTheme.colorScheme.secondary
-                    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
-
-                    // Main Chart Container: [ Y-Axis Labels | Canvas Bar Graph ]
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 6.dp)
-                    ) {
-                        // Y-Axis Labels Column (5 points from top to 0m)
-                        Column(
-                            modifier = Modifier
-                                .height(130.dp)
-                                .width(28.dp)
-                                .padding(end = 4.dp),
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            horizontalAlignment = Alignment.End
-                        ) {
-                            yLabels.forEach { label ->
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 9.5.sp,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        // Chart Area: Canvas + X-Axis
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Canvas(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(130.dp)
-                            ) {
-                                val chartWidth = size.width
-                                val chartHeight = size.height
-                                val topPadding = 8.dp.toPx()
-                                val bottomPadding = 8.dp.toPx()
-                                val usableHeight = chartHeight - topPadding - bottomPadding
-
-                                val yTop = topPadding
-                                val yBottom = chartHeight - bottomPadding
-
-                                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
-
-                                // 1. Horizontal Y-Axis Grid Lines (5 levels)
-                                for (level in 0..4) {
-                                    val yLevel = yTop + (level / 4f) * usableHeight
-                                    val isBaseLine = level == 4
-                                    drawLine(
-                                        color = if (isBaseLine) gridColor.copy(alpha = 0.6f) else gridColor,
-                                        start = Offset(0f, yLevel),
-                                        end = Offset(chartWidth, yLevel),
-                                        strokeWidth = if (isBaseLine) 1.5.dp.toPx() else 1.dp.toPx(),
-                                        pathEffect = if (isBaseLine) null else dashEffect
-                                    )
-                                }
-
-                                // 2. 24 Hourly Bar Lines
-                                val numBars = 24
-                                val barSlotWidth = chartWidth / numBars
-                                val barStrokeWidth = (barSlotWidth * 0.45f).coerceIn(3.dp.toPx(), 6.dp.toPx())
-
-                                for (h in 0 until numBars) {
-                                    val mins = stats.hourlyMinutes.getOrElse(h) { 0 }
-                                    val isCurrent = h == currentHour
-                                    val x = (h + 0.5f) * barSlotWidth
-
-                                    // Background full track line
-                                    drawLine(
-                                        color = if (isCurrent) primaryColor.copy(alpha = 0.15f) else trackColor,
-                                        start = Offset(x, yTop),
-                                        end = Offset(x, yBottom),
-                                        strokeWidth = barStrokeWidth,
-                                        cap = StrokeCap.Round
-                                    )
-
-                                    // Active Focus Bar
-                                    if (mins > 0) {
-                                        val fraction = (mins.toFloat() / maxTotalMinutes).coerceIn(0f, 1f)
-                                        val barHeight = (fraction * usableHeight).coerceAtLeast(barStrokeWidth)
-                                        val barYTop = yBottom - barHeight
-
-                                        drawLine(
-                                            brush = Brush.verticalGradient(
-                                                colors = if (isCurrent) {
-                                                    listOf(secondaryColor, primaryColor)
-                                                } else {
-                                                    listOf(primaryColor, primaryColor.copy(alpha = 0.75f))
-                                                },
-                                                startY = barYTop,
-                                                endY = yBottom
-                                            ),
-                                            start = Offset(x, barYTop),
-                                            end = Offset(x, yBottom),
-                                            strokeWidth = barStrokeWidth,
-                                            cap = StrokeCap.Round
-                                        )
-                                    }
-
-                                    // Current Hour Marker Dot at baseline
-                                    if (isCurrent) {
-                                        drawCircle(
-                                            color = primaryColor,
-                                            radius = 2.dp.toPx(),
-                                            center = Offset(x, yBottom + 5.dp.toPx())
-                                        )
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // X-Axis Time Labels Row (Key hour markers across 24h)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                val timeAxisLabels = listOf("00:00", "06:00", "12:00", "18:00", "23:00")
-                                timeAxisLabels.forEach { timeLabel ->
-                                    Text(
-                                        text = timeLabel,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 10.5.sp
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }
