@@ -46,7 +46,9 @@ import com.zenzeros.kimon.ui.settings.components.ThemePickerListItem
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
-import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.cardShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import com.zenzeros.kimon.ui.theme.colorSchemes
 
@@ -61,6 +63,8 @@ fun AppearanceSettingsScreen(
 ) {
     val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
+    val hasDynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val totalItems = if (hasDynamicColor) 4 else 3
 
     Scaffold(
         topBar = {
@@ -99,20 +103,20 @@ fun AppearanceSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(6.dp))
 
-            // 1. Theme (System | Light | Dark)
+            // Item 1: Theme (System | Light | Dark) -> topListItemShape
             ThemePickerListItem(
                 theme = state.themeMode,
-                items = 1,
+                items = totalItems,
                 index = 0,
                 onThemeChange = onSetThemeMode
             )
 
-            // 2. Dynamic Color (Android 12+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Item 2: Dynamic Color (Android 12+) -> middleListItemShape
+            if (hasDynamicColor) {
                 val isDynamic = state.themeColor == colorSchemes.last()
                 AppearanceSwitchRow(
                     item = SettingsSwitchItem(
@@ -125,7 +129,7 @@ fun AppearanceSettingsScreen(
                             else onSetThemeColor(colorSchemes.first())
                         }
                     ),
-                    shape = cardShape,
+                    shape = middleListItemShape,
                     onToggle = { enabled ->
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         if (enabled) onSetThemeColor(colorSchemes.last())
@@ -134,17 +138,17 @@ fun AppearanceSettingsScreen(
                 )
             }
 
-            // 3. Color Scheme (Non-grouped clean card with horizontal color swatches)
+            // Item 3: Color Scheme (Clean Palette) -> middleListItemShape
             ColorSchemePickerCard(
                 color = state.themeColor,
-                shape = cardShape,
+                shape = middleListItemShape,
                 onColorChange = { color ->
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onSetThemeColor(color)
                 }
             )
 
-            // 4. Black Theme (Pure AMOLED)
+            // Item 4: Black Theme (Pure AMOLED) -> bottomListItemShape
             AppearanceSwitchRow(
                 item = SettingsSwitchItem(
                     checked = state.amoledBlack,
@@ -153,7 +157,7 @@ fun AppearanceSettingsScreen(
                     description = R.string.settings_amoled_black_desc,
                     onClick = onToggleAmoledBlack
                 ),
-                shape = cardShape,
+                shape = bottomListItemShape,
                 onToggle = { enabled ->
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onToggleAmoledBlack(enabled)
