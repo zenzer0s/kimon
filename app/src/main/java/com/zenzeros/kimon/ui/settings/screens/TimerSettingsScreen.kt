@@ -27,6 +27,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -57,6 +58,7 @@ import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.cardShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
@@ -433,22 +435,59 @@ fun TimerSettingsScreen(
             )
 
             switchItems.forEachIndexed { index, item ->
-                SegmentedListItem(
-                    leadingContent = {
+                val itemShape = when {
+                    switchItems.size == 1 -> cardShape
+                    index == 0 -> topListItemShape
+                    index == switchItems.size - 1 -> bottomListItemShape
+                    else -> middleListItemShape
+                }
+                Surface(
+                    shape = itemShape,
+                    color = listItemColors.containerColor,
+                    onClick = {
+                        if (item.enabled) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            item.onClick(!item.checked)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
                         Icon(
                             painter = painterResource(item.icon),
                             contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
-                    },
-                    supportingContent = {
-                        Text(
-                            text = stringResource(item.description),
-                            fontSize = 12.5.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    trailingContent = {
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(item.label),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 15.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(item.description),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 12.5.sp,
+                                    lineHeight = 16.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
                         Switch(
                             checked = item.checked,
                             enabled = item.enabled,
@@ -458,21 +497,7 @@ fun TimerSettingsScreen(
                             },
                             colors = switchColors
                         )
-                    },
-                    shapes = segmentedListItemShapes(index, switchItems.size),
-                    colors = listItemColors,
-                    onClick = {
-                        if (item.enabled) {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            item.onClick(!item.checked)
-                        }
                     }
-                ) {
-                    Text(
-                        text = stringResource(item.label),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
-                    )
                 }
             }
 
