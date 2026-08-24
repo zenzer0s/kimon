@@ -4,33 +4,19 @@ import com.zenzeros.kimon.data.repository.SessionRepository
 import com.zenzeros.kimon.domain.model.YearStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoField
 
 class GetYearStatsUseCase(
     private val sessionRepository: SessionRepository,
     private val calculateStreaksUseCase: CalculateStreaksUseCase = CalculateStreaksUseCase()
 ) {
     operator fun invoke(year: Int): Flow<YearStats> {
-        val startOfYear = Calendar.getInstance().apply {
-            set(Calendar.YEAR, year)
-            set(Calendar.DAY_OF_YEAR, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
-        val endOfYear = Calendar.getInstance().apply {
-            set(Calendar.YEAR, year)
-            set(Calendar.MONTH, Calendar.DECEMBER)
-            set(Calendar.DAY_OF_MONTH, 31)
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 59)
-            set(Calendar.MILLISECOND, 999)
-        }.timeInMillis
+        val zone = ZoneId.systemDefault()
+        val startOfYear = LocalDate.of(year, 1, 1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val endOfYear = LocalDate.of(year, 12, 31).atTime(23, 59, 59, 999_000_000).atZone(zone).toInstant().toEpochMilli()
 
         return combine(
             sessionRepository.getAllSessions(),
@@ -42,32 +28,34 @@ class GetYearStatsUseCase(
             val totalCount = yearSessions.size
             val avgSessionSecs = if (totalCount > 0) totalSecs / totalCount else 0L
 
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val activeDays = mutableSetOf<String>()
-
-            val cal = Calendar.getInstance()
-            val dayTotals = mutableMapOf<Int, Long>() // dayOfYear -> seconds
-            val weekTotals = mutableMapOf<Int, Long>() // weekOfYear -> seconds
-            val monthTotals = mutableMapOf<Int, Long>() // month -> seconds
+            val dayTotals = LongArray(367)
+            val weekTotals = LongArray(54)
+            val monthTotals = LongArray(12)
 
             for (session in yearSessions) {
                 if (session.actualDurationSeconds > 0) {
-                    cal.timeInMillis = session.startTimeEpochMs
-                    activeDays.add(dateFormat.format(cal.time))
+                    val localDate = Instant.ofEpochMilli(session.startTimeEpochMs).atZone(zone).toLocalDate()
+                    val y = localDate.year
+                    val m = localDate.monthValue
+                    val d = localDate.dayOfMonth
+                    val dayKey = "$y-${if (m < 10) "0$m" else "$m"}-${if (d < 10) "0$d" else "$d"}"
+                    activeDays.add(dayKey)
 
-                    val dayOfYear = cal.get(Calendar.DAY_OF_YEAR)
-                    val weekOfYear = cal.get(Calendar.WEEK_OF_YEAR)
-                    val month = cal.get(Calendar.MONTH)
+                    val dayOfYear = localDate.get(ChronoField.DAY_OF_YEAR).coerceIn(1, 366)
+                    val weekOfYear = localDate.get(ChronoField.ALIGNED_WEEK_OF_YEAR).coerceIn(1, 53)
+                    val month = (m - 1).coerceIn(0, 11)
 
-                    dayTotals[dayOfYear] = (dayTotals[dayOfYear] ?: 0L) + session.actualDurationSeconds
-                    weekTotals[weekOfYear] = (weekTotals[weekOfYear] ?: 0L) + session.actualDurationSeconds
-                    monthTotals[month] = (monthTotals[month] ?: 0L) + session.actualDurationSeconds
+                    val dur = session.actualDurationSeconds.toLong()
+                    dayTotals[dayOfYear] += dur
+                    weekTotals[weekOfYear] += dur
+                    monthTotals[month] += dur
                 }
             }
 
-            val bestDaySecs = dayTotals.values.maxOrNull() ?: 0L
-            val bestWeekSecs = weekTotals.values.maxOrNull() ?: 0L
-            val bestMonthSecs = monthTotals.values.maxOrNull() ?: 0L
+            val bestDaySecs = dayTotals.maxOrNull() ?: 0L
+            val bestWeekSecs = weekTotals.maxOrNull() ?: 0L
+            val bestMonthSecs = monthTotals.maxOrNull() ?: 0L
 
             YearStats(
                 totalFocusSeconds = totalSecs,

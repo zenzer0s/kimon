@@ -30,10 +30,10 @@
     <string name="label_focus_days">Focus Days</string>
 
     <!-- Day Tab -->
-    <string name="title_focus_time_by_tag">Focus Time by Tag</string>
     <string name="title_daily_timeline">Daily Timeline</string>
     <string name="empty_no_focus_sessions_day">No focus sessions for this day.</string>
     <string name="action_start_focus">Start Focusing</string>
+    <string name="title_hourly_focus">Hourly Focus</string>
 
     <!-- Week Tab -->
     <string name="title_weekly_focus">Weekly Focus</string>
@@ -79,6 +79,8 @@
     <string name="tag_no_tag">No Tag</string>
     <string name="tag_select_title">Select Tag</string>
     <string name="tag_create_new">Create New Tag</string>
+    <string name="tag_delete_title">Delete Tag</string>
+    <string name="tag_delete_mode_hint">Select a tag to delete</string>
     <string name="tag_name_placeholder">Tag name</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_create">Create</string>
@@ -100,4 +102,46 @@
     <string name="notification_time_remaining">%1$s • %2$s remaining</string>
     <string name="notification_channel_name">Pomodoro Timer</string>
     <string name="notification_channel_desc">Shows live countdown timer during focus and break sessions</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Settings</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="action_reset">Reset</string>
+    <string name="settings_section_timer">Timer Durations</string>
+    <string name="settings_work_duration">Focus Duration</string>
+    <string name="settings_short_break">Short Break Duration</string>
+    <string name="settings_long_break">Long Break Duration</string>
+    <string name="settings_long_break_interval">Long Break Interval</string>
+    <string name="settings_daily_goal">Daily Focus Goal</string>
+    <string name="settings_section_automation">Automation &amp; Focus</string>
+    <string name="settings_auto_start_breaks">Auto-start Breaks</string>
+    <string name="settings_auto_start_breaks_desc">Start breaks automatically after focus</string>
+    <string name="settings_auto_start_pomodoros">Auto-start Focus</string>
+    <string name="settings_auto_start_pomodoros_desc">Start focus sessions automatically after break</string>
+    <string name="settings_keep_screen_on">Keep Screen Awake</string>
+    <string name="settings_keep_screen_on_desc">Prevent screen from sleeping during active sessions</string>
+    <string name="settings_dnd">Do Not Disturb</string>
+    <string name="settings_dnd_desc">Silence notifications while focusing</string>
+    <string name="settings_section_sound">Sound &amp; Vibration</string>
+    <string name="settings_sound_enabled">Alarm Sound</string>
+    <string name="settings_sound_enabled_desc">Play chime when session completes</string>
+    <string name="settings_vibration_enabled">Vibration</string>
+    <string name="settings_vibration_enabled_desc">Vibrate device on timer completion</string>
+    <string name="settings_media_volume">Media Volume for Alarm</string>
+    <string name="settings_media_volume_desc">Use media audio stream instead of alarm stream</string>
+    <string name="settings_section_appearance">Appearance &amp; Theme</string>
+    <string name="settings_theme_mode">Theme Mode</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_color_palette">Color Palette</string>
+    <string name="dynamic_color">Dynamic Color</string>
+    <string name="dynamic_color_desc">Match app theme to your system wallpaper</string>
+    <string name="settings_amoled_black">Pure AMOLED Black</string>
+    <string name="settings_amoled_black_desc">Use pitch black backgrounds in dark mode</string>
+    <string name="settings_section_data">Data &amp; Reset</string>
+    <string name="reset_data_title">Erase &amp; Reset All Data</string>
+    <string name="reset_data_desc">Permanently delete all focus history, stats, and settings</string>
+    <string name="reset_data_confirm_message">Are you sure you want to erase all data? This action cannot be undone.</string>
 </resources>

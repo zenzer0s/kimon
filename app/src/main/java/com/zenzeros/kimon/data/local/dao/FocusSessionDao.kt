@@ -36,4 +36,7 @@ interface FocusSessionDao {
 
     @Query("SELECT COUNT(DISTINCT (startTimeEpochMs / 86400000)) FROM focus_sessions WHERE sessionType = 'POMODORO'")
     fun getDistinctFocusDaysCount(): Flow<Int>
+
+    @Query("DELETE FROM focus_sessions")
+    suspend fun deleteAllSessions()
 }

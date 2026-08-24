@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 
 package com.zenzeros.kimon.ui.analyze.tabs
 
@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
@@ -32,8 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,21 +75,18 @@ fun WeekTab(
 ) {
     val scrollState = rememberScrollState()
 
-    val weekEndCal = remember(selectedWeekStart.timeInMillis) {
-        val end = selectedWeekStart.clone() as Calendar
-        end.add(Calendar.DAY_OF_YEAR, 6)
-        end
-    }
+    val totalSections = 3
+    val weeklyFocusShapes = ListItemDefaults.segmentedShapes(index = 0, count = totalSections)
+    val focusDistributionShapes = ListItemDefaults.segmentedShapes(index = 1, count = totalSections)
+    val focusTrendsShapes = ListItemDefaults.segmentedShapes(index = 2, count = totalSections)
 
-    val weekRangeText = remember(selectedWeekStart.timeInMillis, weekEndCal.timeInMillis) {
-        val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
-        "${dateFormat.format(selectedWeekStart.time)} - ${dateFormat.format(weekEndCal.time)}".uppercase()
-    }
+    val weekRangeText = remember(selectedWeekStart.timeInMillis) {
+        val endCal = selectedWeekStart.clone() as Calendar
+        endCal.add(Calendar.DAY_OF_YEAR, 6)
 
-    val totalSectionsGroup = 3
-    val weeklyFocusShapes = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
-    val focusDistributionShapes = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
-    val focusTrendsShapes = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
+        val monthFormat = SimpleDateFormat("MMM d", Locale.getDefault())
+        "${monthFormat.format(selectedWeekStart.time)} - ${monthFormat.format(endCal.time)}"
+    }
 
     Column(
         modifier = modifier
@@ -113,13 +115,13 @@ fun WeekTab(
                 painter = painterResource(R.drawable.ic_calendar),
                 contentDescription = "Calendar",
                 modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 2. Material 3 Expressive Segmented 3-Card Group
+        // 2. Material 3 Expressive Segmented Group
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(3.5.dp)
@@ -329,7 +331,7 @@ fun WeekTab(
                 }
             }
 
-            // --- Card 3: Focus Trends ---
+            // --- Card 3: Focus Trends (Line Graph with X and Y Axis) ---
             Surface(
                 shape = focusTrendsShapes.shape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -348,98 +350,225 @@ fun WeekTab(
                         iconBg = MaterialTheme.colorScheme.tertiaryContainer
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    val todayDayOfWeekIndex = remember {
-                        val cal = Calendar.getInstance()
-                        (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+                    val isCurrentWeek = remember(selectedWeekStart.timeInMillis) {
+                        val now = Calendar.getInstance()
+                        now.firstDayOfWeek = Calendar.MONDAY
+                        now.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                        now.get(Calendar.YEAR) == selectedWeekStart.get(Calendar.YEAR) &&
+                                now.get(Calendar.WEEK_OF_YEAR) == selectedWeekStart.get(Calendar.WEEK_OF_YEAR)
                     }
 
-                    val timelineColor = MaterialTheme.colorScheme.primary
-                    val surfaceContainerHigh = MaterialTheme.colorScheme.surfaceContainerHigh
-
-                    // 1. Interactive Nodes Timeline Canvas
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .padding(horizontal = 14.dp)
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val step = size.width / (WEEK_DAY_LABELS.size - 1)
-                            val centerY = size.height / 2
-
-                            // Base track line
-                            drawLine(
-                                color = timelineColor.copy(alpha = 0.5f),
-                                start = androidx.compose.ui.geometry.Offset(0f, centerY),
-                                end = androidx.compose.ui.geometry.Offset(size.width, centerY),
-                                strokeWidth = 3.dp.toPx(),
-                                cap = StrokeCap.Round
-                            )
-
-                            // 7 Day Nodes
-                            for (i in WEEK_DAY_LABELS.indices) {
-                                val x = i * step
-                                val isToday = i == todayDayOfWeekIndex
-                                val hasFocus = stats.dailyMinutes.getOrElse(i) { 0 } > 0
-
-                                // Outer circle
-                                drawCircle(
-                                    color = if (hasFocus || isToday) timelineColor else timelineColor.copy(alpha = 0.5f),
-                                    radius = if (isToday) 6.dp.toPx() else 4.5.dp.toPx(),
-                                    center = androidx.compose.ui.geometry.Offset(x, centerY)
-                                )
-
-                                // Inner core
-                                drawCircle(
-                                    color = if (hasFocus) timelineColor else surfaceContainerHigh,
-                                    radius = if (isToday) 2.5.dp.toPx() else 1.8.dp.toPx(),
-                                    center = androidx.compose.ui.geometry.Offset(x, centerY)
-                                )
-                            }
-                        }
+                    val todayDayIndex = if (isCurrentWeek) {
+                        (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) + 5) % 7
+                    } else {
+                        -1
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    val rawMaxMinutes = stats.dailyMinutes.maxOrNull() ?: 0
+                    val rawMaxHours = (rawMaxMinutes + 59) / 60
+                    val stepHours = maxOf(1, (rawMaxHours + 3) / 4)
+                    val yLabels = listOf(
+                        "${4 * stepHours}h",
+                        "${3 * stepHours}h",
+                        "${2 * stepHours}h",
+                        "${1 * stepHours}h",
+                        "0h"
+                    )
+                    val maxTotalMinutes = 4 * stepHours * 60
 
-                    // 2. Day Labels Row
+                    val primaryColor = MaterialTheme.colorScheme.primary
+                    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
+
+                    // Main Chart Container: [ Y-Axis Labels | Canvas Line Graph ]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(end = 6.dp)
                     ) {
-                        WEEK_DAY_LABELS.forEachIndexed { index, day ->
-                            val isToday = index == todayDayOfWeekIndex
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.width(36.dp)
-                            ) {
+                        // Y-Axis Labels Column (5 points from top to 0h)
+                        Column(
+                            modifier = Modifier
+                                .height(130.dp)
+                                .width(28.dp)
+                                .padding(end = 4.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            yLabels.forEach { label ->
                                 Text(
-                                    text = day,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 11.5.sp
+                                    text = label,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.5.sp,
+                                        fontWeight = FontWeight.Medium
                                     ),
-                                    color = if (isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                    textAlign = TextAlign.Center
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Chart Area: Canvas + X-Axis
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // Line Graph Canvas
+                            Canvas(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(130.dp)
+                            ) {
+                                val chartWidth = size.width
+                                val chartHeight = size.height
+                                val topPadding = 8.dp.toPx()
+                                val bottomPadding = 8.dp.toPx()
+                                val usableHeight = chartHeight - topPadding - bottomPadding
+
+                                val yTop = topPadding
+                                val yBottom = chartHeight - bottomPadding
+
+                                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
+
+                                // 1. Horizontal Y-Axis Grid Lines (5 levels)
+                                for (level in 0..4) {
+                                    val yLevel = yTop + (level / 4f) * usableHeight
+                                    val isBaseLine = level == 4
+                                    drawLine(
+                                        color = if (isBaseLine) gridColor.copy(alpha = 0.6f) else gridColor,
+                                        start = Offset(0f, yLevel),
+                                        end = Offset(chartWidth, yLevel),
+                                        strokeWidth = if (isBaseLine) 1.5.dp.toPx() else 1.dp.toPx(),
+                                        pathEffect = if (isBaseLine) null else dashEffect
+                                    )
+                                }
+
+                                // 2. Calculate Point Coordinates
+                                val numPoints = 7
+                                val stepX = chartWidth / (numPoints - 1)
+                                val points = mutableListOf<Offset>()
+
+                                for (i in 0 until numPoints) {
+                                    val mins = stats.dailyMinutes.getOrElse(i) { 0 }
+                                    val fraction = (mins.toFloat() / maxTotalMinutes).coerceIn(0f, 1f)
+                                    val x = i * stepX
+                                    val y = yBottom - (fraction * usableHeight)
+                                    points.add(Offset(x, y))
+                                }
+
+                                // 3. Build Smooth Cubic Path
+                                val strokePath = Path().apply {
+                                    if (points.isNotEmpty()) {
+                                        moveTo(points[0].x, points[0].y)
+                                        for (i in 0 until points.size - 1) {
+                                            val p0 = points[i]
+                                            val p1 = points[i + 1]
+                                            val controlX1 = p0.x + (p1.x - p0.x) / 2f
+                                            val controlY1 = p0.y
+                                            val controlX2 = p0.x + (p1.x - p0.x) / 2f
+                                            val controlY2 = p1.y
+                                            cubicTo(controlX1, controlY1, controlX2, controlY2, p1.x, p1.y)
+                                        }
+                                    }
+                                }
+
+                                // 4. Fill Gradient Under Curve
+                                val fillPath = Path().apply {
+                                    addPath(strokePath)
+                                    lineTo(points.last().x, yBottom)
+                                    lineTo(points.first().x, yBottom)
+                                    close()
+                                }
+
+                                drawPath(
+                                    path = fillPath,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            primaryColor.copy(alpha = 0.28f),
+                                            primaryColor.copy(alpha = 0.02f)
+                                        ),
+                                        startY = yTop,
+                                        endY = yBottom
+                                    )
                                 )
 
-                                if (isToday) {
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .size(4.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary)
+                                // 5. Draw Curve Stroke
+                                drawPath(
+                                    path = strokePath,
+                                    color = primaryColor,
+                                    style = Stroke(
+                                        width = 2.5.dp.toPx(),
+                                        cap = StrokeCap.Round,
+                                        join = StrokeJoin.Round
                                     )
+                                )
+
+                                // 6. Draw Nodes on Points
+                                for (i in points.indices) {
+                                    val pt = points[i]
+                                    val mins = stats.dailyMinutes.getOrElse(i) { 0 }
+                                    val isToday = i == todayDayIndex
+
+                                    if (mins > 0 || isToday) {
+                                        // Outer ring
+                                        drawCircle(
+                                            color = primaryColor,
+                                            radius = if (isToday) 5.5.dp.toPx() else 4.dp.toPx(),
+                                            center = pt
+                                        )
+                                        // Inner center
+                                        drawCircle(
+                                            color = if (isToday) Color.White else surfaceColor,
+                                            radius = if (isToday) 2.5.dp.toPx() else 2.dp.toPx(),
+                                            center = pt
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // X-Axis Day Labels Row (Aligned with the 7 points)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                WEEK_DAY_LABELS.forEachIndexed { index, day ->
+                                    val isToday = index == todayDayIndex
+                                    val mins = stats.dailyMinutes.getOrElse(index) { 0 }
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(32.dp)
+                                    ) {
+                                        Text(
+                                            text = day,
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
+                                                fontSize = 11.5.sp
+                                            ),
+                                            color = if (isToday) primaryColor
+                                            else if (mins > 0) MaterialTheme.colorScheme.onSurface
+                                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        if (isToday) {
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(4.dp)
+                                                    .clip(CircleShape)
+                                                    .background(primaryColor)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }

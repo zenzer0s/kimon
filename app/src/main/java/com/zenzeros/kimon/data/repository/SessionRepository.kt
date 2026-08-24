@@ -23,4 +23,6 @@ class SessionRepository(private val sessionDao: FocusSessionDao) {
     fun getTotalSessionsCount(): Flow<Int> = sessionDao.getTotalSessionsCount()
 
     fun getDistinctFocusDaysCount(): Flow<Int> = sessionDao.getDistinctFocusDaysCount()
+
+    suspend fun clearAllSessions() = sessionDao.deleteAllSessions()
 }

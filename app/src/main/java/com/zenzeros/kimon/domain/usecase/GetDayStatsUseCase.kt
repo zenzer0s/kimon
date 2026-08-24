@@ -37,11 +37,24 @@ class GetDayStatsUseCase(
                     TagDistributionItem(tag = tag, totalDurationSeconds = tagSecs, percentage = percentage)
                 }.sortedByDescending { it.totalDurationSeconds }
 
+                // 24 hours daily minutes (0 to 23)
+                val hourlyMins = IntArray(24)
+                val cal = Calendar.getInstance()
+                for (item in focusSessions) {
+                    cal.timeInMillis = item.session.startTimeEpochMs
+                    val hourIndex = cal.get(Calendar.HOUR_OF_DAY)
+                    if (hourIndex in 0..23) {
+                        val durationMins = if (item.session.actualDurationSeconds in 1..59) 1 else (item.session.actualDurationSeconds / 60)
+                        hourlyMins[hourIndex] += durationMins
+                    }
+                }
+
                 DayStats(
                     totalFocusSeconds = totalSecs,
                     totalSessions = totalCount,
                     tagDistributions = distributions,
-                    timelineSessions = sessionsWithTag
+                    timelineSessions = sessionsWithTag,
+                    hourlyMinutes = hourlyMins.toList()
                 )
             }
     }

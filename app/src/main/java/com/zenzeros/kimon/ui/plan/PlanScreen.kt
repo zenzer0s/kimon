@@ -4,6 +4,9 @@ package com.zenzeros.kimon.ui.plan
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +14,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,22 +34,31 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -96,7 +110,7 @@ fun PlanScreen(
                     )
                 }
             } else {
-                // 1. Material 3 Expressive Segmented List with Circular Checkboxes
+                // 1. Material 3 Expressive Segmented List with Circular Checkboxes & Swipe-to-Reveal Delete
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -105,95 +119,19 @@ fun PlanScreen(
                     contentPadding = PaddingValues(top = 4.dp, bottom = 80.dp)
                 ) {
                     itemsIndexed(tasks, key = { _, item -> item.id }) { index, item ->
-                        SegmentedListItem(
-                            checked = item.isCompleted,
-                            onCheckedChange = {
+                        val itemShapes = ListItemDefaults.segmentedShapes(
+                            index = index,
+                            count = tasks.size
+                        )
+
+                        SwipeToRevealTaskItem(
+                            task = item,
+                            shapes = itemShapes,
+                            onToggleCompletion = {
                                 viewModel.toggleTaskCompletion(item)
                             },
-                            shapes = ListItemDefaults.segmentedShapes(
-                                index = index,
-                                count = tasks.size
-                            ),
-                            colors = ListItemDefaults.segmentedColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                leadingContentColor = MaterialTheme.colorScheme.primary,
-                                selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                selectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                                selectedSupportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                selectedLeadingContentColor = MaterialTheme.colorScheme.primary
-                            ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                            leadingContent = {
-                                CircularCheckIcon(
-                                    checked = item.isCompleted
-                                )
-                            },
-                            supportingContent = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(top = 2.dp)
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = if (item.isCompleted) {
-                                            MaterialTheme.colorScheme.surfaceContainer
-                                        } else {
-                                            MaterialTheme.colorScheme.surfaceContainerHighest
-                                        }
-                                    ) {
-                                        Text(
-                                            text = item.category,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = if (item.isCompleted) {
-                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            },
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_focus),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(13.dp),
-                                            tint = if (item.isCompleted) {
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                            } else {
-                                                MaterialTheme.colorScheme.primary
-                                            }
-                                        )
-                                        Text(
-                                            text = "${item.estimatedPomodoros} ${if (item.estimatedPomodoros == 1) "session" else "sessions"}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = if (item.isCompleted) {
-                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            }
-                                        )
-                                    }
-                                }
-                            },
-                            content = {
-                                Text(
-                                    text = item.title,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.5.sp,
-                                        textDecoration = if (item.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                                    ),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            onDelete = {
+                                viewModel.deleteTask(item)
                             }
                         )
                     }
@@ -274,6 +212,192 @@ private fun CircularCheckIcon(
                 contentDescription = stringResource(R.string.plan_content_desc_completed),
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(13.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SwipeToRevealTaskItem(
+    task: com.zenzeros.kimon.data.local.entity.TaskEntity,
+    shapes: ListItemShapes,
+    onToggleCompletion: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+    val maxOffsetPx = with(density) { 68.dp.toPx() }
+    val offsetX = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    val isRevealed by remember { derivedStateOf { offsetX.value <= -maxOffsetPx * 0.7f } }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shapes.shape)
+    ) {
+        // Background Action Drawer: only rendered when item is actively swiped
+        if (offsetX.value < -0.5f) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(shapes.shape)
+                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f))
+                    .padding(end = 14.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            offsetX.animateTo(0f)
+                            onDelete()
+                        }
+                    },
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_delete),
+                        contentDescription = stringResource(R.string.tag_delete_title),
+                        tint = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        // Foreground: The Segmented Task List Item with Smooth Swipe Gestures
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            coroutineScope.launch {
+                                val newOffset = (offsetX.value + dragAmount).coerceIn(-maxOffsetPx, 0f)
+                                offsetX.snapTo(newOffset)
+                            }
+                        },
+                        onDragEnd = {
+                            coroutineScope.launch {
+                                val target = if (offsetX.value < -maxOffsetPx / 2.5f) -maxOffsetPx else 0f
+                                offsetX.animateTo(
+                                    targetValue = target,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
+                                    )
+                                )
+                            }
+                        },
+                        onDragCancel = {
+                            coroutineScope.launch {
+                                offsetX.animateTo(0f)
+                            }
+                        }
+                    )
+                }
+        ) {
+            SegmentedListItem(
+                checked = task.isCompleted,
+                onCheckedChange = {
+                    if (isRevealed) {
+                        coroutineScope.launch {
+                            offsetX.animateTo(
+                                0f,
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            )
+                        }
+                    } else {
+                        onToggleCompletion()
+                    }
+                },
+                shapes = shapes,
+                colors = ListItemDefaults.segmentedColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    leadingContentColor = MaterialTheme.colorScheme.primary,
+                    selectedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    selectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                    selectedSupportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    selectedLeadingContentColor = MaterialTheme.colorScheme.primary
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                leadingContent = {
+                    CircularCheckIcon(
+                        checked = task.isCompleted
+                    )
+                },
+                supportingContent = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (task.isCompleted) {
+                                MaterialTheme.colorScheme.surfaceContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHighest
+                            }
+                        ) {
+                            Text(
+                                text = task.category,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (task.isCompleted) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_focus),
+                                contentDescription = null,
+                                modifier = Modifier.size(13.dp),
+                                tint = if (task.isCompleted) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                }
+                            )
+                            Text(
+                                text = "${task.estimatedPomodoros} ${if (task.estimatedPomodoros == 1) "session" else "sessions"}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (task.isCompleted) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+                    }
+                },
+                content = {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.5.sp,
+                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             )
         }
     }

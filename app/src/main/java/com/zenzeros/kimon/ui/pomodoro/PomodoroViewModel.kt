@@ -47,6 +47,15 @@ class PomodoroViewModel(
         }
     }
 
+    fun deleteTag(tag: TagEntity) {
+        viewModelScope.launch {
+            if (_uiState.value.selectedTag?.id == tag.id) {
+                _uiState.update { it.copy(selectedTag = null) }
+            }
+            tagRepository.deleteTag(tag)
+        }
+    }
+
     fun setClockStyle(style: ClockStyle) {
         _uiState.update { it.copy(clockStyle = style) }
     }

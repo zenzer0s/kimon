@@ -19,7 +19,8 @@ data class DayStats(
     val totalFocusSeconds: Long = 0,
     val totalSessions: Int = 0,
     val tagDistributions: List<TagDistributionItem> = emptyList(),
-    val timelineSessions: List<FocusSessionWithTag> = emptyList()
+    val timelineSessions: List<FocusSessionWithTag> = emptyList(),
+    val hourlyMinutes: List<Int> = List(24) { 0 }
 )
 
 data class WeekStats(

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -35,7 +36,6 @@ import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalToggleButton
 import androidx.compose.material3.FilledTonalToggleButtonDefaults
 import androidx.compose.material3.Icon
@@ -47,6 +47,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,11 +78,20 @@ fun TagSelectionBottomSheet(
     selectedTag: TagEntity?,
     onSelectTag: (TagEntity?) -> Unit,
     onCreateTag: (name: String, colorHex: String) -> Unit,
+    onDeleteTag: (TagEntity) -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
     var isCreatingTag by remember { mutableStateOf(false) }
+    var isDeleteMode by remember { mutableStateOf(false) }
     var newTagName by remember { mutableStateOf("") }
     var selectedColorHex by remember { mutableStateOf(PRESET_COLORS[0]) }
+
+    // If all tags get deleted, exit delete mode
+    LaunchedEffect(tags) {
+        if (tags.isEmpty()) {
+            isDeleteMode = false
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -96,61 +106,133 @@ fun TagSelectionBottomSheet(
                 .padding(bottom = 32.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. Header with Icon, Title & "+ Create New Tag" Toggle
+            // 1. Header with Icon, Title & ButtonGroup (+ and Delete)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Title and Icon
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(
+                                if (isDeleteMode) MaterialTheme.colorScheme.errorContainer
+                                else MaterialTheme.colorScheme.primaryContainer
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_tag),
+                            painter = painterResource(if (isDeleteMode) R.drawable.ic_delete else R.drawable.ic_tag),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            tint = if (isDeleteMode) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(16.dp)
                         )
                     }
                     Text(
-                        text = stringResource(R.string.tag_select_title),
+                        text = if (isDeleteMode) stringResource(R.string.tag_delete_mode_hint) else stringResource(R.string.tag_select_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
+                            fontSize = 16.5.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (isDeleteMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                FilledTonalButton(
-                    onClick = { isCreatingTag = !isCreatingTag },
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                // Connected ButtonGroup with Add (+) and Delete (Trash) Icon Buttons
+                ButtonGroup(
+                    overflowIndicator = { menuState ->
+                        ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+                    },
+                    modifier = Modifier.wrapContentWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                    // + Create New Tag Button (Leading)
+                    customItem(
+                        buttonGroupContent = {
+                            FilledTonalToggleButton(
+                                checked = isCreatingTag,
+                                onCheckedChange = {
+                                    isCreatingTag = !isCreatingTag
+                                    if (isCreatingTag) isDeleteMode = false
+                                },
+                                shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                                colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                    checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 1.dp,
+                                    color = if (isCreatingTag) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                ),
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier
+                                    .width(42.dp)
+                                    .height(36.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_add),
+                                    contentDescription = stringResource(R.string.tag_create_new),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        },
+                        menuContent = {}
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(R.string.tag_create_new),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+
+                    // Delete Tag Mode Button (Trailing)
+                    customItem(
+                        buttonGroupContent = {
+                            FilledTonalToggleButton(
+                                checked = isDeleteMode,
+                                onCheckedChange = {
+                                    isDeleteMode = !isDeleteMode
+                                    if (isDeleteMode) isCreatingTag = false
+                                },
+                                shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                    checkedContainerColor = MaterialTheme.colorScheme.errorContainer,
+                                    checkedContentColor = MaterialTheme.colorScheme.onErrorContainer
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 1.dp,
+                                    color = if (isDeleteMode) MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
+                                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                ),
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier
+                                    .width(42.dp)
+                                    .height(36.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_delete),
+                                    contentDescription = stringResource(R.string.tag_delete_title),
+                                    tint = if (isDeleteMode) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                        },
+                        menuContent = {}
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 2. Expandable Inline Tag Creation Card (Clean with no redundant labels)
+            // 2. Expandable Inline Tag Creation Card
             AnimatedVisibility(
                 visible = isCreatingTag,
                 enter = fadeIn() + expandVertically(),
@@ -259,47 +341,49 @@ fun TagSelectionBottomSheet(
                 }
             }
 
-            // 3. Special "No Tag" Option
-            val isNoTagSelected = selectedTag == null
-            Surface(
-                onClick = {
-                    onSelectTag(null)
-                    onDismissRequest()
-                },
-                shape = RoundedCornerShape(12.dp),
-                color = if (isNoTagSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = if (isNoTagSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // 3. Special "No Tag" Option (visible only when not in delete mode)
+            if (!isDeleteMode) {
+                val isNoTagSelected = selectedTag == null
+                Surface(
+                    onClick = {
+                        onSelectTag(null)
+                        onDismissRequest()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isNoTagSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = if (isNoTagSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(if (isNoTagSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
-                    )
-                    Text(
-                        text = stringResource(R.string.tag_no_tag),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isNoTagSelected) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 13.sp
-                        ),
-                        color = if (isNoTagSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(if (isNoTagSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
+                        )
+                        Text(
+                            text = stringResource(R.string.tag_no_tag),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isNoTagSelected) FontWeight.Bold else FontWeight.Medium,
+                                fontSize = 13.sp
+                            ),
+                            color = if (isNoTagSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+            }
 
             // 4. Tag Grid: Max 3 Tags per Row using ButtonGroup
             val tagChunks = remember(tags) { tags.chunked(3) }
@@ -312,7 +396,9 @@ fun TagSelectionBottomSheet(
                     TagButtonGroupRow(
                         rowTags = rowTags,
                         selectedTag = selectedTag,
+                        isDeleteMode = isDeleteMode,
                         onSelectTag = onSelectTag,
+                        onDeleteTag = onDeleteTag,
                         onDismissRequest = onDismissRequest
                     )
                 }
@@ -325,7 +411,9 @@ fun TagSelectionBottomSheet(
 private fun TagButtonGroupRow(
     rowTags: List<TagEntity>,
     selectedTag: TagEntity?,
+    isDeleteMode: Boolean,
     onSelectTag: (TagEntity?) -> Unit,
+    onDeleteTag: (TagEntity) -> Unit,
     onDismissRequest: () -> Unit
 ) {
     ButtonGroup(
@@ -353,24 +441,33 @@ private fun TagButtonGroupRow(
                     }
 
                     FilledTonalToggleButton(
-                        checked = isSelected,
+                        checked = if (isDeleteMode) false else isSelected,
                         onCheckedChange = {
-                            onSelectTag(tag)
-                            onDismissRequest()
+                            if (isDeleteMode) {
+                                onDeleteTag(tag)
+                            } else {
+                                onSelectTag(tag)
+                                onDismissRequest()
+                            }
                         },
                         shapes = buttonShapes,
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            containerColor = if (isDeleteMode) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
+                            else MaterialTheme.colorScheme.surfaceContainerHighest,
+                            contentColor = if (isDeleteMode) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurface,
                             checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                             checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ),
                         border = androidx.compose.foundation.BorderStroke(
                             width = 1.dp,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                            color = when {
+                                isDeleteMode -> MaterialTheme.colorScheme.error.copy(alpha = 0.45f)
+                                isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                            }
                         ),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                         modifier = Modifier
                             .weight(1f)
                             .height(44.dp)
@@ -379,17 +476,26 @@ private fun TagButtonGroupRow(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(9.dp)
-                                    .clip(CircleShape)
-                                    .background(tagColor)
-                            )
+                            if (isDeleteMode) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_delete),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(9.dp)
+                                        .clip(CircleShape)
+                                        .background(tagColor)
+                                )
+                            }
                             Text(
                                 text = tag.name,
                                 style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 12.5.sp
+                                    fontWeight = if (isSelected && !isDeleteMode) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.sp
                                 ),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -402,3 +508,4 @@ private fun TagButtonGroupRow(
         }
     }
 }
+

@@ -64,6 +64,7 @@ fun FocusScreen(
     tags: List<TagEntity> = emptyList(),
     onSelectTag: (TagEntity?) -> Unit = {},
     onCreateTag: (name: String, colorHex: String) -> Unit = { _, _ -> },
+    onDeleteTag: (TagEntity) -> Unit = {},
     onStart: () -> Unit,
     onPause: () -> Unit,
     onRestart: () -> Unit,
@@ -263,6 +264,7 @@ fun FocusScreen(
             selectedTag = selectedTag,
             onSelectTag = onSelectTag,
             onCreateTag = onCreateTag,
+            onDeleteTag = onDeleteTag,
             onDismissRequest = { isTagSheetOpen = false }
         )
     }

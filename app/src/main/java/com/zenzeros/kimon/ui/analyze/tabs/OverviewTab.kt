@@ -51,12 +51,21 @@ import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.CompactSummaryTile
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
+import androidx.compose.runtime.Immutable
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
 private val ACTIVITY_LOG_WEEK_DAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+private val ActivityDayShape = RoundedCornerShape(4.5.dp)
+
+@Immutable
+private data class ActivityLogCell(
+    val dayNumber: Int,
+    val isToday: Boolean,
+    val isFocused: Boolean
+)
 
 @Composable
 fun OverviewTab(
@@ -483,25 +492,53 @@ private fun ActivityLogContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Vertical Weekday Calendar Heatmap (7 Rows: Mon-Sun x 6 Columns)
-        val cal = remember(calendarMonth.timeInMillis) {
-            val c = calendarMonth.clone() as Calendar
-            c.set(Calendar.DAY_OF_MONTH, 1)
-            c
-        }
-        val firstDayOfWeek = remember(cal) {
-            (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7 // Monday = 0 ... Sunday = 6
-        }
-        val maxDaysInMonth = remember(cal) { cal.getActualMaximum(Calendar.DAY_OF_MONTH) }
-        val totalCols = 6
+        // Precompute the entire 7x6 month grid once outside composition rendering
+        val gridRows = remember(calendarMonth.timeInMillis, stats.monthActiveDays, isCurrentMonth, todayDayOfMonth) {
+            val cal = calendarMonth.clone() as Calendar
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+            val firstDayOfWeek = (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+            val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
+            (0 until 7).map { row ->
+                (0 until 6).map { col ->
+                    val slotIndex = col * 7 + row
+                    val dayNumber = slotIndex - firstDayOfWeek + 1
+                    if (dayNumber in 1..maxDaysInMonth) {
+                        ActivityLogCell(
+                            dayNumber = dayNumber,
+                            isToday = isCurrentMonth && dayNumber == todayDayOfMonth,
+                            isFocused = stats.monthActiveDays.contains(dayNumber)
+                        )
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+
+        val maxDaysInMonth = remember(calendarMonth.timeInMillis) {
+            val cal = calendarMonth.clone() as Calendar
+            cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        }
+
+        val primaryColor = MaterialTheme.colorScheme.primary
+        val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+        val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
+        val onPrimaryContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
+        val surfaceContainerHighestColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+        val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+        val todayBorder = remember(primaryColor) { androidx.compose.foundation.BorderStroke(1.2.dp, primaryColor) }
+        val focusedBorder = remember(primaryColor) { androidx.compose.foundation.BorderStroke(1.dp, primaryColor) }
+
+        // Vertical Weekday Calendar Heatmap (7 Rows: Mon-Sun x 6 Columns)
         Column(
             verticalArrangement = Arrangement.spacedBy(2.5.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 26.dp)
         ) {
-            for (row in 0 until 7) {
+            gridRows.forEachIndexed { row, cols ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(2.5.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -520,63 +557,41 @@ private fun ActivityLogContent(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 9.sp
                             ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = onSurfaceVariantColor.copy(alpha = 0.7f)
                         )
                     }
 
                     // 6 Columns of Day Cells (1:1 Compact Squares)
-                    for (col in 0 until totalCols) {
-                        val slotIndex = col * 7 + row
-                        val dayNumber = slotIndex - firstDayOfWeek + 1
-
-                        if (dayNumber in 1..maxDaysInMonth) {
-                            val isToday = isCurrentMonth && dayNumber == todayDayOfMonth
-                            val isFocusedDay = stats.monthActiveDays.contains(dayNumber)
-
+                    cols.forEach { cell ->
+                        if (cell != null) {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(4.5.dp))
+                                    .clip(ActivityDayShape)
                                     .then(
                                         when {
-                                            isToday -> {
-                                                Modifier
-                                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                                                    .border(
-                                                        width = 1.2.dp,
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        shape = RoundedCornerShape(4.5.dp)
-                                                    )
-                                            }
-                                            isFocusedDay -> {
-                                                Modifier
-                                                    .background(MaterialTheme.colorScheme.primary)
-                                                    .border(
-                                                        width = 1.dp,
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        shape = RoundedCornerShape(4.5.dp)
-                                                    )
-                                            }
-                                            else -> {
-                                                Modifier.background(
-                                                    MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
-                                                )
-                                            }
+                                            cell.isToday -> Modifier
+                                                .background(primaryContainerColor)
+                                                .border(todayBorder, ActivityDayShape)
+                                            cell.isFocused -> Modifier
+                                                .background(primaryColor)
+                                                .border(focusedBorder, ActivityDayShape)
+                                            else -> Modifier.background(surfaceContainerHighestColor)
                                         }
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = dayNumber.toString(),
+                                    text = cell.dayNumber.toString(),
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = if (isToday || isFocusedDay) FontWeight.Bold else FontWeight.Normal,
+                                        fontWeight = if (cell.isToday || cell.isFocused) FontWeight.Bold else FontWeight.Normal,
                                         fontSize = 9.sp
                                     ),
                                     color = when {
-                                        isFocusedDay -> MaterialTheme.colorScheme.onPrimary
-                                        isToday -> MaterialTheme.colorScheme.onPrimaryContainer
-                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                        cell.isFocused -> onPrimaryColor
+                                        cell.isToday -> onPrimaryContainerColor
+                                        else -> onSurfaceVariantColor
                                     }
                                 )
                             }
