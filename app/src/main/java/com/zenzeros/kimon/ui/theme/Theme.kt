@@ -24,6 +24,7 @@ fun KimonTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    CustomColors.isDark = darkTheme
     CustomColors.black = blackTheme && darkTheme
 
     // 1. Official Google Material 3 Dynamic / Baseline Color Scheme

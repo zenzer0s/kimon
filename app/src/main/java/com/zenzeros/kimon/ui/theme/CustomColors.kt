@@ -14,24 +14,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 object CustomColors {
+    var isDark = false
     var black = false
 
     val topBarColors: TopAppBarColors
         @Composable get() =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface,
-                scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
+                containerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer,
+                scrolledContainerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer
             )
 
     val detailPaneTopBarColors: TopAppBarColors
         @Composable get() =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface,
-                scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
+                containerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer,
+                scrolledContainerColor = if (black) colorScheme.surface else colorScheme.surfaceContainer
             )
 
     val cardContainerColor: Color
-        @Composable get() = if (!black) colorScheme.surfaceContainerLowest else colorScheme.surfaceContainerHigh
+        @Composable get() =
+            if (isDark) colorScheme.surfaceContainerHigh else colorScheme.surfaceContainerLowest
 
     val listItemColors: ListItemColors
         @Composable get() =
