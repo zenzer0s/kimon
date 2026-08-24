@@ -53,6 +53,7 @@ import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
+import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -129,7 +130,7 @@ fun WeekTab(
             // --- Card 1: Weekly Focus ---
             Surface(
                 shape = weeklyFocusShapes.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -186,7 +187,7 @@ fun WeekTab(
             // --- Card 2: Focus Distribution ---
             Surface(
                 shape = focusDistributionShapes.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -334,7 +335,7 @@ fun WeekTab(
             // --- Card 3: Focus Trends (Line Graph with X and Y Axis) ---
             Surface(
                 shape = focusTrendsShapes.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()

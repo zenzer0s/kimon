@@ -53,6 +53,7 @@ import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
+import com.zenzeros.kimon.ui.theme.CustomColors
 import androidx.compose.runtime.Immutable
 import java.text.DateFormatSymbols
 import java.util.Calendar
@@ -134,7 +135,7 @@ fun YearTab(
             // --- Card 1: Yearly Focus ---
             Surface(
                 shape = yearlyFocusShapes.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -302,7 +303,7 @@ fun YearTab(
             // --- Card 2: Heat Map ---
             Surface(
                 shape = heatMapShapes.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()

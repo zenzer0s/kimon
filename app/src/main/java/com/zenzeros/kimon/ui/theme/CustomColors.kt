@@ -30,11 +30,14 @@ object CustomColors {
                 scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
             )
 
+    val cardContainerColor: Color
+        @Composable get() = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh
+
     val listItemColors: ListItemColors
         @Composable get() =
             ListItemDefaults.segmentedColors(
-                containerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
-                disabledContainerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
+                containerColor = cardContainerColor,
+                disabledContainerColor = cardContainerColor,
                 selectedContainerColor = colorScheme.surfaceContainerLow,
                 contentColor = colorScheme.onSurface,
                 leadingContentColor = colorScheme.primary,

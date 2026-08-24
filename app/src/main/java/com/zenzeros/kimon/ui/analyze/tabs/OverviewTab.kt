@@ -51,6 +51,7 @@ import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.CompactSummaryTile
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
+import com.zenzeros.kimon.ui.theme.CustomColors
 import androidx.compose.runtime.Immutable
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -95,7 +96,7 @@ fun OverviewTab(
         // --- Section 1: Today's Focus Card ---
         Surface(
             shape = todayFocusShapes.shape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = CustomColors.cardContainerColor,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -167,7 +168,7 @@ fun OverviewTab(
         // --- Section 2: Streaks Card ---
         Surface(
             shape = streaksShapes.shape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = CustomColors.cardContainerColor,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -220,7 +221,7 @@ fun OverviewTab(
         // --- Section 3: Activity Log Card ---
         Surface(
             shape = activityLogShapes.shape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = CustomColors.cardContainerColor,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -235,7 +236,7 @@ fun OverviewTab(
         // --- Section 4: Lifetime Focus Card ---
         Surface(
             shape = lifetimeFocusShapes.shape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = CustomColors.cardContainerColor,
             tonalElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()

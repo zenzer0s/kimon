@@ -51,6 +51,7 @@ import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
+import com.zenzeros.kimon.ui.theme.CustomColors
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -139,7 +140,7 @@ fun DayTab(
             // --- Card 1: Today's Focus ---
             Surface(
                 shape = todayFocusShapesGroup.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -196,7 +197,7 @@ fun DayTab(
             // --- Card 2: Daily Timeline ---
             Surface(
                 shape = dailyTimelineShapesGroup.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -381,7 +382,7 @@ fun DayTab(
             // --- Card 3: Hourly Focus (Bar Graph of 24 lines for 24 hours) ---
             Surface(
                 shape = hourlyFocusShapesGroup.shape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = CustomColors.cardContainerColor,
                 tonalElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()
