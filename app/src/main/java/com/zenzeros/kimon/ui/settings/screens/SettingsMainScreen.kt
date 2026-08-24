@@ -2,47 +2,47 @@
 
 package com.zenzeros.kimon.ui.settings.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.navigation.KimonNavKey
 import com.zenzeros.kimon.ui.settings.SettingsUiState
-import com.zenzeros.kimon.ui.settings.components.ResetDataDialog
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
-import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 
 data class SettingsNavCategory(
@@ -57,17 +57,10 @@ fun SettingsMainScreen(
     state: SettingsUiState,
     onNavigate: (KimonNavKey) -> Unit,
     onBack: () -> Unit,
-    onResetData: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showResetDialog by remember { mutableStateOf(false) }
-
-    if (showResetDialog) {
-        ResetDataDialog(
-            onReset = onResetData,
-            onDismiss = { showResetDialog = false }
-        )
-    }
+    val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
 
     val categories = remember {
         listOf(
@@ -75,19 +68,19 @@ fun SettingsMainScreen(
                 key = KimonNavKey.TimerSettings,
                 icon = R.drawable.ic_focus,
                 title = R.string.settings_section_timer,
-                subtitle = "Durations, configuration, preview, automation"
+                subtitle = "Durations, auto-start, screen & DND"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.AlarmSettings,
-                icon = R.drawable.ic_sparkles,
+                icon = R.drawable.ic_alarm_sound,
                 title = R.string.settings_section_sound,
-                subtitle = "Alarm sound, Sound, Vibrate, Media volume"
+                subtitle = "Alarm sound, Vibration, Headphone mode"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.AppearanceSettings,
-                icon = R.drawable.ic_profile,
+                icon = R.drawable.palette,
                 title = R.string.settings_section_appearance,
-                subtitle = "Theme mode, Palette, AMOLED Black"
+                subtitle = "Theme mode, Dynamic color, Color scheme, Black theme"
             )
         )
     }
@@ -101,7 +94,8 @@ fun SettingsMainScreen(
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontFamily = LocalAppFonts.current.topBarTitle,
                             fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 },
@@ -124,83 +118,80 @@ fun SettingsMainScreen(
         containerColor = topBarColors.containerColor,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            contentPadding = innerPadding,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(innerPadding)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            item { Spacer(Modifier.height(4.dp)) }
+            Spacer(Modifier.height(6.dp))
 
-            // 1. Settings Main Categories (Timer, Alarm, Appearance)
-            items(categories.size) { index ->
-                val cat = categories[index]
-                SegmentedListItem(
-                    leadingContent = {
-                        Icon(painterResource(cat.icon), contentDescription = null)
+            // Main Settings Categories Card (Focus, Sound & Vibration, Appearance & Theme)
+            categories.forEachIndexed { index, cat ->
+                val shape: Shape = when (index) {
+                    0 -> topListItemShape
+                    categories.lastIndex -> bottomListItemShape
+                    else -> middleListItemShape
+                }
+
+                Surface(
+                    shape = shape,
+                    color = listItemColors.containerColor,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNavigate(cat.key)
                     },
-                    supportingContent = {
-                        Text(
-                            cat.subtitle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(cat.icon),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
-                    },
-                    trailingContent = {
-                        Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null)
-                    },
-                    shapes = segmentedListItemShapes(index, categories.size),
-                    colors = listItemColors,
-                    onClick = { onNavigate(cat.key) }
-                ) {
-                    Text(stringResource(cat.title))
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(cat.title),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 15.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = cat.subtitle,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 12.5.sp,
+                                    lineHeight = 16.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Icon(
+                            painter = painterResource(R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
-            item { Spacer(Modifier.height(12.dp)) }
-
-            // 2. Data & Reset Group
-            item {
-                SegmentedListItem(
-                    leadingContent = {
-                        Icon(painterResource(R.drawable.ic_close), contentDescription = null)
-                    },
-                    supportingContent = {
-                        Text(stringResource(R.string.reset_data_desc))
-                    },
-                    trailingContent = {
-                        Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null)
-                    },
-                    shapes = segmentedListItemShapes(0, 2),
-                    colors = listItemColors,
-                    onClick = { showResetDialog = true }
-                ) {
-                    Text(stringResource(R.string.reset_data_title))
-                }
-            }
-
-            // 3. About App Group
-            item {
-                SegmentedListItem(
-                    leadingContent = {
-                        Icon(painterResource(R.drawable.ic_profile), contentDescription = null)
-                    },
-                    supportingContent = {
-                        Text(stringResource(R.string.app_name) + " 1.0")
-                    },
-                    trailingContent = {
-                        Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null)
-                    },
-                    shapes = segmentedListItemShapes(1, 2),
-                    colors = listItemColors,
-                    onClick = { onNavigate(KimonNavKey.AboutSettings) }
-                ) {
-                    Text("About")
-                }
-            }
-
-            item { Spacer(Modifier.height(24.dp)) }
+            Spacer(Modifier.height(28.dp))
         }
     }
 }

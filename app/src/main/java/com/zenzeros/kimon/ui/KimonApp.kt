@@ -167,8 +167,7 @@ fun KimonApp() {
                 SettingsMainScreen(
                     state = settingsState,
                     onNavigate = { key -> settingsBackStack.add(key) },
-                    onBack = navigateBack,
-                    onResetData = { settingsViewModel.resetAllData() }
+                    onBack = navigateBack
                 )
             }
             entry<KimonNavKey.TimerSettings> {
@@ -202,11 +201,6 @@ fun KimonApp() {
                     onSetThemeMode = { settingsViewModel.setThemeMode(it) },
                     onSetThemeColor = { settingsViewModel.setThemeColor(it) },
                     onToggleAmoledBlack = { settingsViewModel.toggleAmoledBlack(it) },
-                    onBack = navigateBack
-                )
-            }
-            entry<KimonNavKey.AboutSettings> {
-                AboutSettingsScreen(
                     onBack = navigateBack
                 )
             }
