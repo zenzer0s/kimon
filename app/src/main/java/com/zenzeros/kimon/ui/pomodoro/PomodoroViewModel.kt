@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,6 +36,39 @@ class PomodoroViewModel(
 
     private var timerJob: Job? = null
     private var sessionStartTimeMs: Long = 0L
+
+    init {
+        viewModelScope.launch {
+            combine(
+                userSettingsRepository.workDurationMinutes,
+                userSettingsRepository.shortBreakMinutes,
+                userSettingsRepository.longBreakMinutes,
+                userSettingsRepository.sessionsBeforeLongBreak
+            ) { work, sBreak, lBreak, totalSessions ->
+                listOf(work, sBreak, lBreak, totalSessions)
+            }.collect { (work, sBreak, lBreak, totalSessions) ->
+                _uiState.update { state ->
+                    val durationMinutes = when (state.currentMode) {
+                        PomodoroMode.FOCUS -> work
+                        PomodoroMode.SHORT_BREAK -> sBreak
+                        PomodoroMode.LONG_BREAK -> lBreak
+                    }
+                    val durationSecs = durationMinutes * 60
+                    if (state.timerStatus == TimerStatus.IDLE) {
+                        state.copy(
+                            remainingSeconds = durationSecs,
+                            totalSeconds = durationSecs,
+                            totalDailySessions = totalSessions
+                        )
+                    } else {
+                        state.copy(
+                            totalDailySessions = totalSessions
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun selectTag(tag: TagEntity?) {
         _uiState.update { it.copy(selectedTag = tag) }
@@ -62,14 +97,21 @@ class PomodoroViewModel(
 
     fun setMode(mode: PomodoroMode, context: Context? = null) {
         pauseTimer(context)
-        val durationSecs = mode.durationMinutes * 60
-        _uiState.update {
-            it.copy(
-                currentMode = mode,
-                timerStatus = TimerStatus.IDLE,
-                remainingSeconds = durationSecs,
-                totalSeconds = durationSecs
-            )
+        viewModelScope.launch {
+            val durationMinutes = when (mode) {
+                PomodoroMode.FOCUS -> userSettingsRepository.workDurationMinutes.first()
+                PomodoroMode.SHORT_BREAK -> userSettingsRepository.shortBreakMinutes.first()
+                PomodoroMode.LONG_BREAK -> userSettingsRepository.longBreakMinutes.first()
+            }
+            val durationSecs = durationMinutes * 60
+            _uiState.update {
+                it.copy(
+                    currentMode = mode,
+                    timerStatus = TimerStatus.IDLE,
+                    remainingSeconds = durationSecs,
+                    totalSeconds = durationSecs
+                )
+            }
         }
     }
 
@@ -163,23 +205,32 @@ class PomodoroViewModel(
         sessionStartTimeMs = 0L
 
         // Auto switch mode: FOCUS -> SHORT_BREAK (or LONG_BREAK)
-        val nextMode = when (currentState.currentMode) {
-            PomodoroMode.FOCUS -> {
-                val nextSessionIndex = currentState.currentSessionIndex + 1
-                if (nextSessionIndex % 4 == 0) PomodoroMode.LONG_BREAK else PomodoroMode.SHORT_BREAK
+        viewModelScope.launch {
+            val sessionsBeforeLong = userSettingsRepository.sessionsBeforeLongBreak.first()
+            val nextMode = when (currentState.currentMode) {
+                PomodoroMode.FOCUS -> {
+                    val nextSessionIndex = currentState.currentSessionIndex + 1
+                    if (nextSessionIndex % sessionsBeforeLong == 0) PomodoroMode.LONG_BREAK else PomodoroMode.SHORT_BREAK
+                }
+                PomodoroMode.SHORT_BREAK, PomodoroMode.LONG_BREAK -> PomodoroMode.FOCUS
             }
-            PomodoroMode.SHORT_BREAK, PomodoroMode.LONG_BREAK -> PomodoroMode.FOCUS
-        }
 
-        val nextDurationSecs = nextMode.durationMinutes * 60
-        _uiState.update {
-            it.copy(
-                currentMode = nextMode,
-                timerStatus = TimerStatus.IDLE,
-                remainingSeconds = nextDurationSecs,
-                totalSeconds = nextDurationSecs,
-                currentSessionIndex = if (currentState.currentMode == PomodoroMode.FOCUS) it.currentSessionIndex + 1 else it.currentSessionIndex
-            )
+            val nextDurationMinutes = when (nextMode) {
+                PomodoroMode.FOCUS -> userSettingsRepository.workDurationMinutes.first()
+                PomodoroMode.SHORT_BREAK -> userSettingsRepository.shortBreakMinutes.first()
+                PomodoroMode.LONG_BREAK -> userSettingsRepository.longBreakMinutes.first()
+            }
+            val nextDurationSecs = nextDurationMinutes * 60
+
+            _uiState.update {
+                it.copy(
+                    currentMode = nextMode,
+                    timerStatus = TimerStatus.IDLE,
+                    remainingSeconds = nextDurationSecs,
+                    totalSeconds = nextDurationSecs,
+                    currentSessionIndex = if (currentState.currentMode == PomodoroMode.FOCUS) it.currentSessionIndex + 1 else it.currentSessionIndex
+                )
+            }
         }
     }
 

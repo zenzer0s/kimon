@@ -3,10 +3,10 @@
 package com.zenzeros.kimon.ui.settings.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -16,15 +16,17 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
@@ -36,7 +38,9 @@ fun MinuteInputField(
     shape: Shape,
     modifier: Modifier = Modifier,
     inputTransformation: MinutesInputTransformation = MinutesInputTransformation2Digits,
-    imeAction: ImeAction = ImeAction.Next
+    imeAction: ImeAction = ImeAction.Next,
+    height: Dp = 72.dp,
+    fontSize: TextUnit = 38.sp
 ) {
     BasicTextField(
         state = state,
@@ -49,22 +53,20 @@ fun MinuteInputField(
         ),
         textStyle = TextStyle(
             fontFamily = typography.bodyLarge.fontFamily,
-            fontSize = 57.sp,
-            letterSpacing = (-2).sp,
-            color = if (enabled) colorScheme.onSurfaceVariant else colorScheme.outlineVariant,
+            fontSize = fontSize,
+            letterSpacing = (-1).sp,
+            fontWeight = FontWeight.Bold,
+            color = if (enabled) colorScheme.onSurface else colorScheme.outlineVariant,
             textAlign = TextAlign.Center
         ),
         cursorBrush = SolidColor(colorScheme.onSurface),
         decorator = { innerTextField ->
             val text = state.text
-            val width by animateDpAsState(
-                if (text.length < 3) 112.dp else 140.dp,
-                motionScheme.defaultSpatialSpec()
-            )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = modifier
-                    .size(width, 100.dp)
+                    .fillMaxWidth()
+                    .height(height)
                     .background(
                         animateColorAsState(
                             if (text.isNotEmpty())
@@ -78,3 +80,4 @@ fun MinuteInputField(
         }
     )
 }
+

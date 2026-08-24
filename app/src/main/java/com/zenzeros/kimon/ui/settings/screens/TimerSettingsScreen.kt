@@ -3,7 +3,6 @@
 package com.zenzeros.kimon.ui.settings.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,12 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
@@ -80,6 +78,7 @@ fun TimerSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
     var isLongBreakEnabled by remember { mutableStateOf(true) }
 
     val focusTimeState = rememberTextFieldState(state.workDurationMinutes.toString())
@@ -88,21 +87,21 @@ fun TimerSettingsScreen(
 
     LaunchedEffect(focusTimeState.text) {
         val num = focusTimeState.text.toString().toIntOrNull()
-        if (num != null && num != state.workDurationMinutes) {
+        if (num != null && num in 1..180 && num != state.workDurationMinutes) {
             onSetWorkDuration(num)
         }
     }
 
     LaunchedEffect(shortBreakState.text) {
         val num = shortBreakState.text.toString().toIntOrNull()
-        if (num != null && num != state.shortBreakMinutes) {
+        if (num != null && num in 1..60 && num != state.shortBreakMinutes) {
             onSetShortBreak(num)
         }
     }
 
     LaunchedEffect(longBreakState.text) {
         val num = longBreakState.text.toString().toIntOrNull()
-        if (num != null && num != state.longBreakMinutes) {
+        if (num != null && num in 1..90 && num != state.longBreakMinutes) {
             onSetLongBreak(num)
         }
     }
@@ -176,267 +175,250 @@ fun TimerSettingsScreen(
         containerColor = topBarColors.containerColor,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            contentPadding = innerPadding,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(innerPadding)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            item { Spacer(Modifier.height(6.dp)) }
+            Spacer(Modifier.height(6.dp))
 
             // ==========================================
-            // 1. Triple Horizontal Minute Input Fields
+            // 1. Triple Horizontal Minute Input Fields (Compact, No Scroll)
             // ==========================================
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                // 1.1 Focus Duration
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // 1.1 Focus Duration
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.mode_focus),
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        MinuteInputField(
-                            state = focusTimeState,
-                            enabled = true,
-                            shape = RoundedCornerShape(
-                                topStart = topListItemShape.topStart,
-                                bottomStart = topListItemShape.topStart,
-                                topEnd = topListItemShape.bottomStart,
-                                bottomEnd = topListItemShape.bottomStart
-                            ),
-                            inputTransformation = MinutesInputTransformation3Digits,
-                            imeAction = ImeAction.Next
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.mode_focus),
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    MinuteInputField(
+                        state = focusTimeState,
+                        enabled = true,
+                        shape = RoundedCornerShape(
+                            topStart = topListItemShape.topStart,
+                            bottomStart = topListItemShape.topStart,
+                            topEnd = topListItemShape.bottomStart,
+                            bottomEnd = topListItemShape.bottomStart
+                        ),
+                        inputTransformation = MinutesInputTransformation3Digits,
+                        imeAction = ImeAction.Next
+                    )
+                }
 
-                    Spacer(Modifier.width(6.dp))
+                // 1.2 Short Break Duration
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.mode_short_break),
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    MinuteInputField(
+                        state = shortBreakState,
+                        enabled = true,
+                        shape = RoundedCornerShape(middleListItemShape.topStart),
+                        imeAction = ImeAction.Next
+                    )
+                }
 
-                    // 1.2 Short Break Duration
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.mode_short_break),
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        MinuteInputField(
-                            state = shortBreakState,
-                            enabled = true,
-                            shape = RoundedCornerShape(middleListItemShape.topStart),
-                            imeAction = ImeAction.Next
-                        )
-                    }
-
-                    Spacer(Modifier.width(6.dp))
-
-                    // 1.3 Long Break Duration
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.mode_long_break),
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        MinuteInputField(
-                            state = longBreakState,
-                            enabled = true,
-                            shape = RoundedCornerShape(
-                                topStart = bottomListItemShape.topStart,
-                                bottomStart = bottomListItemShape.topStart,
-                                topEnd = bottomListItemShape.bottomStart,
-                                bottomEnd = bottomListItemShape.bottomStart
-                            ),
-                            imeAction = ImeAction.Done
-                        )
-                    }
+                // 1.3 Long Break Duration
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.mode_long_break),
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    MinuteInputField(
+                        state = longBreakState,
+                        enabled = true,
+                        shape = RoundedCornerShape(
+                            topStart = bottomListItemShape.topStart,
+                            bottomStart = bottomListItemShape.topStart,
+                            topEnd = bottomListItemShape.bottomStart,
+                            bottomEnd = bottomListItemShape.bottomStart
+                        ),
+                        imeAction = ImeAction.Done
+                    )
                 }
             }
 
-            item { Spacer(Modifier.height(18.dp)) }
+            Spacer(Modifier.height(18.dp))
 
             // ==========================================
             // 2. SECTION: Configuration (Pomodoros stepper & Long break switch)
             // ==========================================
-            item {
+            Text(
+                text = stringResource(R.string.section_configuration),
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+            )
+
+            // 2.1 Pomodoros Stepper Item
+            SegmentedListItem(
+                trailingContent = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f))
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        IconButton(
+                            onClick = {
+                                if (state.sessionsBeforeLongBreak > 1) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onSetSessionsBeforeLongBreak(state.sessionsBeforeLongBreak - 1)
+                                }
+                            },
+                            enabled = state.sessionsBeforeLongBreak > 1,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_remove),
+                                contentDescription = "Decrease",
+                                modifier = Modifier.size(16.dp),
+                                tint = if (state.sessionsBeforeLongBreak > 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+
+                        Text(
+                            text = state.sessionsBeforeLongBreak.toString(),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+
+                        IconButton(
+                            onClick = {
+                                if (state.sessionsBeforeLongBreak < 12) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onSetSessionsBeforeLongBreak(state.sessionsBeforeLongBreak + 1)
+                                }
+                            },
+                            enabled = state.sessionsBeforeLongBreak < 12,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_add),
+                                contentDescription = "Increase",
+                                modifier = Modifier.size(16.dp),
+                                tint = if (state.sessionsBeforeLongBreak < 12) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+                    }
+                },
+                shapes = segmentedListItemShapes(0, 2),
+                colors = listItemColors,
+                onClick = {}
+            ) {
                 Text(
-                    text = stringResource(R.string.section_configuration),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+                    text = stringResource(R.string.label_pomodoros),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp
                 )
             }
 
-            // 2.1 Pomodoros Stepper Item
-            item {
-                SegmentedListItem(
-                    trailingContent = {
-                        // Stepper Container: [ -   4   + ]
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f))
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    if (state.sessionsBeforeLongBreak > 1) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        onSetSessionsBeforeLongBreak(state.sessionsBeforeLongBreak - 1)
-                                    }
-                                },
-                                enabled = state.sessionsBeforeLongBreak > 1,
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_remove),
-                                    contentDescription = "Decrease",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = if (state.sessionsBeforeLongBreak > 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
-                                )
-                            }
-
-                            Text(
-                                text = state.sessionsBeforeLongBreak.toString(),
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    if (state.sessionsBeforeLongBreak < 12) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        onSetSessionsBeforeLongBreak(state.sessionsBeforeLongBreak + 1)
-                                    }
-                                },
-                                enabled = state.sessionsBeforeLongBreak < 12,
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_add),
-                                    contentDescription = "Increase",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = if (state.sessionsBeforeLongBreak < 12) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
-                                )
-                            }
-                        }
-                    },
-                    shapes = segmentedListItemShapes(0, 2),
-                    colors = listItemColors,
-                    onClick = {}
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_pomodoros),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
-                    )
-                }
-            }
-
             // 2.2 Long Break Switch Item
-            item {
-                SegmentedListItem(
-                    trailingContent = {
-                        Switch(
-                            checked = isLongBreakEnabled,
-                            onCheckedChange = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                isLongBreakEnabled = it
-                            },
-                            colors = switchColors
-                        )
-                    },
-                    shapes = segmentedListItemShapes(1, 2),
-                    colors = listItemColors,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        isLongBreakEnabled = !isLongBreakEnabled
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_long_break),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
+            SegmentedListItem(
+                trailingContent = {
+                    Switch(
+                        checked = isLongBreakEnabled,
+                        onCheckedChange = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            isLongBreakEnabled = it
+                        },
+                        colors = switchColors
                     )
+                },
+                shapes = segmentedListItemShapes(1, 2),
+                colors = listItemColors,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    isLongBreakEnabled = !isLongBreakEnabled
                 }
+            ) {
+                Text(
+                    text = stringResource(R.string.label_long_break),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp
+                )
             }
 
-            item { Spacer(Modifier.height(14.dp)) }
+            Spacer(Modifier.height(14.dp))
 
             // ==========================================
             // 3. SECTION: Session preview
             // ==========================================
-            item {
-                Text(
-                    text = stringResource(R.string.section_session_preview),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
-                )
-            }
+            Text(
+                text = stringResource(R.string.section_session_preview),
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+            )
 
-            item {
-                SessionPreviewCard(
-                    pomodoros = state.sessionsBeforeLongBreak,
-                    focusMinutes = state.workDurationMinutes,
-                    shortBreakMinutes = state.shortBreakMinutes,
-                    longBreakMinutes = state.longBreakMinutes,
-                    isLongBreakEnabled = isLongBreakEnabled
-                )
-            }
+            SessionPreviewCard(
+                pomodoros = state.sessionsBeforeLongBreak,
+                focusMinutes = state.workDurationMinutes,
+                shortBreakMinutes = state.shortBreakMinutes,
+                longBreakMinutes = state.longBreakMinutes,
+                isLongBreakEnabled = isLongBreakEnabled
+            )
 
-            item { Spacer(Modifier.height(18.dp)) }
+            Spacer(Modifier.height(18.dp))
 
             // ==========================================
             // 4. SECTION: Automation & Behavior
             // ==========================================
-            item {
-                Text(
-                    text = stringResource(R.string.settings_section_automation),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
-                )
-            }
+            Text(
+                text = stringResource(R.string.settings_section_automation),
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
+            )
 
-            itemsIndexed(switchItems) { index, item ->
+            switchItems.forEachIndexed { index, item ->
                 ListItem(
                     leadingContent = {
                         Icon(
@@ -470,7 +452,7 @@ fun TimerSettingsScreen(
                 }
             }
 
-            item { Spacer(Modifier.height(28.dp)) }
+            Spacer(Modifier.height(28.dp))
         }
     }
 }
