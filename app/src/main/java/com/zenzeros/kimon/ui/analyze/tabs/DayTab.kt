@@ -167,10 +167,8 @@ fun DayTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 0, count = 2),
                             icon = R.drawable.ic_focus,
-                            iconTint = MaterialTheme.colorScheme.primary,
+                            iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                             iconBg = MaterialTheme.colorScheme.primaryContainer,
-                            cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
                             label = stringResource(R.string.label_total_focus),
                             value = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds)
@@ -182,10 +180,8 @@ fun DayTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 1, count = 2),
                             icon = R.drawable.ic_bar_chart,
-                            iconTint = MaterialTheme.colorScheme.secondary,
+                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                             iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                            cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
                             label = stringResource(R.string.label_total_sessions),
                             value = stats.totalSessions.toString()
@@ -501,10 +497,10 @@ fun DayTab(
                                     // --- 2. Right Segmented Session Card ---
                                     Surface(
                                         shape = itemShapes.shape,
-                                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
+                                        color = CustomColors.innerCardContainerColor,
                                         border = androidx.compose.foundation.BorderStroke(
                                             width = 1.dp,
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                            color = CustomColors.innerCardBorderColor
                                         ),
                                         modifier = Modifier
                                             .weight(1f)

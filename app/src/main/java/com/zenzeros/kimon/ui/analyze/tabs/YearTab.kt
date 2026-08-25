@@ -154,10 +154,8 @@ fun YearTab(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         icon = R.drawable.ic_focus,
-                        iconTint = MaterialTheme.colorScheme.primary,
+                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                         iconBg = MaterialTheme.colorScheme.primaryContainer,
-                        cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                        cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                         valueColor = MaterialTheme.colorScheme.primary,
                         label = stringResource(R.string.label_total_focus_time),
                         value = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds)
@@ -178,10 +176,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 0, count = 2),
                             icon = R.drawable.ic_check,
-                            iconTint = MaterialTheme.colorScheme.secondary,
+                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                             iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                            cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
                             label = stringResource(R.string.label_sessions),
                             value = stats.totalSessions.toString()
@@ -193,10 +189,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 1, count = 2),
                             icon = R.drawable.ic_trophy,
-                            iconTint = MaterialTheme.colorScheme.tertiary,
+                            iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                             iconBg = MaterialTheme.colorScheme.tertiaryContainer,
-                            cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.tertiary,
                             label = stringResource(R.string.label_avg_session),
                             value = AnalyzeViewModel.formatDuration(stats.avgSessionSeconds)
@@ -218,10 +212,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 0, count = 2),
                             icon = R.drawable.ic_calendar,
-                            iconTint = MaterialTheme.colorScheme.primary,
+                            iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                             iconBg = MaterialTheme.colorScheme.primaryContainer,
-                            cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
                             label = stringResource(R.string.label_focus_days),
                             value = "${stats.focusDaysCount}d"
@@ -233,10 +225,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 1, count = 2),
                             icon = R.drawable.ic_streak,
-                            iconTint = MaterialTheme.colorScheme.tertiary,
+                            iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                             iconBg = MaterialTheme.colorScheme.tertiaryContainer,
-                            cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.tertiary,
                             label = stringResource(R.string.label_best_streak),
                             value = "${stats.bestStreakDays}d"
@@ -258,10 +248,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 0, count = 3),
                             icon = R.drawable.ic_bolt,
-                            iconTint = MaterialTheme.colorScheme.primary,
+                            iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                             iconBg = MaterialTheme.colorScheme.primaryContainer,
-                            cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.primary,
                             label = stringResource(R.string.label_best_day),
                             value = AnalyzeViewModel.formatDuration(stats.bestDaySeconds)
@@ -273,10 +261,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 1, count = 3),
                             icon = R.drawable.ic_target,
-                            iconTint = MaterialTheme.colorScheme.secondary,
+                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                             iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                            cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.secondary,
                             label = stringResource(R.string.label_best_week),
                             value = AnalyzeViewModel.formatDuration(stats.bestWeekSeconds)
@@ -288,10 +274,8 @@ fun YearTab(
                                 .fillMaxHeight(),
                             shape = horizontalSegmentedShape(index = 2, count = 3),
                             icon = R.drawable.ic_calendar,
-                            iconTint = MaterialTheme.colorScheme.tertiary,
+                            iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                             iconBg = MaterialTheme.colorScheme.tertiaryContainer,
-                            cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
-                            cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             valueColor = MaterialTheme.colorScheme.tertiary,
                             label = stringResource(R.string.label_best_month),
                             value = AnalyzeViewModel.formatDuration(stats.bestMonthSeconds)
@@ -454,7 +438,7 @@ private fun MonthHeatMapColumn(
     val primaryColor = MaterialTheme.colorScheme.primary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
     val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-    val unfocusedBgColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+    val unfocusedBgColor = CustomColors.innerCardContainerColor
 
     val textMeasurer = rememberTextMeasurer()
     val normalTextStyle = MaterialTheme.typography.labelSmall.copy(

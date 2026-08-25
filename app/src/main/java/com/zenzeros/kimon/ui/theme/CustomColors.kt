@@ -33,6 +33,12 @@ object CustomColors {
     val cardContainerColor: androidx.compose.ui.graphics.Color
         @Composable get() = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh
 
+    val innerCardContainerColor: androidx.compose.ui.graphics.Color
+        @Composable get() = if (!black) colorScheme.surfaceContainerLow else colorScheme.surfaceContainer
+
+    val innerCardBorderColor: androidx.compose.ui.graphics.Color
+        @Composable get() = if (!black) colorScheme.outlineVariant.copy(alpha = 0.35f) else colorScheme.outlineVariant.copy(alpha = 0.2f)
+
     val listItemColors: ListItemColors
         @Composable get() =
             ListItemDefaults.segmentedColors(
