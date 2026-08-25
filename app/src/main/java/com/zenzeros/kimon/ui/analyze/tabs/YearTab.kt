@@ -130,7 +130,7 @@ fun YearTab(
         // 2. Material 3 Expressive Segmented 2-Card Group (Yearly Focus & Heat Map)
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(2.5.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             // --- Card 1: Yearly Focus ---
             Surface(
