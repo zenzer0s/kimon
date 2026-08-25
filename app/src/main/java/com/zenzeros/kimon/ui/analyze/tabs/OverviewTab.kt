@@ -97,6 +97,7 @@ fun OverviewTab(
         Surface(
             shape = todayFocusShapes.shape,
             color = CustomColors.cardContainerColor,
+            border = CustomColors.cardBorder,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -165,6 +166,7 @@ fun OverviewTab(
         Surface(
             shape = streaksShapes.shape,
             color = CustomColors.cardContainerColor,
+            border = CustomColors.cardBorder,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -214,6 +216,7 @@ fun OverviewTab(
         Surface(
             shape = activityLogShapes.shape,
             color = CustomColors.cardContainerColor,
+            border = CustomColors.cardBorder,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -229,6 +232,7 @@ fun OverviewTab(
         Surface(
             shape = lifetimeFocusShapes.shape,
             color = CustomColors.cardContainerColor,
+            border = CustomColors.cardBorder,
             tonalElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()

@@ -131,6 +131,7 @@ fun WeekTab(
             Surface(
                 shape = weeklyFocusShapes.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -184,6 +185,7 @@ fun WeekTab(
             Surface(
                 shape = focusDistributionShapes.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -332,6 +334,7 @@ fun WeekTab(
             Surface(
                 shape = focusTrendsShapes.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()
