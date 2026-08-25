@@ -34,7 +34,7 @@ object CustomColors {
     val cardContainerColor: androidx.compose.ui.graphics.Color
         @Composable get() = when {
             black -> colorScheme.surfaceContainerHigh
-            isDark -> colorScheme.surfaceBright
+            isDark -> colorScheme.surfaceContainerHigh
             else -> colorScheme.surfaceContainerLowest
         }
 
