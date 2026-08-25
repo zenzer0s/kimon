@@ -125,7 +125,7 @@ fun AboutSettingsScreen(
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(2.5.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
             contentPadding = innerPadding,
             modifier = Modifier
                 .fillMaxSize()
@@ -325,62 +325,9 @@ fun AboutSettingsScreen(
                 )
             }
 
-            // --- 4. DONATE & SUPPORT SECTION ---
+            // --- 4. COMMUNITY SECTION ---
             item {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "SUPPORT DEVELOPMENT",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 6.dp, top = 6.dp, bottom = 4.dp)
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = R.drawable.ic_buymeacoffee,
-                    iconTint = Color(0xFFD68A00),
-                    iconContainerColor = Color(0xFFFFDD00).copy(alpha = 0.22f),
-                    title = "Buy Me a Coffee",
-                    subtitle = "buymeacoffee.com/zenzer0s",
-                    shape = topListItemShape,
-                    isExternal = true,
-                    onClick = { openUrl(context, BUYMEACOFFEE_URL) }
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = R.drawable.ic_paypal,
-                    iconTint = Color(0xFF0079C1),
-                    iconContainerColor = Color(0xFF0079C1).copy(alpha = 0.15f),
-                    title = "PayPal",
-                    subtitle = "@zenzer0s • paypal.me/zenzer0s",
-                    shape = middleListItemShape,
-                    isExternal = true,
-                    onClick = { openPayPal(context, PAYPAL_USERNAME) }
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = R.drawable.currency_rupee_upi,
-                    iconTint = Color(0xFF00897B),
-                    iconContainerColor = Color(0xFF00897B).copy(alpha = 0.18f),
-                    title = "Pay with UPI (India)",
-                    subtitle = "$UPI_ID • GPay, PhonePe, Paytm, BHIM",
-                    shape = bottomListItemShape,
-                    isExternal = true,
-                    onClick = { openUpiPayment(context, UPI_ID, "zenzeros") }
-                )
-            }
-
-            // --- 5. COMMUNITY SECTION ---
-            item {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(14.dp))
                 Text(
                     text = "COMMUNITY",
                     style = MaterialTheme.typography.labelLarge.copy(
@@ -414,9 +361,9 @@ fun AboutSettingsScreen(
                 )
             }
 
-            // --- 6. APP INFO SECTION ---
+            // --- 5. APP INFO SECTION ---
             item {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(14.dp))
                 Text(
                     text = "APP INFO",
                     style = MaterialTheme.typography.labelLarge.copy(
