@@ -42,3 +42,7 @@
 # Material Kolor
 -dontwarn com.materialkolor.**
 -keep class com.materialkolor.** { *; }
+
+# Coil
+-dontwarn coil.**
+-keep class coil.** { *; }

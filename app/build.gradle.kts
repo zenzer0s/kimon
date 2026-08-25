@@ -93,6 +93,9 @@ dependencies {
     // Material Kolor
     implementation(libs.material.kolor)
 
+    // Coil Image Loading
+    implementation(libs.coil.compose)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
