@@ -125,7 +125,7 @@ fun WeekTab(
         // 2. Material 3 Expressive Segmented Group
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(3.5.dp)
+            verticalArrangement = Arrangement.spacedBy(2.5.dp)
         ) {
             // --- Card 1: Weekly Focus ---
             Surface(
@@ -150,7 +150,7 @@ fun WeekTab(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         MetricTileCard(
                             modifier = Modifier

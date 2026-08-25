@@ -130,7 +130,7 @@ fun YearTab(
         // 2. Material 3 Expressive Segmented 2-Card Group (Yearly Focus & Heat Map)
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(3.5.dp)
+            verticalArrangement = Arrangement.spacedBy(2.5.dp)
         ) {
             // --- Card 1: Yearly Focus ---
             Surface(
@@ -162,14 +162,14 @@ fun YearTab(
                         value = AnalyzeViewModel.formatDuration(stats.totalFocusSeconds)
                     )
 
-                    Spacer(modifier = Modifier.height(3.5.dp))
+                    Spacer(modifier = Modifier.height(2.5.dp))
 
                     // Row 2: [ Sessions ] [ Avg Session ]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         MetricTileCard(
                             modifier = Modifier
@@ -198,14 +198,14 @@ fun YearTab(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(3.5.dp))
+                    Spacer(modifier = Modifier.height(2.5.dp))
 
                     // Row 3: [ Focus Days ] [ Best Streak ]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         MetricTileCard(
                             modifier = Modifier
@@ -234,14 +234,14 @@ fun YearTab(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(3.5.dp))
+                    Spacer(modifier = Modifier.height(2.5.dp))
 
                     // Row 4: [ Best Day ] [ Best Week ] [ Best Month ]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         MetricTileCard(
                             modifier = Modifier
