@@ -404,7 +404,7 @@ fun KimonApp() {
                             0 -> PlanScreen()
                             1 -> FocusScreen(
                                 remainingSeconds = pomodoroUiState.remainingSeconds,
-                                isRunning = pomodoroUiState.timerStatus == TimerStatus.RUNNING,
+                                timerStatus = pomodoroUiState.timerStatus,
                                 clockStyle = settingsState.clockStyle,
                                 selectedTag = pomodoroUiState.selectedTag,
                                 tags = allTags,

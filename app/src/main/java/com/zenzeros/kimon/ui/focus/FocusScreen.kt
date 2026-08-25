@@ -10,6 +10,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -56,11 +58,12 @@ import com.zenzeros.kimon.R
 import com.zenzeros.kimon.data.local.entity.TagEntity
 import com.zenzeros.kimon.ui.pomodoro.ConcentricPomodoroDial
 import com.zenzeros.kimon.ui.pomodoro.FlipCardPomodoroClock
+import com.zenzeros.kimon.ui.pomodoro.TimerStatus
 
 @Composable
 fun FocusScreen(
     remainingSeconds: Int,
-    isRunning: Boolean,
+    timerStatus: TimerStatus,
     clockStyle: String = "DIAL",
     selectedTag: TagEntity? = null,
     tags: List<TagEntity> = emptyList(),
@@ -72,14 +75,16 @@ fun FocusScreen(
     onRestart: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isTimerActive = remainingSeconds < 25 * 60
+    val isRunning = timerStatus == TimerStatus.RUNNING
+    val isPaused = timerStatus == TimerStatus.PAUSED
+    val isTimerActive = timerStatus != TimerStatus.IDLE
     var isTagSheetOpen by remember { mutableStateOf(false) }
     val tagSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val buttonCornerRadius by animateDpAsState(
         targetValue = when {
             isRunning -> 16.dp
-            isTimerActive -> 24.dp
+            isPaused -> 24.dp
             else -> 28.dp
         },
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -306,12 +311,12 @@ fun FocusScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_start),
-                        contentDescription = if (isTimerActive) stringResource(R.string.timer_resume) else stringResource(R.string.timer_start),
+                        contentDescription = if (isPaused) stringResource(R.string.timer_resume) else stringResource(R.string.timer_start),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isTimerActive) stringResource(R.string.timer_resume) else stringResource(R.string.timer_start),
+                        text = if (isPaused) stringResource(R.string.timer_resume) else stringResource(R.string.timer_start),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                     )
                 }
@@ -319,9 +324,34 @@ fun FocusScreen(
 
             // Animated Circular Restart Button (Visible when Running or Paused)
             AnimatedVisibility(
-                visible = isRunning || isTimerActive,
-                enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(),
-                exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally()
+                visible = isTimerActive,
+                enter = fadeIn(animationSpec = tween(220)) +
+                        scaleIn(
+                            initialScale = 0.5f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        ) +
+                        expandHorizontally(
+                            expandFrom = Alignment.Start,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        ),
+                exit = fadeOut(animationSpec = tween(180)) +
+                        scaleOut(
+                            targetScale = 0.5f,
+                            animationSpec = tween(180)
+                        ) +
+                        shrinkHorizontally(
+                            shrinkTowards = Alignment.Start,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
             ) {
                 FilledTonalIconButton(
                     onClick = onRestart,

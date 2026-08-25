@@ -290,12 +290,17 @@ class PomodoroViewModel(
         timerJob = viewModelScope.launch {
             while (_uiState.value.remainingSeconds > 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {
                 delay(1000)
+                if (_uiState.value.timerStatus != TimerStatus.RUNNING) break
+                val newRemaining = (_uiState.value.remainingSeconds - 1).coerceAtLeast(0)
                 _uiState.update {
-                    it.copy(remainingSeconds = (it.remainingSeconds - 1).coerceAtLeast(0))
+                    it.copy(remainingSeconds = newRemaining)
+                }
+                if (newRemaining == 0) {
+                    break
                 }
             }
 
-            if (_uiState.value.remainingSeconds <= 0) {
+            if (_uiState.value.remainingSeconds == 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {
                 onTimerFinished(context)
             }
         }
@@ -318,7 +323,7 @@ class PomodoroViewModel(
         }
 
         val currentState = _uiState.value
-        val actualSeconds = currentState.totalSeconds - currentState.remainingSeconds
+        val actualSeconds = (currentState.totalSeconds - currentState.remainingSeconds).coerceAtLeast(0)
 
         // Save session if elapsed >= 30 seconds
         if (actualSeconds >= 30 && sessionStartTimeMs > 0) {
