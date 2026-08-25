@@ -430,7 +430,6 @@ private fun AboutItem(
     Surface(
         shape = shape,
         color = listItemColors.containerColor,
-        border = CustomColors.cardBorder,
         onClick = { onClick?.invoke() },
         enabled = onClick != null,
         modifier = modifier.fillMaxWidth()
@@ -438,7 +437,7 @@ private fun AboutItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
