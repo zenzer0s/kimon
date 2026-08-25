@@ -91,7 +91,7 @@ fun OverviewTab(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(3.5.dp)
+        verticalArrangement = Arrangement.spacedBy(2.5.dp)
     ) {
         // --- Section 1: Today's Focus Card ---
         Surface(
@@ -135,7 +135,7 @@ fun OverviewTab(
                 // Horizontal Expressive Segmented Row: [ Focus Time ] [ Sessions ]
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     MetricTileCard(
                         modifier = Modifier.weight(1f),
@@ -185,7 +185,7 @@ fun OverviewTab(
                 // Horizontal Expressive Segmented Row: [ Current Streak ] [ Best Streak ]
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     MetricTileCard(
                         modifier = Modifier.weight(1f),
@@ -281,7 +281,7 @@ private fun LifetimeFocusContent(stats: OverviewStats) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             MetricTileCard(
                 modifier = Modifier
@@ -597,7 +597,7 @@ private fun ActivityLogContent(
         // Bottom 3 Metric Tiles: Horizontal Expressive Segmented Group
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             // Days Focused
             CompactSummaryTile(
