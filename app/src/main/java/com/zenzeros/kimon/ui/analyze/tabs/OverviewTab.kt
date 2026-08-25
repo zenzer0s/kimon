@@ -437,6 +437,7 @@ private fun ActivityLogContent(
                                 Icon(
                                     painter = painterResource(R.drawable.ic_chevron_left),
                                     contentDescription = "Previous Month",
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
@@ -464,6 +465,7 @@ private fun ActivityLogContent(
                                 Icon(
                                     painter = painterResource(R.drawable.ic_chevron_right),
                                     contentDescription = "Next Month",
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }

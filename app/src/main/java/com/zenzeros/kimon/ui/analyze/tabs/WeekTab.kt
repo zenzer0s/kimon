@@ -103,9 +103,9 @@ fun WeekTab(
         ) {
             Text(
                 text = weekRangeText,
-                style = MaterialTheme.typography.labelSmall.copy(
+                style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     letterSpacing = 0.4.sp
                 ),
                 color = MaterialTheme.colorScheme.primary,
@@ -115,7 +115,7 @@ fun WeekTab(
             Icon(
                 painter = painterResource(R.drawable.ic_calendar),
                 contentDescription = "Calendar",
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(15.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
         }

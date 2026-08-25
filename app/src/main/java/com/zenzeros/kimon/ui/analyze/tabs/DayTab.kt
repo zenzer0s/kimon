@@ -95,9 +95,9 @@ fun DayTab(
         ) {
             Text(
                 text = dayOfWeek,
-                style = MaterialTheme.typography.labelSmall.copy(
+                style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     letterSpacing = 0.5.sp
                 ),
                 color = MaterialTheme.colorScheme.primary
@@ -109,14 +109,14 @@ fun DayTab(
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp
                 ),
-                color = MaterialTheme.colorScheme.outlineVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
 
             Text(
                 text = formattedDate,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
                     letterSpacing = 0.3.sp
                 ),
                 color = MaterialTheme.colorScheme.onSurface
@@ -125,8 +125,8 @@ fun DayTab(
             Icon(
                 painter = painterResource(R.drawable.ic_calendar),
                 contentDescription = "Calendar",
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(15.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
