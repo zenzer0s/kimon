@@ -1,5 +1,6 @@
 package com.zenzeros.kimon.ui.pomodoro
 
+import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
@@ -11,6 +12,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -47,6 +49,9 @@ class PomodoroViewModel(
 
     private var timerJob: Job? = null
     private var sessionStartTimeMs: Long = 0L
+    private var previousDndFilter: Int = NotificationManager.INTERRUPTION_FILTER_ALL
+    private var alarmPlayer: MediaPlayer? = null
+    private var alarmAutoStopJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -127,19 +132,19 @@ class PomodoroViewModel(
     }
 
     private var dndActivatedByTimer: Boolean = false
-
     private fun applyDndIfEnabled(context: Context?) {
-        val ctx = context ?: appContext
-        viewModelScope.launch {
-            val isDndEnabled = userSettingsRepository.dndEnabled.first()
-            if (isDndEnabled && _uiState.value.currentMode == PomodoroMode.FOCUS) {
-                val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
-                if (notificationManager != null && notificationManager.isNotificationPolicyAccessGranted) {
+        val nm = (context ?: appContext).getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && nm.isNotificationPolicyAccessGranted) {
+            viewModelScope.launch {
+                val dndEnabled = userSettingsRepository.dndEnabled.first()
+                if (dndEnabled && _uiState.value.currentMode == PomodoroMode.FOCUS) {
                     try {
-                        notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                        previousDndFilter = nm.currentInterruptionFilter
+                        nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
                         dndActivatedByTimer = true
                     } catch (e: Exception) {
-                        // SecurityException or unsupported
+                        // Ignored
                     }
                 }
             }
@@ -147,17 +152,33 @@ class PomodoroViewModel(
     }
 
     private fun restoreDnd(context: Context?) {
-        if (dndActivatedByTimer) {
-            val ctx = context ?: appContext
-            val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
-            if (notificationManager != null && notificationManager.isNotificationPolicyAccessGranted) {
-                try {
-                    notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_ALL)
-                } catch (e: Exception) {
-                    // Ignored
-                }
+        val nm = (context ?: appContext).getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            ?: return
+        if (dndActivatedByTimer && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && nm.isNotificationPolicyAccessGranted) {
+            try {
+                nm.setInterruptionFilter(previousDndFilter)
+            } catch (e: Exception) {
+                // Ignored
             }
             dndActivatedByTimer = false
+        }
+    }
+
+    private fun stopAlarm() {
+        alarmAutoStopJob?.cancel()
+        alarmAutoStopJob = null
+        try {
+            alarmPlayer?.let { player ->
+                if (player.isPlaying) {
+                    player.stop()
+                }
+                player.reset()
+                player.release()
+            }
+        } catch (e: Exception) {
+            // Ignored
+        } finally {
+            alarmPlayer = null
         }
     }
 
@@ -188,14 +209,14 @@ class PomodoroViewModel(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             vibrator.vibrate(
                                 VibrationEffect.createWaveform(
-                                    longArrayOf(0, 500, 250, 500),
+                                    longArrayOf(0, 400, 200, 400),
                                     -1
                                 ),
                                 audioAttributes
                             )
                         } else {
                             @Suppress("DEPRECATION")
-                            vibrator.vibrate(longArrayOf(0, 500, 250, 500), -1)
+                            vibrator.vibrate(longArrayOf(0, 400, 200, 400), -1)
                         }
                     }
                 } catch (e: Exception) {
@@ -205,6 +226,7 @@ class PomodoroViewModel(
 
             if (sound) {
                 try {
+                    stopAlarm()
                     val audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
                     val isHeadphonesConnected = audioManager?.let { am ->
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -222,51 +244,56 @@ class PomodoroViewModel(
                         }
                     } ?: false
 
-                    if (headphoneOnly && isHeadphonesConnected) {
-                        // When headphones are connected: play on USAGE_MEDIA (STREAM_MUSIC) to stay inside headphones
-                        val alertUri = if (customSoundUri.isNotEmpty()) {
-                            Uri.parse(customSoundUri)
-                        } else {
-                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                        }
-                        MediaPlayer().apply {
-                            setAudioAttributes(
-                                AudioAttributes.Builder()
-                                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                    .build()
-                            )
-                            setDataSource(ctx, alertUri)
-                            prepare()
-                            start()
-                            setOnCompletionListener { release() }
-                        }
+                    val usage = if (headphoneOnly && isHeadphonesConnected) {
+                        AudioAttributes.USAGE_MEDIA
                     } else {
-                        // When headphones are not connected (or headphone mode is off): play on standard alarm stream
-                        val alertUri = if (customSoundUri.isNotEmpty()) {
-                            Uri.parse(customSoundUri)
-                        } else {
-                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                        }
-                        val ringtone = RingtoneManager.getRingtone(ctx, alertUri)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            ringtone?.audioAttributes = AudioAttributes.Builder()
-                                .setUsage(AudioAttributes.USAGE_ALARM)
-                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        AudioAttributes.USAGE_ALARM
+                    }
+
+                    val contentType = if (headphoneOnly && isHeadphonesConnected) {
+                        AudioAttributes.CONTENT_TYPE_MUSIC
+                    } else {
+                        AudioAttributes.CONTENT_TYPE_SONIFICATION
+                    }
+
+                    val alertUri = if (customSoundUri.isNotEmpty()) {
+                        Uri.parse(customSoundUri)
+                    } else {
+                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                            ?: Settings.System.DEFAULT_NOTIFICATION_URI
+                    }
+
+                    val player = MediaPlayer().apply {
+                        setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(usage)
+                                .setContentType(contentType)
                                 .build()
+                        )
+                        setDataSource(ctx, alertUri)
+                        isLooping = false
+                        prepare()
+                        start()
+                        setOnCompletionListener {
+                            stopAlarm()
                         }
-                        ringtone?.play()
+                    }
+                    alarmPlayer = player
+
+                    alarmAutoStopJob = viewModelScope.launch {
+                        delay(4000L)
+                        stopAlarm()
                     }
                 } catch (e: Exception) {
-                    // Ignored
+                    stopAlarm()
                 }
             }
         }
     }
 
     fun startTimer(context: Context? = null) {
+        stopAlarm()
         if (_uiState.value.timerStatus == TimerStatus.RUNNING) return
 
         if (_uiState.value.timerStatus == TimerStatus.IDLE) {
@@ -307,6 +334,7 @@ class PomodoroViewModel(
     }
 
     fun pauseTimer(context: Context? = null) {
+        stopAlarm()
         timerJob?.cancel()
         restoreDnd(context)
         _uiState.update { it.copy(timerStatus = TimerStatus.PAUSED) }
@@ -316,6 +344,7 @@ class PomodoroViewModel(
     }
 
     fun stopTimer(context: Context? = null) {
+        stopAlarm()
         timerJob?.cancel()
         restoreDnd(context)
         context?.let { ctx ->
@@ -433,6 +462,12 @@ class PomodoroViewModel(
                 )
             )
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopAlarm()
+        timerJob?.cancel()
     }
 
     companion object {
