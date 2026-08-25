@@ -81,6 +81,12 @@ fun SettingsMainScreen(
                 icon = R.drawable.palette,
                 title = R.string.settings_section_appearance,
                 subtitle = "Theme mode, Dynamic color, Color scheme, Black theme"
+            ),
+            SettingsNavCategory(
+                key = KimonNavKey.AboutSettings,
+                icon = R.drawable.ic_profile,
+                title = R.string.settings_section_about,
+                subtitle = "zenzeros, donations, open source & info"
             )
         )
     }
