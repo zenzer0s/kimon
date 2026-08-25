@@ -140,10 +140,8 @@ fun OverviewTab(
                         modifier = Modifier.weight(1f),
                         shape = horizontalSegmentedShape(index = 0, count = 2),
                         icon = R.drawable.ic_focus,
-                        iconTint = MaterialTheme.colorScheme.primary,
+                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                         iconBg = MaterialTheme.colorScheme.primaryContainer,
-                        cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                        cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                         valueColor = MaterialTheme.colorScheme.primary,
                         label = stringResource(R.string.label_focus_time),
                         value = AnalyzeViewModel.formatDuration(stats.todayFocusSeconds)
@@ -153,10 +151,8 @@ fun OverviewTab(
                         modifier = Modifier.weight(1f),
                         shape = horizontalSegmentedShape(index = 1, count = 2),
                         icon = R.drawable.ic_check,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                         iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                        cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                        cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                         valueColor = MaterialTheme.colorScheme.secondary,
                         label = stringResource(R.string.label_sessions),
                         value = stats.todaySessionsCount.toString()
@@ -193,10 +189,8 @@ fun OverviewTab(
                         modifier = Modifier.weight(1f),
                         shape = horizontalSegmentedShape(index = 0, count = 2),
                         icon = R.drawable.ic_streak,
-                        iconTint = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                         iconBg = MaterialTheme.colorScheme.tertiaryContainer,
-                        cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
-                        cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                         valueColor = MaterialTheme.colorScheme.tertiary,
                         label = stringResource(R.string.label_current_streak),
                         value = "${stats.currentStreak}d"
@@ -206,10 +200,8 @@ fun OverviewTab(
                         modifier = Modifier.weight(1f),
                         shape = horizontalSegmentedShape(index = 1, count = 2),
                         icon = R.drawable.ic_star,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                         iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                        cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                        cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                         valueColor = MaterialTheme.colorScheme.secondary,
                         label = stringResource(R.string.label_best_streak),
                         value = "${stats.bestStreak}d"
@@ -293,10 +285,8 @@ private fun LifetimeFocusContent(stats: OverviewStats) {
                     .fillMaxHeight(),
                 shape = horizontalSegmentedShape(index = 0, count = 3),
                 icon = R.drawable.ic_focus,
-                iconTint = MaterialTheme.colorScheme.primary,
+                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                 iconBg = MaterialTheme.colorScheme.primaryContainer,
-                cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                 valueColor = MaterialTheme.colorScheme.primary,
                 label = stringResource(R.string.label_total_focus_time),
                 value = AnalyzeViewModel.formatDuration(stats.lifetimeFocusSeconds),
@@ -309,10 +299,8 @@ private fun LifetimeFocusContent(stats: OverviewStats) {
                     .fillMaxHeight(),
                 shape = horizontalSegmentedShape(index = 1, count = 3),
                 icon = R.drawable.ic_list,
-                iconTint = MaterialTheme.colorScheme.secondary,
+                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                 iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                 valueColor = MaterialTheme.colorScheme.secondary,
                 label = stringResource(R.string.label_total_sessions),
                 value = stats.lifetimeSessionsCount.toString(),
@@ -325,10 +313,8 @@ private fun LifetimeFocusContent(stats: OverviewStats) {
                     .fillMaxHeight(),
                 shape = horizontalSegmentedShape(index = 2, count = 3),
                 icon = R.drawable.ic_calendar,
-                iconTint = MaterialTheme.colorScheme.tertiary,
+                iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                 iconBg = MaterialTheme.colorScheme.tertiaryContainer,
-                cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
-                cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                 valueColor = MaterialTheme.colorScheme.tertiary,
                 label = stringResource(R.string.label_focus_days),
                 value = "${stats.lifetimeFocusDays}d",
@@ -400,30 +386,23 @@ private fun ActivityLogContent(
             ) {
                 // Month Pill (without icon, compact)
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(6.dp),
+                    color = CustomColors.innerCardContainerColor,
                     border = androidx.compose.foundation.BorderStroke(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                    ),
-                    modifier = Modifier.height(30.dp)
+                        color = CustomColors.innerCardBorderColor
+                    )
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(horizontal = 9.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = currentFormattedMonth,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                letterSpacing = 0.5.sp
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Text(
+                        text = currentFormattedMonth,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.5.sp,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                    )
                 }
 
                 // < > Connected ButtonGroup
@@ -441,12 +420,12 @@ private fun ActivityLogContent(
                                 onCheckedChange = { onPreviousMonth() },
                                 shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                                 colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    containerColor = CustomColors.innerCardContainerColor,
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 border = androidx.compose.foundation.BorderStroke(
                                     width = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                    color = CustomColors.innerCardBorderColor
                                 ),
                                 contentPadding = PaddingValues(0.dp),
                                 modifier = Modifier.size(width = 34.dp, height = 30.dp)
@@ -468,12 +447,12 @@ private fun ActivityLogContent(
                                 onCheckedChange = { onNextMonth() },
                                 shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                                 colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    containerColor = CustomColors.innerCardContainerColor,
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 border = androidx.compose.foundation.BorderStroke(
                                     width = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                    color = CustomColors.innerCardBorderColor
                                 ),
                                 contentPadding = PaddingValues(0.dp),
                                 modifier = Modifier.size(width = 34.dp, height = 30.dp)
@@ -526,7 +505,7 @@ private fun ActivityLogContent(
         val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
         val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
         val onPrimaryContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
-        val surfaceContainerHighestColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f)
+        val surfaceContainerColor = CustomColors.innerCardContainerColor
         val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
 
         val todayBorder = remember(primaryColor) { androidx.compose.foundation.BorderStroke(1.2.dp, primaryColor) }
@@ -578,7 +557,7 @@ private fun ActivityLogContent(
                                             cell.isFocused -> Modifier
                                                 .background(primaryColor)
                                                 .border(focusedBorder, ActivityDayShape)
-                                            else -> Modifier.background(surfaceContainerHighestColor)
+                                            else -> Modifier.background(surfaceContainerColor)
                                         }
                                     ),
                                 contentAlignment = Alignment.Center
@@ -623,8 +602,8 @@ private fun ActivityLogContent(
                 label = stringResource(R.string.label_days_focused),
                 value = "${stats.monthDaysFocused} of $maxDaysInMonth",
                 valueColor = MaterialTheme.colorScheme.primary,
-                cardBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                cardBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                cardBg = CustomColors.innerCardContainerColor,
+                cardBorder = CustomColors.innerCardBorderColor
             )
 
             // Avg Focus Day
@@ -634,8 +613,8 @@ private fun ActivityLogContent(
                 label = stringResource(R.string.label_avg_focus_day),
                 value = AnalyzeViewModel.formatDuration(stats.monthAvgDailySeconds),
                 valueColor = MaterialTheme.colorScheme.tertiary,
-                cardBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
-                cardBorder = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                cardBg = CustomColors.innerCardContainerColor,
+                cardBorder = CustomColors.innerCardBorderColor
             )
 
             // Total Focus
@@ -645,8 +624,8 @@ private fun ActivityLogContent(
                 label = stringResource(R.string.label_total_focus),
                 value = AnalyzeViewModel.formatDuration(stats.monthTotalFocusSeconds),
                 valueColor = MaterialTheme.colorScheme.secondary,
-                cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
-                cardBorder = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                cardBg = CustomColors.innerCardContainerColor,
+                cardBorder = CustomColors.innerCardBorderColor
             )
         }
     }

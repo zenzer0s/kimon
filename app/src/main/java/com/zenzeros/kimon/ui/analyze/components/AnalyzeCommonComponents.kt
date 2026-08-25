@@ -175,10 +175,10 @@ fun AnalyzeNavigationHeader(
         // Left Pill
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = CustomColors.cardContainerColor,
+            color = CustomColors.innerCardContainerColor,
             border = androidx.compose.foundation.BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                color = CustomColors.innerCardBorderColor
             ),
             modifier = Modifier
                 .height(36.dp)
@@ -213,12 +213,12 @@ fun AnalyzeNavigationHeader(
                         onCheckedChange = { onPreviousClick() },
                         shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            containerColor = CustomColors.innerCardContainerColor,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         border = androidx.compose.foundation.BorderStroke(
                             width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                            color = CustomColors.innerCardBorderColor
                         ),
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(width = 42.dp, height = 36.dp)
@@ -241,12 +241,12 @@ fun AnalyzeNavigationHeader(
                         onCheckedChange = { onNextClick() },
                         shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            containerColor = CustomColors.innerCardContainerColor,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         border = androidx.compose.foundation.BorderStroke(
                             width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                            color = CustomColors.innerCardBorderColor
                         ),
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(width = 42.dp, height = 36.dp)
@@ -275,8 +275,8 @@ fun MetricTileCard(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    cardBg: Color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f),
-    cardBorder: Color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f),
+    cardBg: Color = CustomColors.innerCardContainerColor,
+    cardBorder: Color = CustomColors.innerCardBorderColor,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
     shape: Shape = RoundedCornerShape(12.dp),
     minLabelLines: Int = 1
