@@ -205,6 +205,11 @@ fun KimonApp() {
                     onBack = navigateBack
                 )
             }
+            entry<KimonNavKey.AboutSettings> {
+                AboutSettingsScreen(
+                    onBack = navigateBack
+                )
+            }
         }
     }
 
