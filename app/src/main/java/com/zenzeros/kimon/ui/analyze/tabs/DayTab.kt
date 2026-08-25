@@ -141,6 +141,7 @@ fun DayTab(
             Surface(
                 shape = todayFocusShapesGroup.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -194,6 +195,7 @@ fun DayTab(
             Surface(
                 shape = hourlyFocusShapesGroup.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -376,6 +378,7 @@ fun DayTab(
             Surface(
                 shape = dailyTimelineShapesGroup.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()

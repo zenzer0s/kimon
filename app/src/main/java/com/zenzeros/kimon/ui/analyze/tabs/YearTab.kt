@@ -136,6 +136,7 @@ fun YearTab(
             Surface(
                 shape = yearlyFocusShapes.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -288,6 +289,7 @@ fun YearTab(
             Surface(
                 shape = heatMapShapes.shape,
                 color = CustomColors.cardContainerColor,
+                border = CustomColors.cardBorder,
                 tonalElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()

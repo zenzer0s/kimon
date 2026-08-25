@@ -11,6 +11,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 
 object CustomColors {
     var isDark = false
@@ -31,19 +32,47 @@ object CustomColors {
             )
 
     val cardContainerColor: androidx.compose.ui.graphics.Color
-        @Composable get() = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh
+        @Composable get() = when {
+            black -> colorScheme.surfaceContainerHigh
+            isDark -> colorScheme.surfaceBright
+            else -> colorScheme.surfaceContainerLowest
+        }
+
+    val cardBorder: androidx.compose.foundation.BorderStroke
+        @Composable get() = when {
+            black -> androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = colorScheme.outlineVariant.copy(alpha = 0.15f)
+            )
+            isDark -> androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = colorScheme.outlineVariant.copy(alpha = 0.2f)
+            )
+            else -> androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = colorScheme.outlineVariant.copy(alpha = 0.35f)
+            )
+        }
 
     val innerCardContainerColor: androidx.compose.ui.graphics.Color
-        @Composable get() = if (!black) colorScheme.surfaceContainerLow else colorScheme.surfaceContainer
+        @Composable get() = when {
+            black -> colorScheme.surfaceContainer
+            isDark -> colorScheme.surfaceContainerLow
+            else -> colorScheme.surfaceContainerLow
+        }
 
     val innerCardBorderColor: androidx.compose.ui.graphics.Color
-        @Composable get() = if (!black) colorScheme.outlineVariant.copy(alpha = 0.35f) else colorScheme.outlineVariant.copy(alpha = 0.2f)
+        @Composable get() = when {
+            black -> colorScheme.outlineVariant.copy(alpha = 0.2f)
+            isDark -> colorScheme.outlineVariant.copy(alpha = 0.25f)
+            else -> colorScheme.outlineVariant.copy(alpha = 0.45f)
+        }
 
     val listItemColors: ListItemColors
         @Composable get() =
             ListItemDefaults.segmentedColors(
-                containerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
-                disabledContainerColor = if (!black) colorScheme.surfaceBright else colorScheme.surfaceContainerHigh,
+                containerColor = cardContainerColor,
+                disabledContainerColor = cardContainerColor,
             )
 
     val switchColors: SwitchColors
