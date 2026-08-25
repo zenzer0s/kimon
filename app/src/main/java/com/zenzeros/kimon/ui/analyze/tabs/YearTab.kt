@@ -110,7 +110,7 @@ fun YearTab(
                 text = selectedYear.toString(),
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
+                    fontSize = 12.5.sp,
                     letterSpacing = 0.5.sp
                 ),
                 color = MaterialTheme.colorScheme.primary,
@@ -120,8 +120,8 @@ fun YearTab(
             Icon(
                 painter = painterResource(R.drawable.ic_calendar),
                 contentDescription = "Calendar",
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(15.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 

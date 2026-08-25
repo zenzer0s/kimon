@@ -175,11 +175,8 @@ fun AnalyzeNavigationHeader(
         // Left Pill
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = CustomColors.innerCardContainerColor,
-            border = androidx.compose.foundation.BorderStroke(
-                width = 1.dp,
-                color = CustomColors.innerCardBorderColor
-            ),
+            color = CustomColors.cardContainerColor,
+            border = CustomColors.cardBorder,
             modifier = Modifier
                 .height(36.dp)
                 .weight(1f, fill = false)
@@ -187,7 +184,7 @@ fun AnalyzeNavigationHeader(
             Row(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(horizontal = 10.dp),
+                    .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -213,19 +210,17 @@ fun AnalyzeNavigationHeader(
                         onCheckedChange = { onPreviousClick() },
                         shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = CustomColors.innerCardContainerColor,
+                            containerColor = CustomColors.cardContainerColor,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 1.dp,
-                            color = CustomColors.innerCardBorderColor
-                        ),
+                        border = CustomColors.cardBorder,
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(width = 42.dp, height = 36.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_left),
                             contentDescription = stringResource(R.string.action_previous),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -241,19 +236,17 @@ fun AnalyzeNavigationHeader(
                         onCheckedChange = { onNextClick() },
                         shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                         colors = FilledTonalToggleButtonDefaults.filledTonalToggleButtonColors(
-                            containerColor = CustomColors.innerCardContainerColor,
+                            containerColor = CustomColors.cardContainerColor,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 1.dp,
-                            color = CustomColors.innerCardBorderColor
-                        ),
+                        border = CustomColors.cardBorder,
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.size(width = 42.dp, height = 36.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_right),
                             contentDescription = stringResource(R.string.action_next),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                     }
