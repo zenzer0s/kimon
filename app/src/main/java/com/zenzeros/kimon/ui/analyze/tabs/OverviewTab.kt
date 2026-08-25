@@ -91,7 +91,7 @@ fun OverviewTab(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(2.5.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         // --- Section 1: Today's Focus Card ---
         Surface(

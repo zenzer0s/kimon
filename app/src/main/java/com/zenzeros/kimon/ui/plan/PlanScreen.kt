@@ -116,7 +116,7 @@ fun PlanScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.5.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                     contentPadding = PaddingValues(top = 4.dp, bottom = 80.dp)
                 ) {
                     itemsIndexed(tasks, key = { _, item -> item.id }) { index, item ->

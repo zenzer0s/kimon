@@ -135,7 +135,7 @@ fun DayTab(
         // 2. Material 3 Expressive Segmented Group (Today's Focus, Daily Timeline, and Hourly Focus)
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(2.5.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             // --- Card 1: Today's Focus ---
             Surface(
