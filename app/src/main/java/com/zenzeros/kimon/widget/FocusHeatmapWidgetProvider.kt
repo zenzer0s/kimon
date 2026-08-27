@@ -180,7 +180,8 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             val unfocusedBgColor = if (isNight) 0xFF282C34.toInt() else 0xFFE0E5EC.toInt()
             val unfocusedBorderColor = if (isNight) 0x1EFFFFFF.toInt() else 0x1A000000.toInt()
             val unfocusedTextColor = if (isNight) 0xFFE0E3EB.toInt() else 0xFF2D3139.toInt()
-            val futureCellBgColor = if (isNight) 0x0DFFFFFF.toInt() else 0x08000000.toInt()
+            val futureCellBgColor = if (isNight) 0xFF1C2025.toInt() else 0xFFEAEFF5.toInt()
+            val futureTextColor = if (isNight) 0xFF858C98.toInt() else 0xFF7A818C.toInt()
             val onSurfaceColor = if (isNight) 0xFFFFFFFF.toInt() else 0xFF14171A.toInt()
             val weekdayColor = if (isNight) 0xFF9DA2AC.toInt() else 0xFF656B75.toInt()
 
@@ -260,18 +261,25 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
 
                     val isToday = cellDate.isEqual(today)
                     val isFuture = cellDate.isAfter(today)
+                    val d = cellDate.dayOfMonth
+                    val m = cellDate.monthValue
+                    val dayKey = "${cellDate.year}-${if (m < 10) "0$m" else "$m"}-${if (d < 10) "0$d" else "$d"}"
+                    val isFocused = activeDaysSet.contains(dayKey)
 
                     if (isFuture) {
-                        // Future day cell in the current week
+                        // Future day cell in the current week with visible date number
                         cellPaint.color = futureCellBgColor
                         cellPaint.style = Paint.Style.FILL
                         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, cellPaint)
-                    } else {
-                        val m = cellDate.monthValue
-                        val d = cellDate.dayOfMonth
-                        val dayKey = "${cellDate.year}-${if (m < 10) "0$m" else "$m"}-${if (d < 10) "0$d" else "$d"}"
-                        val isFocused = activeDaysSet.contains(dayKey)
 
+                        borderPaint.color = unfocusedBorderColor
+                        borderPaint.strokeWidth = 1f
+                        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
+
+                        textPaint.color = futureTextColor
+                        val textY = top + textYOffset
+                        canvas.drawText(d.toString(), rect.centerX(), textY, textPaint)
+                    } else {
                         // 1. Draw Cell Background
                         cellPaint.color = if (isFocused) primaryColor else unfocusedBgColor
                         cellPaint.style = Paint.Style.FILL
