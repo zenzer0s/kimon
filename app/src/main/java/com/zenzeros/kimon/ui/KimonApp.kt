@@ -85,6 +85,13 @@ import com.zenzeros.kimon.ui.theme.KimonTheme
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import kotlinx.coroutines.launch
 
+private enum class KimonTab(val titleRes: Int, val iconRes: Int) {
+    SLEEP(R.string.tab_sleep, R.drawable.ic_moon),
+    PLAN(R.string.tab_plan, R.drawable.ic_plan),
+    FOCUS(R.string.tab_focus, R.drawable.ic_focus),
+    ANALYZE(R.string.tab_analyze, R.drawable.ic_analyze)
+}
+
 @Composable
 fun KimonApp() {
     val context = LocalContext.current
@@ -146,10 +153,18 @@ fun KimonApp() {
         }
     }
 
-    // Pre-warmed Root Tabs Pager (0 = Sleep, 1 = Plan, 2 = Focus, 3 = Analyze)
+    // Dynamic Root Tabs (Sleep is visible only when sleep monitoring is enabled)
+    val enabledTabs = remember(settingsState.sleepMonitoringEnabled) {
+        if (settingsState.sleepMonitoringEnabled) {
+            listOf(KimonTab.SLEEP, KimonTab.PLAN, KimonTab.FOCUS, KimonTab.ANALYZE)
+        } else {
+            listOf(KimonTab.PLAN, KimonTab.FOCUS, KimonTab.ANALYZE)
+        }
+    }
+
     val mainTabPagerState = rememberPagerState(
-        initialPage = 2,
-        pageCount = { 4 }
+        initialPage = if (settingsState.sleepMonitoringEnabled) 2 else 1,
+        pageCount = { enabledTabs.size }
     )
 
     // Settings Navigation Stack
@@ -258,129 +273,38 @@ fun KimonApp() {
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
                     NavigationBar {
-                        NavigationBarItem(
-                            selected = mainTabPagerState.currentPage == 0,
-                            onClick = {
-                                if (mainTabPagerState.currentPage != 0) {
-                                    coroutineScope.launch {
-                                        mainTabPagerState.scrollToPage(0)
+                        enabledTabs.forEachIndexed { index, tab ->
+                            NavigationBarItem(
+                                selected = mainTabPagerState.currentPage == index,
+                                onClick = {
+                                    if (mainTabPagerState.currentPage != index) {
+                                        coroutineScope.launch {
+                                            mainTabPagerState.scrollToPage(index)
+                                        }
                                     }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_moon),
-                                    contentDescription = stringResource(R.string.tab_sleep),
-                                    modifier = Modifier.size(24.dp)
+                                },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(tab.iconRes),
+                                        contentDescription = stringResource(tab.titleRes),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(tab.titleRes),
+                                        fontWeight = if (mainTabPagerState.currentPage == index) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            },
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.tab_sleep),
-                                    fontWeight = if (mainTabPagerState.currentPage == 0) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        )
-
-                        NavigationBarItem(
-                            selected = mainTabPagerState.currentPage == 1,
-                            onClick = {
-                                if (mainTabPagerState.currentPage != 1) {
-                                    coroutineScope.launch {
-                                        mainTabPagerState.scrollToPage(1)
-                                    }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_plan),
-                                    contentDescription = stringResource(R.string.tab_plan),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.tab_plan),
-                                    fontWeight = if (mainTabPagerState.currentPage == 1) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
-
-                        NavigationBarItem(
-                            selected = mainTabPagerState.currentPage == 2,
-                            onClick = {
-                                if (mainTabPagerState.currentPage != 2) {
-                                    coroutineScope.launch {
-                                        mainTabPagerState.scrollToPage(2)
-                                    }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_focus),
-                                    contentDescription = stringResource(R.string.tab_focus),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.tab_focus),
-                                    fontWeight = if (mainTabPagerState.currentPage == 2) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
-
-                        NavigationBarItem(
-                            selected = mainTabPagerState.currentPage == 3,
-                            onClick = {
-                                if (mainTabPagerState.currentPage != 3) {
-                                    coroutineScope.launch {
-                                        mainTabPagerState.scrollToPage(3)
-                                    }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_analyze),
-                                    contentDescription = stringResource(R.string.tab_analyze),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.tab_analyze),
-                                    fontWeight = if (mainTabPagerState.currentPage == 3) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
+                        }
                     }
                 }
             }
@@ -455,7 +379,7 @@ fun KimonApp() {
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // 2. Pre-warmed Main Root Content Tabs (Sleep, Plan, Focus, Analyze)
+                    // 2. Pre-warmed Main Root Content Tabs (Dynamic: Plan, Focus, Analyze + optional Sleep)
                     HorizontalPager(
                         state = mainTabPagerState,
                         beyondViewportPageCount = 3,
@@ -464,14 +388,14 @@ fun KimonApp() {
                             .fillMaxWidth()
                             .weight(1f)
                     ) { page ->
-                        when (page) {
-                            0 -> SleepScreen(
+                        when (enabledTabs.getOrNull(page)) {
+                            KimonTab.SLEEP -> SleepScreen(
                                 onNavigateToSettings = {
                                     settingsBackStack.add(KimonNavKey.SleepSettings)
                                 }
                             )
-                            1 -> PlanScreen()
-                            2 -> FocusScreen(
+                            KimonTab.PLAN -> PlanScreen()
+                            KimonTab.FOCUS -> FocusScreen(
                                 remainingSeconds = pomodoroUiState.remainingSeconds,
                                 timerStatus = pomodoroUiState.timerStatus,
                                 clockStyle = settingsState.clockStyle,
@@ -484,13 +408,15 @@ fun KimonApp() {
                                 onPause = { pomodoroViewModel.pauseTimer(context) },
                                 onRestart = { pomodoroViewModel.stopTimer(context) }
                             )
-                            3 -> AnalyzeScreen(
+                            KimonTab.ANALYZE -> AnalyzeScreen(
                                 onNavigateToFocus = {
+                                    val focusIndex = enabledTabs.indexOf(KimonTab.FOCUS).coerceAtLeast(0)
                                     coroutineScope.launch {
-                                        mainTabPagerState.scrollToPage(2)
+                                        mainTabPagerState.scrollToPage(focusIndex)
                                     }
                                 }
                             )
+                            null -> {}
                         }
                     }
                 }
