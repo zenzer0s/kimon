@@ -3,6 +3,7 @@
     android:description="@string/widget_heatmap_desc"
     android:initialKeyguardLayout="@layout/widget_focus_heatmap"
     android:initialLayout="@layout/widget_focus_heatmap"
+    android:previewLayout="@layout/widget_focus_heatmap"
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:targetCellWidth="4"

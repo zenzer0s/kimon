@@ -7,7 +7,7 @@
     android:padding="12dp">
 
     <!-- ==========================================
-         1. Header: Icon + Title + Streak & Today Badges
+         1. Header: Icon + "Heat Map" + Streak Pill
          ========================================== -->
     <LinearLayout
         android:id="@+id/widget_header"
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="Focus Activity"
+            android:text="Heat Map"
             android:textColor="@color/widget_text_primary"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -69,78 +69,14 @@
     </LinearLayout>
 
     <!-- ==========================================
-         2. Footer: Month Range & Legend
-         ========================================== -->
-    <LinearLayout
-        android:id="@+id/widget_footer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginTop="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/widget_month_range"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Last 16 Weeks"
-            android:textColor="@color/widget_text_secondary"
-            android:textSize="10sp" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Less"
-                android:textColor="@color/widget_text_secondary"
-                android:textSize="9.5sp" />
-
-            <ImageView
-                android:layout_width="7dp"
-                android:layout_height="7dp"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/widget_score_badge" />
-
-            <ImageView
-                android:layout_width="7dp"
-                android:layout_height="7dp"
-                android:layout_marginStart="2dp"
-                android:background="@color/widget_accent_container" />
-
-            <ImageView
-                android:layout_width="7dp"
-                android:layout_height="7dp"
-                android:layout_marginStart="2dp"
-                android:background="@color/widget_accent_primary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="More"
-                android:textColor="@color/widget_text_secondary"
-                android:textSize="9.5sp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- ==========================================
-         3. Dynamic Heatmap Canvas Bitmap
+         2. Center: 2-Month YearTab Exact Heatmap Canvas
          ========================================== -->
     <ImageView
         android:id="@+id/widget_heatmap_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/widget_footer"
         android:layout_below="@id/widget_header"
         android:layout_marginTop="6dp"
-        android:layout_marginBottom="4dp"
         android:scaleType="fitCenter" />
 
 </RelativeLayout>

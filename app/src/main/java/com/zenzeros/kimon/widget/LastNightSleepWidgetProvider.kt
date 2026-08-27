@@ -86,17 +86,16 @@ class LastNightSleepWidgetProvider : AppWidgetProvider() {
 
                     val startTimeStr = timeFormat.format(latestSession.startTimeEpochMs)
                     val endTimeStr = timeFormat.format(latestSession.endTimeEpochMs)
-                    val timesText = "$startTimeStr – $endTimeStr"
 
                     val progressPercent = min(100, ((latestSession.durationMinutes * 100) / sleepGoalMinutes).toInt())
                     val goalHours = sleepGoalMinutes / 60
-                    val goalMins = sleepGoalMinutes % 60
-                    val goalText = if (goalMins > 0) "Goal: ${goalHours}h ${goalMins}m ($progressPercent%)" else "Goal: ${goalHours}h ($progressPercent%)"
+                    val goalText = "Time Asleep • $progressPercent% of ${goalHours}h goal"
 
-                    val sourceText = when (latestSession.source) {
-                        "GOOGLE_SLEEP_API" -> "Google Sleep API"
-                        "HEALTH_CONNECT" -> "Health Connect"
-                        else -> "Manual"
+                    val qualityRating = when {
+                        latestSession.qualityScore >= 85 -> "Optimal"
+                        latestSession.qualityScore >= 75 -> "Good"
+                        latestSession.qualityScore >= 60 -> "Fair"
+                        else -> "Low"
                     }
 
                     views.setViewVisibility(R.id.widget_header, View.VISIBLE)
@@ -105,11 +104,11 @@ class LastNightSleepWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(R.id.widget_empty_container, View.GONE)
 
                     views.setTextViewText(R.id.widget_duration, durationText)
-                    views.setTextViewText(R.id.widget_times, timesText)
-                    views.setTextViewText(R.id.widget_quality_badge, "${latestSession.qualityScore}% Rest")
-                    views.setProgressBar(R.id.widget_progress, 100, progressPercent, false)
                     views.setTextViewText(R.id.widget_goal_text, goalText)
-                    views.setTextViewText(R.id.widget_source, sourceText)
+                    views.setTextViewText(R.id.widget_quality_badge, "$qualityRating • ${latestSession.qualityScore}")
+                    views.setProgressBar(R.id.widget_progress, 100, progressPercent, false)
+                    views.setTextViewText(R.id.widget_bedtime, startTimeStr)
+                    views.setTextViewText(R.id.widget_wake_up, endTimeStr)
                 } else {
                     views.setViewVisibility(R.id.widget_header, View.VISIBLE)
                     views.setViewVisibility(R.id.widget_data_container, View.GONE)
