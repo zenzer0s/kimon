@@ -23,7 +23,6 @@ import kotlinx.coroutines.launch
 import java.text.DateFormatSymbols
 import java.time.Instant
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Locale
 
@@ -71,6 +70,7 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_UPDATE_WIDGET = "com.zenzeros.kimon.widget.ACTION_UPDATE_HEATMAP_WIDGET"
         private val WEEK_DAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        private const val TOTAL_COLS = 10
 
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -130,9 +130,9 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
 
             val streaksResult = CalculateStreaksUseCase().invoke(sessions)
 
-            // Render Heatmap Bitmap (Previous Month + Current Month, matching YearTab)
+            // Render Continuous Calendar Heatmap Bitmap (Zero gap between 31st and 1st)
             val isNight = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-            val bitmap = renderYearTabHeatmapBitmap(
+            val bitmap = renderContinuousHeatmapBitmap(
                 today = today,
                 activeDaysSet = activeDaysSet,
                 isNight = isNight
@@ -162,7 +162,7 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
-        private fun renderYearTabHeatmapBitmap(
+        private fun renderContinuousHeatmapBitmap(
             today: LocalDate,
             activeDaysSet: Set<String>,
             isNight: Boolean
@@ -174,21 +174,13 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
 
             val monthNames = DateFormatSymbols(Locale.getDefault()).months
 
-            val m2 = today.monthValue
-            val y2 = today.year
-            val m1 = if (m2 > 1) m2 - 1 else 12
-            val y1 = if (m2 > 1) y2 else y2 - 1
-
-            val months = listOf(
-                Pair(y1, m1),
-                Pair(y2, m2)
-            )
-
+            // Colors
             val primaryColor = if (isNight) 0xFFA2C9EB.toInt() else 0xFF386588.toInt()
             val onPrimaryTextColor = if (isNight) 0xFF001D32.toInt() else 0xFFFFFFFF.toInt()
             val unfocusedBgColor = if (isNight) 0xFF282C34.toInt() else 0xFFE0E5EC.toInt()
             val unfocusedBorderColor = if (isNight) 0x1EFFFFFF.toInt() else 0x1A000000.toInt()
             val unfocusedTextColor = if (isNight) 0xFFE0E3EB.toInt() else 0xFF2D3139.toInt()
+            val futureCellBgColor = if (isNight) 0x0DFFFFFF.toInt() else 0x08000000.toInt()
             val onSurfaceColor = if (isNight) 0xFFFFFFFF.toInt() else 0xFF14171A.toInt()
             val weekdayColor = if (isNight) 0xFF9DA2AC.toInt() else 0xFF656B75.toInt()
 
@@ -217,21 +209,19 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
 
             val leftMargin = 62f
             val topHeaderHeight = 44f
-            val spacing = 7f
-            val colsPerMonth = 6
-            val totalCols = 12
+            val spacing = 7.5f
+            val cols = TOTAL_COLS
             val rows = 7
             val cornerRadius = 9f
 
             val totalGridWidth = width - leftMargin - 16f
-            val cellWidth = (totalGridWidth - (totalCols - 1) * spacing) / totalCols
+            val cellWidth = (totalGridWidth - (cols - 1) * spacing) / cols
             val cellHeight = (height - topHeaderHeight - (rows - 1) * spacing - 6f) / rows
-            val singleMonthWidth = colsPerMonth * cellWidth + (colsPerMonth - 1) * spacing
 
+            // Align weekday labels
             val weekdayMetrics = weekdayPaint.fontMetrics
             val weekdayYOffset = (cellHeight / 2f) - (weekdayMetrics.ascent + weekdayMetrics.descent) / 2f
 
-            // Draw Weekday labels on left
             for (r in 0 until rows) {
                 val dayLabel = WEEK_DAYS[r]
                 val top = topHeaderHeight + r * (cellHeight + spacing)
@@ -239,58 +229,86 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
                 canvas.drawText(dayLabel, 6f, textY, weekdayPaint)
             }
 
+            // Calculate start date (Monday of TOTAL_COLS - 1 weeks ago)
+            val currentWeekMonday = today.minusDays((today.dayOfWeek.value - 1).toLong())
+            val startMonday = currentWeekMonday.minusWeeks((cols - 1).toLong())
+
             val textMetrics = textPaint.fontMetrics
             val textYOffset = (cellHeight / 2f) - (textMetrics.ascent + textMetrics.descent) / 2f
 
-            // Draw 2 Months (Seamlessly joined with unified spacing)
-            months.forEachIndexed { mIndex, (year, month) ->
-                val startX = leftMargin + mIndex * (colsPerMonth * (cellWidth + spacing))
-                val ym = YearMonth.of(year, month)
-                val maxDays = ym.lengthOfMonth()
-                val firstDayOfWeek = LocalDate.of(year, month, 1).dayOfWeek.value - 1 // Monday = 0 ... Sunday = 6
-                val monthName = monthNames[month - 1]
+            // Track columns per month for drawing month titles
+            val monthColBounds = mutableMapOf<Pair<Int, Int>, Pair<Int, Int>>() // (year, month) -> (minCol, maxCol)
 
-                // Draw Month Title
-                val monthCenterX = startX + singleMonthWidth / 2f
-                canvas.drawText(monthName, monthCenterX, topHeaderHeight - 12f, titlePaint)
+            // Draw Continuous Grid Cells
+            for (col in 0 until cols) {
+                val weekMonday = startMonday.plusWeeks(col.toLong())
 
-                // Draw Grid
-                for (col in 0 until colsPerMonth) {
-                    for (row in 0 until rows) {
-                        val slotIndex = col * 7 + row
-                        val dayNumber = slotIndex - firstDayOfWeek + 1
+                for (row in 0 until rows) {
+                    val cellDate = weekMonday.plusDays(row.toLong())
+                    val ymKey = Pair(cellDate.year, cellDate.monthValue)
 
-                        if (dayNumber in 1..maxDays) {
-                            val isThisToday = (year == today.year && month == today.monthValue && dayNumber == today.dayOfMonth)
-                            val dayKey = "$year-${if (month < 10) "0$month" else "$month"}-${if (dayNumber < 10) "0$dayNumber" else "$dayNumber"}"
-                            val isFocused = activeDaysSet.contains(dayKey)
-
-                            val left = startX + col * (cellWidth + spacing)
-                            val top = topHeaderHeight + row * (cellHeight + spacing)
-                            val rect = RectF(left, top, left + cellWidth, top + cellHeight)
-
-                            // 1. Draw Cell Background
-                            cellPaint.color = if (isFocused) primaryColor else unfocusedBgColor
-                            cellPaint.style = Paint.Style.FILL
-                            canvas.drawRoundRect(rect, cornerRadius, cornerRadius, cellPaint)
-
-                            // 2. Draw Subtle Border for unfocused cells or accent border for today
-                            if (isThisToday && !isFocused) {
-                                borderPaint.color = primaryColor
-                                borderPaint.strokeWidth = 3f
-                                canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
-                            } else if (!isFocused) {
-                                borderPaint.color = unfocusedBorderColor
-                                borderPaint.strokeWidth = 1.5f
-                                canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
-                            }
-
-                            // 3. Draw Day Number Text
-                            textPaint.color = if (isFocused) onPrimaryTextColor else unfocusedTextColor
-                            val textY = top + textYOffset
-                            canvas.drawText(dayNumber.toString(), rect.centerX(), textY, textPaint)
-                        }
+                    val existing = monthColBounds[ymKey]
+                    if (existing == null) {
+                        monthColBounds[ymKey] = Pair(col, col)
+                    } else {
+                        monthColBounds[ymKey] = Pair(minOf(existing.first, col), maxOf(existing.second, col))
                     }
+
+                    val left = leftMargin + col * (cellWidth + spacing)
+                    val top = topHeaderHeight + row * (cellHeight + spacing)
+                    val rect = RectF(left, top, left + cellWidth, top + cellHeight)
+
+                    val isToday = cellDate.isEqual(today)
+                    val isFuture = cellDate.isAfter(today)
+
+                    if (isFuture) {
+                        // Future day cell in the current week
+                        cellPaint.color = futureCellBgColor
+                        cellPaint.style = Paint.Style.FILL
+                        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, cellPaint)
+                    } else {
+                        val m = cellDate.monthValue
+                        val d = cellDate.dayOfMonth
+                        val dayKey = "${cellDate.year}-${if (m < 10) "0$m" else "$m"}-${if (d < 10) "0$d" else "$d"}"
+                        val isFocused = activeDaysSet.contains(dayKey)
+
+                        // 1. Draw Cell Background
+                        cellPaint.color = if (isFocused) primaryColor else unfocusedBgColor
+                        cellPaint.style = Paint.Style.FILL
+                        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, cellPaint)
+
+                        // 2. Draw Outline (Accent for today, subtle for unfocused)
+                        if (isToday && !isFocused) {
+                            borderPaint.color = primaryColor
+                            borderPaint.strokeWidth = 3f
+                            canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
+                        } else if (!isFocused) {
+                            borderPaint.color = unfocusedBorderColor
+                            borderPaint.strokeWidth = 1.5f
+                            canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
+                        }
+
+                        // 3. Draw Day Number Text
+                        textPaint.color = if (isFocused) onPrimaryTextColor else unfocusedTextColor
+                        val textY = top + textYOffset
+                        canvas.drawText(d.toString(), rect.centerX(), textY, textPaint)
+                    }
+                }
+            }
+
+            // Draw Month Titles above continuous month column spans
+            for ((ym, bounds) in monthColBounds) {
+                val (year, month) = ym
+                val (minCol, maxCol) = bounds
+                val spanCount = maxCol - minCol + 1
+
+                // Only draw month name if it covers at least 2 columns
+                if (spanCount >= 2) {
+                    val monthName = monthNames[month - 1]
+                    val startLeft = leftMargin + minCol * (cellWidth + spacing)
+                    val endRight = leftMargin + maxCol * (cellWidth + spacing) + cellWidth
+                    val monthCenterX = (startLeft + endRight) / 2f
+                    canvas.drawText(monthName, monthCenterX, topHeaderHeight - 12f, titlePaint)
                 }
             }
 
