@@ -4,10 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:padding="14dp">
+    android:padding="13dp">
 
     <!-- ==========================================
-         1. Header: Icon + "Last Night" + Quality Badge
+         1. Header: Icon + "Last Night's Sleep" + Quality Pill
          ========================================== -->
     <LinearLayout
         android:id="@+id/widget_header"
@@ -37,9 +37,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="Last Night"
-            android:textColor="@color/widget_text_secondary"
-            android:textSize="12sp"
+            android:text="Last Night\'s Sleep"
+            android:textColor="@color/widget_text_primary"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
@@ -47,23 +47,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/widget_score_badge"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="2dp"
-            android:text="88% Rest"
-            android:textColor="@color/widget_text_secondary"
+            android:paddingHorizontal="7dp"
+            android:paddingVertical="3dp"
+            android:text="Optimal • 88"
+            android:textColor="@color/widget_accent_primary"
             android:textSize="10.5sp"
             android:textStyle="bold" />
     </LinearLayout>
 
     <!-- ==========================================
-         2. Main Content (Active Sleep Data)
+         2. Main Hero: Big Duration + Goal Text + Progress Bar
          ========================================== -->
     <LinearLayout
         android:id="@+id/widget_data_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_above="@id/widget_bottom_container"
         android:layout_below="@id/widget_header"
-        android:layout_marginTop="8dp"
+        android:gravity="center"
         android:orientation="vertical">
 
         <TextView
@@ -72,68 +73,126 @@
             android:layout_height="wrap_content"
             android:letterSpacing="-0.02"
             android:text="7h 45m"
-            android:textColor="@color/widget_text_primary"
-            android:textSize="25sp"
+            android:textColor="@color/widget_accent_primary"
+            android:textSize="30sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/widget_times"
+            android:id="@+id/widget_goal_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="1dp"
-            android:text="11:18 PM – 07:03 AM"
+            android:text="Time Asleep • 96% of 8h goal"
             android:textColor="@color/widget_text_secondary"
-            android:textSize="11.5sp" />
-    </LinearLayout>
-
-    <!-- ==========================================
-         3. Bottom Section: Goal Progress Bar & Footer
-         ========================================== -->
-    <LinearLayout
-        android:id="@+id/widget_bottom_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:orientation="vertical">
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
         <ProgressBar
             android:id="@+id/widget_progress"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="4dp"
+            android:layout_height="5dp"
+            android:layout_marginTop="6dp"
             android:max="100"
             android:progress="96"
             android:progressDrawable="@drawable/widget_progress_bar" />
+    </LinearLayout>
 
+    <!-- ==========================================
+         3. Schedule Breakdown: Bedtime & Wake Up Tiles
+         ========================================== -->
+    <LinearLayout
+        android:id="@+id/widget_bottom_container"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+        <!-- Left Tile: Bedtime -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="1dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_tile_left"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
 
-            <TextView
-                android:id="@+id/widget_goal_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Goal 8h (96%)"
-                android:textColor="@color/widget_text_secondary"
-                android:textSize="10.5sp" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_moon"
+                android:tint="@color/widget_accent_primary" />
 
-            <TextView
-                android:id="@+id/widget_source"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Google API"
-                android:textColor="@color/widget_accent_primary"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:layout_marginStart="6dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bedtime"
+                    android:textColor="@color/widget_text_secondary"
+                    android:textSize="9.5sp" />
+
+                <TextView
+                    android:id="@+id/widget_bedtime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="11:18 PM"
+                    android:textColor="@color/widget_text_primary"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Right Tile: Wake Up -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="1dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_tile_right"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_sunrise"
+                android:tint="@color/widget_accent_primary" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Wake Up"
+                    android:textColor="@color/widget_text_secondary"
+                    android:textSize="9.5sp" />
+
+                <TextView
+                    android:id="@+id/widget_wake_up"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="07:03 AM"
+                    android:textColor="@color/widget_text_primary"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
     <!-- ==========================================
-         4. Empty State (Visible if no sleep data)
+         4. Empty State
          ========================================== -->
     <LinearLayout
         android:id="@+id/widget_empty_container"
@@ -147,16 +206,16 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No Sleep Logged"
+            android:text="No sleep recorded yet"
             android:textColor="@color/widget_text_primary"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Tracking active tonight"
+            android:text="Sleep tracking active tonight"
             android:textColor="@color/widget_text_secondary"
             android:textSize="11.5sp" />
     </LinearLayout>

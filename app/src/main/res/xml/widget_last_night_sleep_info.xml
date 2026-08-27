@@ -3,6 +3,7 @@
     android:description="@string/widget_sleep_desc"
     android:initialKeyguardLayout="@layout/widget_last_night_sleep"
     android:initialLayout="@layout/widget_last_night_sleep"
+    android:previewLayout="@layout/widget_last_night_sleep"
     android:minWidth="140dp"
     android:minHeight="140dp"
     android:targetCellWidth="2"
