@@ -27,7 +27,8 @@
                 android:layout_width="15dp"
                 android:layout_height="15dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_streak" />
+                android:src="@drawable/ic_streak"
+                android:tint="@color/widget_accent_on_container" />
         </FrameLayout>
 
         <TextView
@@ -101,19 +102,19 @@
                 android:textColor="@color/widget_text_secondary"
                 android:textSize="9.5sp" />
 
-            <View
+            <ImageView
                 android:layout_width="7dp"
                 android:layout_height="7dp"
                 android:layout_marginStart="4dp"
                 android:background="@drawable/widget_score_badge" />
 
-            <View
+            <ImageView
                 android:layout_width="7dp"
                 android:layout_height="7dp"
                 android:layout_marginStart="2dp"
                 android:background="@color/widget_accent_container" />
 
-            <View
+            <ImageView
                 android:layout_width="7dp"
                 android:layout_height="7dp"
                 android:layout_marginStart="2dp"
