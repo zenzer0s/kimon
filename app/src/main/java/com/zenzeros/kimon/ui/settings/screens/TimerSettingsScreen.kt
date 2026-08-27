@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -450,6 +451,21 @@ fun TimerSettingsScreen(
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             isLongBreakEnabled = it
                         },
+                        thumbContent = {
+                            if (isLongBreakEnabled) {
+                                Icon(
+                                    painter = painterResource(R.drawable.check),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.clear),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                )
+                            }
+                        },
                         colors = switchColors
                     )
                 },
@@ -565,6 +581,21 @@ fun TimerSettingsScreen(
                             onCheckedChange = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 item.onClick(it)
+                            },
+                            thumbContent = {
+                                if (item.checked) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.check),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(R.drawable.clear),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                }
                             },
                             colors = switchColors
                         )

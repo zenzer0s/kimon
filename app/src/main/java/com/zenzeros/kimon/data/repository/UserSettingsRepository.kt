@@ -43,6 +43,11 @@ class UserSettingsRepository(private val context: Context) {
         val THEME_COLOR = stringPreferencesKey("theme_color")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
         val CLOCK_STYLE = stringPreferencesKey("clock_style")
+
+        // Sleep Monitor
+        val SLEEP_MONITORING_ENABLED = booleanPreferencesKey("sleep_monitoring_enabled")
+        val HEALTH_CONNECT_SYNC_ENABLED = booleanPreferencesKey("health_connect_sync_enabled")
+        val SLEEP_GOAL_MINUTES = intPreferencesKey("sleep_goal_minutes")
     }
 
     // --- Flows ---
@@ -126,7 +131,23 @@ class UserSettingsRepository(private val context: Context) {
         prefs[PreferencesKeys.AMOLED_BLACK] ?: false
     }
 
+    val sleepMonitoringEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.SLEEP_MONITORING_ENABLED] ?: false
+    }
+
+    val healthConnectSyncEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.HEALTH_CONNECT_SYNC_ENABLED] ?: false
+    }
+
+    val sleepGoalMinutes: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.SLEEP_GOAL_MINUTES] ?: 480
+    }
+
     // --- Setters ---
+    suspend fun setSleepGoalMinutes(minutes: Int) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.SLEEP_GOAL_MINUTES] = minutes }
+    }
+
     suspend fun setWorkDurationMinutes(minutes: Int) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.WORK_DURATION_MINUTES] = minutes }
     }
@@ -210,6 +231,14 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setClockStyle(style: String) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.CLOCK_STYLE] = style }
+    }
+
+    suspend fun setSleepMonitoringEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.SLEEP_MONITORING_ENABLED] = enabled }
+    }
+
+    suspend fun setHealthConnectSyncEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.HEALTH_CONNECT_SYNC_ENABLED] = enabled }
     }
 
     suspend fun clearAllSettings() {

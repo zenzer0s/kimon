@@ -401,8 +401,8 @@ fun CompactSummaryTile(
 fun AnalyzeEmptyState(
     icon: Int,
     message: String,
-    actionText: String = "Go here to start one",
-    onActionClick: () -> Unit = {},
+    actionText: String? = null,
+    onActionClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -435,33 +435,36 @@ fun AnalyzeEmptyState(
                 fontSize = 12.5.sp,
                 fontWeight = FontWeight.Normal
             ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        if (actionText != null && onActionClick != null) {
+            Spacer(modifier = Modifier.height(6.dp))
 
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
-                .clickable { onActionClick() }
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = actionText,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp
-                ),
-                color = MaterialTheme.colorScheme.primary
-            )
-            Icon(
-                painter = painterResource(R.drawable.ic_chevron_right),
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { onActionClick() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = actionText,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    painter = painterResource(R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }

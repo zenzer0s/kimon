@@ -19,6 +19,16 @@ class KimonApplication : Application() {
     val taskRepository by lazy { TaskRepository(database.taskDao()) }
     val userSettingsRepository by lazy { UserSettingsRepository(this) }
 
+    val sleepMonitorManager by lazy { com.zenzeros.kimon.service.sleep.SleepMonitorManager(this) }
+    val healthConnectManager by lazy { com.zenzeros.kimon.service.health.HealthConnectManager(this) }
+    val sleepRepository by lazy {
+        com.zenzeros.kimon.data.repository.SleepRepository(
+            database.sleepSessionDao(),
+            sleepMonitorManager,
+            healthConnectManager
+        )
+    }
+
     val getOverviewStatsUseCase by lazy { GetOverviewStatsUseCase(sessionRepository) }
     val getDayStatsUseCase by lazy { GetDayStatsUseCase(sessionRepository) }
     val getWeekStatsUseCase by lazy { GetWeekStatsUseCase(sessionRepository) }

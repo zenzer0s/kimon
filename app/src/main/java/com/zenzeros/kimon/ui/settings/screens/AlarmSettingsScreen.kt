@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -352,6 +353,21 @@ private fun SettingsSwitchRow(
                 onCheckedChange = {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onToggle(it)
+                },
+                thumbContent = {
+                    if (item.checked) {
+                        Icon(
+                            painter = painterResource(R.drawable.check),
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.clear),
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
                 },
                 colors = switchColors
             )

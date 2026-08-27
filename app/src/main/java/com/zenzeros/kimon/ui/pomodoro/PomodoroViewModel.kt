@@ -48,6 +48,7 @@ class PomodoroViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private var timerJob: Job? = null
+    private var targetEndTimeMs: Long = 0L
     private var sessionStartTimeMs: Long = 0L
     private var previousDndFilter: Int = NotificationManager.INTERRUPTION_FILTER_ALL
     private var alarmPlayer: MediaPlayer? = null
@@ -113,6 +114,7 @@ class PomodoroViewModel(
 
     fun setMode(mode: PomodoroMode, context: Context? = null) {
         pauseTimer(context)
+        targetEndTimeMs = 0L
         viewModelScope.launch {
             val durationMinutes = when (mode) {
                 PomodoroMode.FOCUS -> userSettingsRepository.workDurationMinutes.first()
@@ -301,6 +303,7 @@ class PomodoroViewModel(
         }
 
         val currentState = _uiState.value
+        targetEndTimeMs = System.currentTimeMillis() + (currentState.remainingSeconds * 1000L)
         _uiState.update { it.copy(timerStatus = TimerStatus.RUNNING) }
 
         applyDndIfEnabled(context)
@@ -315,19 +318,21 @@ class PomodoroViewModel(
 
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            while (_uiState.value.remainingSeconds > 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {
-                delay(1000)
-                if (_uiState.value.timerStatus != TimerStatus.RUNNING) break
-                val newRemaining = (_uiState.value.remainingSeconds - 1).coerceAtLeast(0)
-                _uiState.update {
-                    it.copy(remainingSeconds = newRemaining)
+            while (_uiState.value.timerStatus == TimerStatus.RUNNING) {
+                val now = System.currentTimeMillis()
+                val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+                if (_uiState.value.remainingSeconds != newRemaining) {
+                    _uiState.update {
+                        it.copy(remainingSeconds = newRemaining)
+                    }
                 }
-                if (newRemaining == 0) {
+                if (newRemaining <= 0) {
                     break
                 }
+                delay(200L)
             }
 
-            if (_uiState.value.remainingSeconds == 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {
+            if (_uiState.value.remainingSeconds <= 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {
                 onTimerFinished(context)
             }
         }
@@ -337,7 +342,14 @@ class PomodoroViewModel(
         stopAlarm()
         timerJob?.cancel()
         restoreDnd(context)
-        _uiState.update { it.copy(timerStatus = TimerStatus.PAUSED) }
+        if (targetEndTimeMs > 0L) {
+            val now = System.currentTimeMillis()
+            val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+            _uiState.update { it.copy(timerStatus = TimerStatus.PAUSED, remainingSeconds = newRemaining) }
+        } else {
+            _uiState.update { it.copy(timerStatus = TimerStatus.PAUSED) }
+        }
+        targetEndTimeMs = 0L
         context?.let { ctx ->
             PomodoroTimerService.pauseTimer(ctx)
         }
@@ -346,6 +358,7 @@ class PomodoroViewModel(
     fun stopTimer(context: Context? = null) {
         stopAlarm()
         timerJob?.cancel()
+        targetEndTimeMs = 0L
         restoreDnd(context)
         context?.let { ctx ->
             PomodoroTimerService.stopTimer(ctx)
@@ -374,8 +387,22 @@ class PomodoroViewModel(
         }
     }
 
+    fun syncWithWallClock(context: Context? = null) {
+        if (_uiState.value.timerStatus == TimerStatus.RUNNING && targetEndTimeMs > 0L) {
+            val now = System.currentTimeMillis()
+            val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+            if (_uiState.value.remainingSeconds != newRemaining) {
+                _uiState.update { it.copy(remainingSeconds = newRemaining) }
+            }
+            if (newRemaining <= 0) {
+                onTimerFinished(context)
+            }
+        }
+    }
+
     private fun onTimerFinished(context: Context? = null) {
         timerJob?.cancel()
+        targetEndTimeMs = 0L
         restoreDnd(context)
         context?.let { ctx ->
             PomodoroTimerService.stopTimer(ctx)

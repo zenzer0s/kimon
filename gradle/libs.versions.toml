@@ -58,6 +58,10 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 # Coil
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.7.0" }
 
+# Google Play Services & Health Connect
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.3.0" }
+androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version = "1.1.0-alpha11" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

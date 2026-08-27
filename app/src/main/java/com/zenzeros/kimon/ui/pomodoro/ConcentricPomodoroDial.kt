@@ -7,8 +7,8 @@ import android.graphics.Path as AndroidPath
 import android.graphics.RectF as AndroidRectF
 import android.graphics.Typeface
 import android.os.Build
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.padding
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.res.ResourcesCompat
 import com.zenzeros.kimon.R
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -67,20 +69,42 @@ fun ConcentricPomodoroDial(
     val minutes = remainingSeconds / 60
     val seconds = remainingSeconds % 60
 
-    // Continuous monotonic angle without 00/59 rewind glitch
+    // Target angles
     val targetSecondsAngle = -(remainingSeconds.toFloat() * 6.0f)
-    val animatedSecondsAngle by animateFloatAsState(
-        targetValue = targetSecondsAngle,
-        animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
-        label = "secondsAngle"
-    )
-
     val targetMinutesAngle = -((remainingSeconds.toFloat() / 60.0f) * 6.0f)
-    val animatedMinutesAngle by animateFloatAsState(
-        targetValue = targetMinutesAngle,
-        animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
-        label = "minutesAngle"
-    )
+
+    val secondsAngleAnimatable = remember { Animatable(targetSecondsAngle) }
+    val minutesAngleAnimatable = remember { Animatable(targetMinutesAngle) }
+
+    LaunchedEffect(targetSecondsAngle) {
+        val diff = abs(targetSecondsAngle - secondsAngleAnimatable.value)
+        if (diff > 12f) {
+            // Instant snap for restart, reset, or setting change
+            secondsAngleAnimatable.snapTo(targetSecondsAngle)
+        } else {
+            // Smooth 1-second linear transition for active ticking
+            secondsAngleAnimatable.animateTo(
+                targetValue = targetSecondsAngle,
+                animationSpec = tween(durationMillis = 1000, easing = LinearEasing)
+            )
+        }
+    }
+
+    LaunchedEffect(targetMinutesAngle) {
+        val diff = abs(targetMinutesAngle - minutesAngleAnimatable.value)
+        if (diff > 0.5f) {
+            // Instant snap for restart, reset, or setting change
+            minutesAngleAnimatable.snapTo(targetMinutesAngle)
+        } else {
+            minutesAngleAnimatable.animateTo(
+                targetValue = targetMinutesAngle,
+                animationSpec = tween(durationMillis = 1000, easing = LinearEasing)
+            )
+        }
+    }
+
+    val animatedSecondsAngle = secondsAngleAnimatable.value
+    val animatedMinutesAngle = minutesAngleAnimatable.value
 
     // Center display string (Minutes) & Pill display string (Seconds)
     val centerMinutesText = String.format("%02d", minutes)

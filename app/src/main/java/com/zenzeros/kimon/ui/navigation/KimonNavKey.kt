@@ -27,4 +27,7 @@ sealed interface KimonNavKey : NavKey {
 
     @Serializable
     data object AboutSettings : KimonNavKey
+
+    @Serializable
+    data object SleepSettings : KimonNavKey
 }

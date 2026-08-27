@@ -96,6 +96,10 @@ dependencies {
     // Coil Image Loading
     implementation(libs.coil.compose)
 
+    // Google Play Services Location (Sleep API) & Health Connect
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.health.connect)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))

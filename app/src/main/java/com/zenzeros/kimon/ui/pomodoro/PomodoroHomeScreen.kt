@@ -44,20 +44,31 @@ fun PomodoroHomeScreen(
     var state by remember { mutableStateOf(initialState) }
 
     // Live countdown ticker effect when timer is RUNNING
-    LaunchedEffect(state.timerStatus, state.remainingSeconds) {
-        if (state.timerStatus == TimerStatus.RUNNING && state.remainingSeconds > 0) {
-            delay(1000L)
-            state = state.copy(remainingSeconds = state.remainingSeconds - 1)
-        } else if (state.timerStatus == TimerStatus.RUNNING && state.remainingSeconds <= 0) {
-            val nextMode = if (state.currentMode == PomodoroMode.FOCUS) PomodoroMode.SHORT_BREAK else PomodoroMode.FOCUS
-            val newCompleted = if (state.currentMode == PomodoroMode.FOCUS) state.currentSessionIndex + 1 else state.currentSessionIndex
-            state = state.copy(
-                currentMode = nextMode,
-                remainingSeconds = nextMode.durationMinutes * 60,
-                totalSeconds = nextMode.durationMinutes * 60,
-                timerStatus = TimerStatus.IDLE,
-                currentSessionIndex = newCompleted
-            )
+    var targetEndTimeMs by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(state.timerStatus) {
+        if (state.timerStatus == TimerStatus.RUNNING) {
+            targetEndTimeMs = System.currentTimeMillis() + (state.remainingSeconds * 1000L)
+            while (state.timerStatus == TimerStatus.RUNNING) {
+                val now = System.currentTimeMillis()
+                val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+                if (state.remainingSeconds != newRemaining) {
+                    state = state.copy(remainingSeconds = newRemaining)
+                }
+                if (newRemaining <= 0) {
+                    val nextMode = if (state.currentMode == PomodoroMode.FOCUS) PomodoroMode.SHORT_BREAK else PomodoroMode.FOCUS
+                    val newCompleted = if (state.currentMode == PomodoroMode.FOCUS) state.currentSessionIndex + 1 else state.currentSessionIndex
+                    state = state.copy(
+                        currentMode = nextMode,
+                        remainingSeconds = nextMode.durationMinutes * 60,
+                        totalSeconds = nextMode.durationMinutes * 60,
+                        timerStatus = TimerStatus.IDLE,
+                        currentSessionIndex = newCompleted
+                    )
+                    break
+                }
+                delay(200L)
+            }
         }
     }
 
