@@ -14,7 +14,7 @@ import com.zenzeros.kimon.domain.usecase.GetYearStatsUseCase
 class KimonApplication : Application() {
 
     val database by lazy { KimonDatabase.getInstance(this) }
-    val sessionRepository by lazy { SessionRepository(database.focusSessionDao()) }
+    val sessionRepository by lazy { SessionRepository(database.focusSessionDao(), this) }
     val tagRepository by lazy { TagRepository(database.tagDao()) }
     val taskRepository by lazy { TaskRepository(database.taskDao()) }
     val userSettingsRepository by lazy { UserSettingsRepository(this) }

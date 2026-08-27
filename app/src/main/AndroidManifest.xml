@@ -77,6 +77,18 @@
                 android:resource="@xml/widget_last_night_sleep_info" />
         </receiver>
 
+        <receiver
+            android:name=".widget.FocusHeatmapWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.zenzeros.kimon.widget.ACTION_UPDATE_HEATMAP_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_focus_heatmap_info" />
+        </receiver>
+
         <service
             android:name=".service.PomodoroTimerService"
             android:foregroundServiceType="specialUse"
