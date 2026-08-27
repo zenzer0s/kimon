@@ -100,31 +100,13 @@ fun SleepScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
-    // Activity Recognition Permission Launcher
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.toggleMonitoring(true)
-        } else {
-            Toast.makeText(context, "Activity Recognition permission is required for Google Sleep API", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Smooth pulsing animation for active monitoring indicator
-    val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
-    )
-
     val timeFormat = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     val dateFormat = remember { SimpleDateFormat("EEE, MMM d", Locale.getDefault()) }
+
+    val totalSectionsGroup = 3
+    val heroShapesGroup = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
+    val chartShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
+    val historyShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
 
     Column(
         modifier = modifier
@@ -132,101 +114,18 @@ fun SleepScreen(
             .verticalScroll(scrollState)
             .padding(horizontal = 14.dp)
     ) {
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // ==========================================
-        // 1. Status Bar & Quick Actions Header
+        // Material 3 Expressive Segmented Group (Hero Card, Weekly Chart, Recent History)
         // ==========================================
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Live Monitoring Status Pill
-            Surface(
-                shape = CircleShape,
-                color = if (state.isMonitoringEnabled) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceContainerHighest,
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = if (state.isMonitoringEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-                ),
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    if (!state.isMonitoringEnabled) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !state.hasPermission) {
-                            permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
-                        } else {
-                            viewModel.toggleMonitoring(true)
-                        }
-                    } else {
-                        viewModel.toggleMonitoring(false)
-                    }
-                }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(
-                                color = if (state.isMonitoringEnabled) MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha) else MaterialTheme.colorScheme.outline,
-                                shape = CircleShape
-                            )
-                    )
-
-                    Text(
-                        text = if (state.isMonitoringEnabled) stringResource(R.string.sleep_status_monitoring) else stringResource(R.string.sleep_status_paused),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp
-                        ),
-                        color = if (state.isMonitoringEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Sync Health Connect Action Button
-            FilledTonalIconButton(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    viewModel.syncWithHealthConnect()
-                    Toast.makeText(context, "Synced with Health Connect", Toast.LENGTH_SHORT).show()
-                },
-                modifier = Modifier.size(34.dp),
-                shape = CircleShape,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_sparkles),
-                    contentDescription = stringResource(R.string.sleep_action_sync),
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // ==========================================
-        // 2. Material 3 Expressive Segmented Group (Hero Card, Weekly Chart, Recent History)
-        // ==========================================
-        val totalSectionsGroup = 3
-        val heroShapesGroup = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
-        val chartShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
-        val historyShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            // 2.1 Hero Last Night's Sleep Card
+            // 1. Hero Last Night's Sleep Card
             Surface(
                 shape = heroShapesGroup.shape,
                 color = CustomColors.cardContainerColor,

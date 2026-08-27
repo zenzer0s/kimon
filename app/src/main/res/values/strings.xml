@@ -165,6 +165,9 @@
     <string name="settings_sleep_monitoring_desc">Detect sleep segments passively via Google Sleep API</string>
     <string name="settings_health_connect_sync">Health Connect Sync</string>
     <string name="settings_health_connect_sync_desc">Sync sleep logs with Google Fit, Samsung Health &amp; devices</string>
+    <string name="settings_sync_now">Sync Now</string>
+    <string name="settings_sync_now_desc">Fetch and push latest records with Health Connect</string>
+    <string name="settings_sync_success">Synced with Health Connect</string>
     <string name="settings_sleep_info_title">How it works</string>
     <string name="settings_sleep_info_desc">Google Sleep API uses low-power ambient light sensors and device motion models to passively detect when you fall asleep and wake up without draining battery.</string>
     <string name="sleep_score">Sleep Score</string>
