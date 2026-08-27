@@ -34,19 +34,33 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                for (appWidgetId in appWidgetIds) {
+                    updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
+                }
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == ACTION_UPDATE_WIDGET) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val thisWidget = ComponentName(context, FocusHeatmapWidgetProvider::class.java)
-            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
-            for (appWidgetId in allWidgetIds) {
-                updateAppWidget(context, appWidgetManager, appWidgetId)
+            val pendingResult = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val appWidgetManager = AppWidgetManager.getInstance(context)
+                    val thisWidget = ComponentName(context, FocusHeatmapWidgetProvider::class.java)
+                    val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+                    for (appWidgetId in allWidgetIds) {
+                        updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
+                    }
+                } finally {
+                    pendingResult.finish()
+                }
             }
         }
     }
@@ -68,67 +82,75 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             appWidgetId: Int
         ) {
             CoroutineScope(Dispatchers.IO).launch {
-                val views = RemoteViews(context.packageName, R.layout.widget_focus_heatmap)
-                val database = KimonDatabase.getInstance(context)
-                val zone = ZoneId.systemDefault()
-                val today = LocalDate.now(zone)
+                updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
+            }
+        }
 
-                val sessions = try {
-                    database.focusSessionDao().getAllSessionsList()
-                } catch (e: Exception) {
-                    emptyList()
-                }
+        suspend fun updateAppWidgetInternal(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int
+        ) {
+            val views = RemoteViews(context.packageName, R.layout.widget_focus_heatmap)
+            val database = KimonDatabase.getInstance(context)
+            val zone = ZoneId.systemDefault()
+            val today = LocalDate.now(zone)
 
-                // Active days set for quick lookup
-                val activeDaysSet = mutableSetOf<String>()
-                var todayFocusSeconds = 0
+            val sessions = try {
+                database.focusSessionDao().getAllSessionsList()
+            } catch (e: Exception) {
+                emptyList()
+            }
 
-                for (session in sessions) {
-                    if (session.sessionType == "POMODORO" && session.actualDurationSeconds > 0) {
-                        val sessionDate = Instant.ofEpochMilli(session.startTimeEpochMs).atZone(zone).toLocalDate()
-                        val m = sessionDate.monthValue
-                        val d = sessionDate.dayOfMonth
-                        val key = "${sessionDate.year}-${if (m < 10) "0$m" else "$m"}-${if (d < 10) "0$d" else "$d"}"
-                        activeDaysSet.add(key)
-                        if (sessionDate == today) {
-                            todayFocusSeconds += session.actualDurationSeconds
-                        }
+            // Active days set for quick lookup
+            val activeDaysSet = mutableSetOf<String>()
+            var todayFocusSeconds = 0
+
+            for (session in sessions) {
+                if (session.sessionType == "POMODORO" && session.actualDurationSeconds > 0) {
+                    val sessionDate = Instant.ofEpochMilli(session.startTimeEpochMs).atZone(zone).toLocalDate()
+                    val m = sessionDate.monthValue
+                    val d = sessionDate.dayOfMonth
+                    val key = "${sessionDate.year}-${if (m < 10) "0$m" else "$m"}-${if (d < 10) "0$d" else "$d"}"
+                    activeDaysSet.add(key)
+                    if (sessionDate == today) {
+                        todayFocusSeconds += session.actualDurationSeconds
                     }
                 }
-
-                val streaksResult = CalculateStreaksUseCase().invoke(sessions)
-
-                // Render Heatmap Bitmap (Previous Month + Current Month, matching YearTab)
-                val isNight = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-                val bitmap = renderYearTabHeatmapBitmap(
-                    today = today,
-                    activeDaysSet = activeDaysSet,
-                    isNight = isNight
-                )
-                views.setImageViewBitmap(R.id.widget_heatmap_image, bitmap)
-
-                // Update text views
-                val todayHours = todayFocusSeconds / 3600
-                val todayMins = (todayFocusSeconds % 3600) / 60
-                val todayText = if (todayHours > 0) "Today ${todayHours}h ${todayMins}m" else "Today ${todayMins}m"
-
-                views.setTextViewText(R.id.widget_today_badge, todayText)
-                views.setTextViewText(R.id.widget_streak_badge, "🔥 ${streaksResult.currentStreakDays}d")
-
-                // Click Action to open MainActivity
-                val intent = Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                val pendingIntent = PendingIntent.getActivity(
-                    context,
-                    1,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
-
-                appWidgetManager.updateAppWidget(appWidgetId, views)
             }
+
+            val streaksResult = CalculateStreaksUseCase().invoke(sessions)
+
+            // Render Heatmap Bitmap (Previous Month + Current Month, matching YearTab)
+            val isNight = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            val bitmap = renderYearTabHeatmapBitmap(
+                today = today,
+                activeDaysSet = activeDaysSet,
+                isNight = isNight
+            )
+            views.setImageViewBitmap(R.id.widget_heatmap_image, bitmap)
+
+            // Update text views
+            val todayHours = todayFocusSeconds / 3600
+            val todayMins = (todayFocusSeconds % 3600) / 60
+            val todayText = if (todayHours > 0) "Today ${todayHours}h ${todayMins}m" else "Today ${todayMins}m"
+
+            views.setTextViewText(R.id.widget_today_badge, todayText)
+            views.setTextViewText(R.id.widget_streak_badge, "🔥 ${streaksResult.currentStreakDays}d")
+
+            // Click Action to open MainActivity
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                1,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
         private fun renderYearTabHeatmapBitmap(
