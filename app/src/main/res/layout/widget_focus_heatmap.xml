@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <!-- ==========================================
          1. Header: Icon + "Heat Map" + Streak Pill
@@ -79,7 +79,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/widget_header"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:scaleType="fitCenter" />
 
 </RelativeLayout>
