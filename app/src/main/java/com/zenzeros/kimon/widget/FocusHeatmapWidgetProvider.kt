@@ -158,8 +158,8 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             activeDaysSet: Set<String>,
             isNight: Boolean
         ): Bitmap {
-            val width = 740
-            val height = 280
+            val width = 1000
+            val height = 440
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
 
@@ -176,60 +176,74 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             )
 
             val primaryColor = if (isNight) 0xFFA2C9EB.toInt() else 0xFF386588.toInt()
-            val onPrimaryColor = 0xFFFFFFFF.toInt()
-            val unfocusedBgColor = if (isNight) 0xFF22262B.toInt() else 0xFFE2E7EC.toInt()
-            val onSurfaceVariantColor = if (isNight) 0xFF91969E.toInt() else 0xFF72777F.toInt()
-            val onSurfaceColor = if (isNight) 0xFFE2E2E6.toInt() else 0xFF1A1C1E.toInt()
+            val onPrimaryTextColor = if (isNight) 0xFF001D32.toInt() else 0xFFFFFFFF.toInt()
+            val unfocusedBgColor = if (isNight) 0xFF282C34.toInt() else 0xFFE0E5EC.toInt()
+            val unfocusedBorderColor = if (isNight) 0x1EFFFFFF.toInt() else 0x1A000000.toInt()
+            val unfocusedTextColor = if (isNight) 0xFFE0E3EB.toInt() else 0xFF2D3139.toInt()
+            val onSurfaceColor = if (isNight) 0xFFFFFFFF.toInt() else 0xFF14171A.toInt()
+            val weekdayColor = if (isNight) 0xFF9DA2AC.toInt() else 0xFF656B75.toInt()
 
             val cellPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 2f
+            }
             val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 textAlign = Paint.Align.CENTER
-                textSize = 15f
+                textSize = 21f
+                typeface = Typeface.DEFAULT_BOLD
             }
             val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 textAlign = Paint.Align.CENTER
-                textSize = 21f
+                textSize = 26f
                 typeface = Typeface.DEFAULT_BOLD
                 color = onSurfaceColor
             }
             val weekdayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 textAlign = Paint.Align.LEFT
-                textSize = 15f
-                typeface = Typeface.DEFAULT
-                color = onSurfaceVariantColor
+                textSize = 19f
+                typeface = Typeface.DEFAULT_BOLD
+                color = weekdayColor
             }
 
-            val leftMargin = 50f
-            val topHeaderHeight = 36f
-            val availableGridWidth = width - leftMargin - 20f
-            val monthWidth = availableGridWidth / 2f
-            val spacing = 5f
+            val leftMargin = 62f
+            val topHeaderHeight = 44f
+            val spacing = 7f
             val cols = 6
             val rows = 7
+            val cornerRadius = 9f
 
-            val cellWidth = (monthWidth - (cols - 1) * spacing - 14f) / cols
-            val cellHeight = (height - topHeaderHeight - (rows - 1) * spacing - 10f) / rows
-            val cornerRadius = 6f
+            val totalInnerWidth = width - leftMargin - 16f
+            val monthGap = 20f
+            val singleMonthWidth = (totalInnerWidth - monthGap) / 2f
+            val cellWidth = (singleMonthWidth - (cols - 1) * spacing) / cols
+            val cellHeight = (height - topHeaderHeight - (rows - 1) * spacing - 6f) / rows
+
+            val weekdayMetrics = weekdayPaint.fontMetrics
+            val weekdayYOffset = (cellHeight / 2f) - (weekdayMetrics.ascent + weekdayMetrics.descent) / 2f
 
             // Draw Weekday labels on left
             for (r in 0 until rows) {
                 val dayLabel = WEEK_DAYS[r]
                 val top = topHeaderHeight + r * (cellHeight + spacing)
-                val textY = top + (cellHeight / 2f) + (textPaint.textSize / 3f)
-                canvas.drawText(dayLabel, 4f, textY, weekdayPaint)
+                val textY = top + weekdayYOffset
+                canvas.drawText(dayLabel, 6f, textY, weekdayPaint)
             }
+
+            val textMetrics = textPaint.fontMetrics
+            val textYOffset = (cellHeight / 2f) - (textMetrics.ascent + textMetrics.descent) / 2f
 
             // Draw 2 Months
             months.forEachIndexed { mIndex, (year, month) ->
-                val startX = leftMargin + mIndex * monthWidth
+                val startX = leftMargin + mIndex * (singleMonthWidth + monthGap)
                 val ym = YearMonth.of(year, month)
                 val maxDays = ym.lengthOfMonth()
                 val firstDayOfWeek = LocalDate.of(year, month, 1).dayOfWeek.value - 1 // Monday = 0 ... Sunday = 6
                 val monthName = monthNames[month - 1]
 
                 // Draw Month Title
-                val monthCenterX = startX + (cols * (cellWidth + spacing)) / 2f
-                canvas.drawText(monthName, monthCenterX, topHeaderHeight - 10f, titlePaint)
+                val monthCenterX = startX + singleMonthWidth / 2f
+                canvas.drawText(monthName, monthCenterX, topHeaderHeight - 12f, titlePaint)
 
                 // Draw Grid
                 for (col in 0 until cols) {
@@ -238,6 +252,7 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
                         val dayNumber = slotIndex - firstDayOfWeek + 1
 
                         if (dayNumber in 1..maxDays) {
+                            val isThisToday = (year == today.year && month == today.monthValue && dayNumber == today.dayOfMonth)
                             val dayKey = "$year-${if (month < 10) "0$month" else "$month"}-${if (dayNumber < 10) "0$dayNumber" else "$dayNumber"}"
                             val isFocused = activeDaysSet.contains(dayKey)
 
@@ -245,14 +260,25 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
                             val top = topHeaderHeight + row * (cellHeight + spacing)
                             val rect = RectF(left, top, left + cellWidth, top + cellHeight)
 
+                            // 1. Draw Cell Background
                             cellPaint.color = if (isFocused) primaryColor else unfocusedBgColor
                             cellPaint.style = Paint.Style.FILL
                             canvas.drawRoundRect(rect, cornerRadius, cornerRadius, cellPaint)
 
-                            // Draw Day Number Text
-                            textPaint.color = if (isFocused) onPrimaryColor else onSurfaceVariantColor
-                            textPaint.typeface = if (isFocused) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-                            val textY = rect.centerY() + (textPaint.textSize / 3f)
+                            // 2. Draw Subtle Border for unfocused cells or accent border for today
+                            if (isThisToday && !isFocused) {
+                                borderPaint.color = primaryColor
+                                borderPaint.strokeWidth = 3f
+                                canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
+                            } else if (!isFocused) {
+                                borderPaint.color = unfocusedBorderColor
+                                borderPaint.strokeWidth = 1.5f
+                                canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
+                            }
+
+                            // 3. Draw Day Number Text
+                            textPaint.color = if (isFocused) onPrimaryTextColor else unfocusedTextColor
+                            val textY = top + textYOffset
                             canvas.drawText(dayNumber.toString(), rect.centerX(), textY, textPaint)
                         }
                     }
