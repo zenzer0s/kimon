@@ -24,6 +24,7 @@ class PomodoroTimerService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     private var countdownJob: Job? = null
+    private var targetEndTimeMs: Long = 0L
     private lateinit var notificationManager: NotificationManager
 
     override fun onCreate() {
@@ -47,6 +48,7 @@ class PomodoroTimerService : Service() {
     }
 
     private fun startCountdown(totalSeconds: Int, modeLabel: String) {
+        targetEndTimeMs = System.currentTimeMillis() + (totalSeconds * 1000L)
         _timerState.value = TimerServiceState(
             remainingSeconds = totalSeconds,
             totalSeconds = totalSeconds,
@@ -58,11 +60,17 @@ class PomodoroTimerService : Service() {
 
         countdownJob?.cancel()
         countdownJob = serviceScope.launch {
-            while (_timerState.value.remainingSeconds > 0 && _timerState.value.isRunning) {
-                delay(1000L)
-                val newRemaining = (_timerState.value.remainingSeconds - 1).coerceAtLeast(0)
-                _timerState.value = _timerState.value.copy(remainingSeconds = newRemaining)
-                notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
+            while (_timerState.value.isRunning) {
+                val now = System.currentTimeMillis()
+                val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+                if (_timerState.value.remainingSeconds != newRemaining) {
+                    _timerState.value = _timerState.value.copy(remainingSeconds = newRemaining)
+                    notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
+                }
+                if (newRemaining <= 0) {
+                    break
+                }
+                delay(500L)
             }
 
             if (_timerState.value.remainingSeconds == 0) {
@@ -75,20 +83,34 @@ class PomodoroTimerService : Service() {
 
     private fun pauseCountdown() {
         countdownJob?.cancel()
-        _timerState.value = _timerState.value.copy(isRunning = false)
+        if (targetEndTimeMs > 0L) {
+            val now = System.currentTimeMillis()
+            val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+            _timerState.value = _timerState.value.copy(isRunning = false, remainingSeconds = newRemaining)
+        } else {
+            _timerState.value = _timerState.value.copy(isRunning = false)
+        }
+        targetEndTimeMs = 0L
         notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
     }
 
     private fun resumeCountdown() {
         if (_timerState.value.remainingSeconds > 0) {
+            targetEndTimeMs = System.currentTimeMillis() + (_timerState.value.remainingSeconds * 1000L)
             _timerState.value = _timerState.value.copy(isRunning = true)
             countdownJob?.cancel()
             countdownJob = serviceScope.launch {
-                while (_timerState.value.remainingSeconds > 0 && _timerState.value.isRunning) {
-                    delay(1000L)
-                    val newRemaining = (_timerState.value.remainingSeconds - 1).coerceAtLeast(0)
-                    _timerState.value = _timerState.value.copy(remainingSeconds = newRemaining)
-                    notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
+                while (_timerState.value.isRunning) {
+                    val now = System.currentTimeMillis()
+                    val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
+                    if (_timerState.value.remainingSeconds != newRemaining) {
+                        _timerState.value = _timerState.value.copy(remainingSeconds = newRemaining)
+                        notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
+                    }
+                    if (newRemaining <= 0) {
+                        break
+                    }
+                    delay(500L)
                 }
                 if (_timerState.value.remainingSeconds == 0) {
                     _timerState.value = _timerState.value.copy(isRunning = false)
@@ -101,6 +123,7 @@ class PomodoroTimerService : Service() {
 
     private fun stopCountdown() {
         countdownJob?.cancel()
+        targetEndTimeMs = 0L
         _timerState.value = TimerServiceState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

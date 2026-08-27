@@ -2,7 +2,9 @@
 
 package com.zenzeros.kimon.ui.settings.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -83,6 +86,12 @@ fun SettingsMainScreen(
                 subtitle = "Theme mode, Dynamic color, Color scheme, Black theme"
             ),
             SettingsNavCategory(
+                key = KimonNavKey.SleepSettings,
+                icon = R.drawable.ic_moon,
+                title = R.string.settings_section_sleep,
+                subtitle = "Google Sleep API, Health Connect & sleep tracking"
+            ),
+            SettingsNavCategory(
                 key = KimonNavKey.AboutSettings,
                 icon = R.drawable.ic_profile,
                 title = R.string.settings_section_about,
@@ -151,6 +160,13 @@ fun SettingsMainScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    val (iconContainerColor, iconContentColor) = when (index) {
+                        0 -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+                        1 -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+                        2 -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+                        else -> MaterialTheme.colorScheme.surfaceContainerHighest to MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -158,12 +174,19 @@ fun SettingsMainScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(cat.icon),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(iconContainerColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(cat.icon),
+                                contentDescription = null,
+                                tint = iconContentColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
 
                         Column(
                             modifier = Modifier.weight(1f),

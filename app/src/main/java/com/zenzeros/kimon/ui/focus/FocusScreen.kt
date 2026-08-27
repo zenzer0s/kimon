@@ -2,7 +2,10 @@
 
 package com.zenzeros.kimon.ui.focus
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -13,6 +16,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -271,63 +275,84 @@ fun FocusScreen(
 
         // 3. 3-State Expressive Button (Start / Pause / Resume) + Animated Circle Restart Button
         Row(
-            modifier = Modifier.padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier
+                .padding(bottom = 20.dp)
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Primary Action Button (Outlined when Running, Filled when Start/Resume)
-            if (isRunning) {
-                OutlinedButton(
-                    onClick = onPause,
-                    shape = RoundedCornerShape(buttonCornerRadius),
-                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
-                    modifier = Modifier.height(52.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_pause),
-                        contentDescription = stringResource(R.string.timer_pause),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.timer_pause),
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            } else {
-                Button(
-                    onClick = onStart,
-                    shape = RoundedCornerShape(buttonCornerRadius),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
-                    modifier = Modifier.height(52.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_start),
-                        contentDescription = if (isPaused) stringResource(R.string.timer_resume) else stringResource(R.string.timer_start),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isPaused) stringResource(R.string.timer_resume) else stringResource(R.string.timer_start),
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                    )
+            val buttonContainerColor by animateColorAsState(
+                targetValue = if (isRunning) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary,
+                animationSpec = tween(durationMillis = 200),
+                label = "primaryButtonBg"
+            )
+            val buttonContentColor by animateColorAsState(
+                targetValue = if (isRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary,
+                animationSpec = tween(durationMillis = 200),
+                label = "primaryButtonContent"
+            )
+
+            // Primary Action Button (Start / Pause / Resume)
+            Button(
+                onClick = if (isRunning) onPause else onStart,
+                shape = RoundedCornerShape(buttonCornerRadius),
+                border = if (isRunning) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = buttonContainerColor,
+                    contentColor = buttonContentColor
+                ),
+                contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
+                modifier = Modifier.height(52.dp)
+            ) {
+                AnimatedContent(
+                    targetState = Triple(isRunning, isPaused, buttonContentColor),
+                    transitionSpec = {
+                        fadeIn(tween(150)) togetherWith fadeOut(tween(100))
+                    },
+                    label = "buttonContentTransition"
+                ) { (running, paused, contentColor) ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(if (running) R.drawable.ic_pause else R.drawable.ic_start),
+                            contentDescription = if (running) {
+                                stringResource(R.string.timer_pause)
+                            } else if (paused) {
+                                stringResource(R.string.timer_resume)
+                            } else {
+                                stringResource(R.string.timer_start)
+                            },
+                            tint = contentColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (running) {
+                                stringResource(R.string.timer_pause)
+                            } else if (paused) {
+                                stringResource(R.string.timer_resume)
+                            } else {
+                                stringResource(R.string.timer_start)
+                            },
+                            color = contentColor,
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                    }
                 }
             }
 
             // Animated Circular Restart Button (Visible when Running or Paused)
             AnimatedVisibility(
                 visible = isTimerActive,
-                enter = fadeIn(animationSpec = tween(220)) +
+                enter = fadeIn(animationSpec = tween(180)) +
                         scaleIn(
-                            initialScale = 0.5f,
+                            initialScale = 0.6f,
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioMediumBouncy,
                                 stiffness = Spring.StiffnessMediumLow
@@ -340,10 +365,10 @@ fun FocusScreen(
                                 stiffness = Spring.StiffnessMediumLow
                             )
                         ),
-                exit = fadeOut(animationSpec = tween(180)) +
+                exit = fadeOut(animationSpec = tween(120)) +
                         scaleOut(
-                            targetScale = 0.5f,
-                            animationSpec = tween(180)
+                            targetScale = 0.6f,
+                            animationSpec = tween(120)
                         ) +
                         shrinkHorizontally(
                             shrinkTowards = Alignment.Start,
@@ -353,20 +378,23 @@ fun FocusScreen(
                             )
                         )
             ) {
-                FilledTonalIconButton(
-                    onClick = onRestart,
-                    shape = CircleShape,
-                    modifier = Modifier.size(52.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_restart),
-                        contentDescription = stringResource(R.string.timer_restart),
-                        modifier = Modifier.size(22.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(14.dp))
+                    FilledTonalIconButton(
+                        onClick = onRestart,
+                        shape = CircleShape,
+                        modifier = Modifier.size(52.dp),
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_restart),
+                            contentDescription = stringResource(R.string.timer_restart),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
         }

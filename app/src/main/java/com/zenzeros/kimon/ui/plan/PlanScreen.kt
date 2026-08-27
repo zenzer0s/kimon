@@ -337,16 +337,18 @@ private fun SwipeToRevealTaskItem(
                             color = if (task.isCompleted) {
                                 MaterialTheme.colorScheme.surfaceContainer
                             } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
+                                MaterialTheme.colorScheme.secondaryContainer
                             }
                         ) {
                             Text(
                                 text = task.category,
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
                                 color = if (task.isCompleted) {
                                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                    MaterialTheme.colorScheme.onSecondaryContainer
                                 },
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )

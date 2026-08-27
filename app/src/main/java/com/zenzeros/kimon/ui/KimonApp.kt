@@ -55,6 +55,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
@@ -74,7 +77,9 @@ import com.zenzeros.kimon.ui.settings.screens.AboutSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.AlarmSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.AppearanceSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.SettingsMainScreen
+import com.zenzeros.kimon.ui.settings.screens.SleepSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.TimerSettingsScreen
+import com.zenzeros.kimon.ui.sleep.SleepScreen
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.KimonTheme
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
@@ -127,10 +132,24 @@ fun KimonApp() {
         }
     }
 
-    // Pre-warmed Root Tabs Pager (0 = Plan, 1 = Focus, 2 = Analyze)
+    // Live sync timer with wall-clock when screen turns on / app returns to foreground
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME || event == Lifecycle.Event.ON_START) {
+                pomodoroViewModel.syncWithWallClock(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Pre-warmed Root Tabs Pager (0 = Sleep, 1 = Plan, 2 = Focus, 3 = Analyze)
     val mainTabPagerState = rememberPagerState(
-        initialPage = 1,
-        pageCount = { 3 }
+        initialPage = 2,
+        pageCount = { 4 }
     )
 
     // Settings Navigation Stack
@@ -150,10 +169,10 @@ fun KimonApp() {
         navigateBack()
     }
 
-    // Handle back press from Plan/Analyze to return to Focus
-    BackHandler(enabled = !isSettingsOpen && mainTabPagerState.currentPage != 1) {
+    // Handle back press from other tabs to return to Focus
+    BackHandler(enabled = !isSettingsOpen && mainTabPagerState.currentPage != 2) {
         coroutineScope.launch {
-            mainTabPagerState.scrollToPage(1)
+            mainTabPagerState.scrollToPage(2)
         }
     }
 
@@ -205,6 +224,15 @@ fun KimonApp() {
                     onBack = navigateBack
                 )
             }
+            entry<KimonNavKey.SleepSettings> {
+                SleepSettingsScreen(
+                    state = settingsState,
+                    onToggleSleepMonitoring = { settingsViewModel.toggleSleepMonitoring(it) },
+                    onToggleHealthConnectSync = { settingsViewModel.toggleHealthConnectSync(it) },
+                    onSetSleepGoal = { settingsViewModel.setSleepGoal(it) },
+                    onBack = navigateBack
+                )
+            }
             entry<KimonNavKey.AboutSettings> {
                 AboutSettingsScreen(
                     onBack = navigateBack
@@ -241,14 +269,14 @@ fun KimonApp() {
                             },
                             icon = {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_plan),
-                                    contentDescription = stringResource(R.string.tab_plan),
+                                    painter = painterResource(R.drawable.ic_moon),
+                                    contentDescription = stringResource(R.string.tab_sleep),
                                     modifier = Modifier.size(24.dp)
                                 )
                             },
                             label = {
                                 Text(
-                                    text = stringResource(R.string.tab_plan),
+                                    text = stringResource(R.string.tab_sleep),
                                     fontWeight = if (mainTabPagerState.currentPage == 0) FontWeight.SemiBold else FontWeight.Normal
                                 )
                             },
@@ -272,14 +300,14 @@ fun KimonApp() {
                             },
                             icon = {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_focus),
-                                    contentDescription = stringResource(R.string.tab_focus),
+                                    painter = painterResource(R.drawable.ic_plan),
+                                    contentDescription = stringResource(R.string.tab_plan),
                                     modifier = Modifier.size(24.dp)
                                 )
                             },
                             label = {
                                 Text(
-                                    text = stringResource(R.string.tab_focus),
+                                    text = stringResource(R.string.tab_plan),
                                     fontWeight = if (mainTabPagerState.currentPage == 1) FontWeight.SemiBold else FontWeight.Normal
                                 )
                             },
@@ -303,6 +331,37 @@ fun KimonApp() {
                             },
                             icon = {
                                 Icon(
+                                    painter = painterResource(R.drawable.ic_focus),
+                                    contentDescription = stringResource(R.string.tab_focus),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.tab_focus),
+                                    fontWeight = if (mainTabPagerState.currentPage == 2) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+
+                        NavigationBarItem(
+                            selected = mainTabPagerState.currentPage == 3,
+                            onClick = {
+                                if (mainTabPagerState.currentPage != 3) {
+                                    coroutineScope.launch {
+                                        mainTabPagerState.scrollToPage(3)
+                                    }
+                                }
+                            },
+                            icon = {
+                                Icon(
                                     painter = painterResource(R.drawable.ic_analyze),
                                     contentDescription = stringResource(R.string.tab_analyze),
                                     modifier = Modifier.size(24.dp)
@@ -311,7 +370,7 @@ fun KimonApp() {
                             label = {
                                 Text(
                                     text = stringResource(R.string.tab_analyze),
-                                    fontWeight = if (mainTabPagerState.currentPage == 2) FontWeight.SemiBold else FontWeight.Normal
+                                    fontWeight = if (mainTabPagerState.currentPage == 3) FontWeight.SemiBold else FontWeight.Normal
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
@@ -396,18 +455,23 @@ fun KimonApp() {
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // 2. Pre-warmed Main Root Content Tabs (Plan, Focus, Analyze)
+                    // 2. Pre-warmed Main Root Content Tabs (Sleep, Plan, Focus, Analyze)
                     HorizontalPager(
                         state = mainTabPagerState,
-                        beyondViewportPageCount = 2,
+                        beyondViewportPageCount = 3,
                         userScrollEnabled = false,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
                     ) { page ->
                         when (page) {
-                            0 -> PlanScreen()
-                            1 -> FocusScreen(
+                            0 -> SleepScreen(
+                                onNavigateToSettings = {
+                                    settingsBackStack.add(KimonNavKey.SleepSettings)
+                                }
+                            )
+                            1 -> PlanScreen()
+                            2 -> FocusScreen(
                                 remainingSeconds = pomodoroUiState.remainingSeconds,
                                 timerStatus = pomodoroUiState.timerStatus,
                                 clockStyle = settingsState.clockStyle,
@@ -420,10 +484,10 @@ fun KimonApp() {
                                 onPause = { pomodoroViewModel.pauseTimer(context) },
                                 onRestart = { pomodoroViewModel.stopTimer(context) }
                             )
-                            2 -> AnalyzeScreen(
+                            3 -> AnalyzeScreen(
                                 onNavigateToFocus = {
                                     coroutineScope.launch {
-                                        mainTabPagerState.scrollToPage(1)
+                                        mainTabPagerState.scrollToPage(2)
                                     }
                                 }
                             )

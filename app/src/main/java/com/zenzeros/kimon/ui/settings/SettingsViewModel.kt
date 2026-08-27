@@ -62,7 +62,10 @@ data class SettingsUiState(
     val themeMode: String = "SYSTEM",
     val themePalette: String = "DYNAMIC",
     val themeColor: Color = Color.White,
-    val amoledBlack: Boolean = false
+    val amoledBlack: Boolean = false,
+    val sleepMonitoringEnabled: Boolean = false,
+    val healthConnectSyncEnabled: Boolean = false,
+    val sleepGoalMinutes: Int = 480
 )
 
 class SettingsViewModel(
@@ -104,11 +107,18 @@ class SettingsViewModel(
             userSettingsRepository.themeMode,
             userSettingsRepository.themePalette,
             userSettingsRepository.themeColor,
-            userSettingsRepository.amoledBlack
-        ) { mode, palette, colorStr, amoled ->
-            mode to (palette to (colorStr to amoled))
+            userSettingsRepository.amoledBlack,
+            userSettingsRepository.sleepMonitoringEnabled
+        ) { mode, palette, colorStr, amoled, sleepEnabled ->
+            Triple(mode, palette, Triple(colorStr, amoled, sleepEnabled))
+        },
+        combine(
+            userSettingsRepository.healthConnectSyncEnabled,
+            userSettingsRepository.sleepGoalMinutes
+        ) { healthConnectEnabled, sleepGoal ->
+            healthConnectEnabled to sleepGoal
         }
-    ) { (work, rest1), (aBreaks, rest2), soundGroup, (mode, rest4) ->
+    ) { (work, rest1), (aBreaks, rest2), soundGroup, appearanceTriple, (healthConnectEnabled, sleepGoal) ->
         val (sBreak, rest1b) = rest1
         val (lBreak, rest1c) = rest1b
         val (sessions, goal) = rest1c
@@ -119,8 +129,8 @@ class SettingsViewModel(
 
         val (sound, vibration, soundMeta) = soundGroup
         val (hMode, soundUri, soundTitle) = soundMeta
-        val (palette, rest4b) = rest4
-        val (colorStr, amoled) = rest4b
+        val (mode, palette, appDetails) = appearanceTriple
+        val (colorStr, amoled, sleepEnabled) = appDetails
 
         SettingsUiState(
             workDurationMinutes = work,
@@ -142,7 +152,10 @@ class SettingsViewModel(
             themeMode = mode,
             themePalette = palette,
             themeColor = colorStr.toColor(),
-            amoledBlack = amoled
+            amoledBlack = amoled,
+            sleepMonitoringEnabled = sleepEnabled,
+            healthConnectSyncEnabled = healthConnectEnabled,
+            sleepGoalMinutes = sleepGoal
         )
     }.stateIn(
         scope = viewModelScope,
@@ -224,6 +237,18 @@ class SettingsViewModel(
 
     fun toggleAmoledBlack(enabled: Boolean) = viewModelScope.launch {
         userSettingsRepository.setAmoledBlack(enabled)
+    }
+
+    fun toggleSleepMonitoring(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setSleepMonitoringEnabled(enabled)
+    }
+
+    fun toggleHealthConnectSync(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setHealthConnectSyncEnabled(enabled)
+    }
+
+    fun setSleepGoal(minutes: Int) = viewModelScope.launch {
+        userSettingsRepository.setSleepGoalMinutes(minutes.coerceIn(240, 720))
     }
 
     fun resetAllData() = viewModelScope.launch {

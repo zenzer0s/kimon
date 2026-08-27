@@ -97,12 +97,19 @@ private fun FlipCardTile(
 
     LaunchedEffect(targetValue) {
         if (targetValue != previousValue) {
+            val delta = kotlin.math.abs(targetValue - previousValue)
             displayTargetValue = targetValue
-            flipAnimation.snapTo(0f)
-            flipAnimation.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 380, easing = FastOutSlowInEasing)
-            )
+            if (delta > 1) {
+                // Instant snap for resets and large adjustments
+                flipAnimation.snapTo(1f)
+            } else {
+                // Smooth flip for active tick
+                flipAnimation.snapTo(0f)
+                flipAnimation.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 380, easing = FastOutSlowInEasing)
+                )
+            }
             previousValue = targetValue
         }
     }

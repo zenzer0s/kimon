@@ -151,6 +151,35 @@
     <string name="settings_amoled_black_desc">Use a pure black dark theme</string>
     <string name="settings_section_about">About &amp; Developer</string>
     <string name="settings_about_desc">zenzeros, donations, open source &amp; info</string>
+
+    <!-- Sleep Monitor -->
+    <string name="tab_sleep">Sleep</string>
+    <string name="title_sleep">Sleep</string>
+    <string name="settings_section_sleep">Sleep Monitor</string>
+    <string name="settings_sleep_desc">Google Sleep API &amp; Health Connect integration</string>
+    <string name="settings_section_sleep_goal">Sleep Target</string>
+    <string name="settings_sleep_goal">Daily Sleep Goal</string>
+    <string name="settings_sleep_goal_desc">Target duration for optimal rest and recovery</string>
+    <string name="settings_section_sleep_tracking">Tracking &amp; Sync</string>
+    <string name="settings_sleep_monitoring">Sleep Monitoring</string>
+    <string name="settings_sleep_monitoring_desc">Detect sleep segments passively via Google Sleep API</string>
+    <string name="settings_health_connect_sync">Health Connect Sync</string>
+    <string name="settings_health_connect_sync_desc">Sync sleep logs with Google Fit, Samsung Health &amp; devices</string>
+    <string name="settings_sleep_info_title">How it works</string>
+    <string name="settings_sleep_info_desc">Google Sleep API uses low-power ambient light sensors and device motion models to passively detect when you fall asleep and wake up without draining battery.</string>
+    <string name="sleep_score">Sleep Score</string>
+    <string name="sleep_duration">Time Asleep</string>
+    <string name="sleep_bedtime">Bedtime</string>
+    <string name="sleep_wake_up">Wake Up</string>
+    <string name="sleep_status_monitoring">Monitoring Active</string>
+    <string name="sleep_status_paused">Monitoring Paused</string>
+    <string name="sleep_status_permission_needed">Permission Required</string>
+    <string name="sleep_recent_history">Recent Sleep History</string>
+    <string name="sleep_weekly_trend">Weekly Sleep Trend</string>
+    <string name="sleep_action_sync">Sync Health Connect</string>
+    <string name="sleep_action_log_manual">Log Sleep</string>
+    <string name="sleep_empty_history">No sleep sessions recorded yet.\nSleep tracking will automatically log your rest.</string>
+
     <string name="settings_section_data">Data &amp; Reset</string>
     <string name="reset_data_title">Erase &amp; Reset All Data</string>
     <string name="reset_data_desc">Permanently delete all focus history, stats, and settings</string>
