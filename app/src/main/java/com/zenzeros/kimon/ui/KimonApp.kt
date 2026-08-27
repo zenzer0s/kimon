@@ -86,10 +86,10 @@ import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import kotlinx.coroutines.launch
 
 private enum class KimonTab(val titleRes: Int, val iconRes: Int) {
-    SLEEP(R.string.tab_sleep, R.drawable.ic_moon),
-    PLAN(R.string.tab_plan, R.drawable.ic_plan),
     FOCUS(R.string.tab_focus, R.drawable.ic_focus),
-    ANALYZE(R.string.tab_analyze, R.drawable.ic_analyze)
+    ANALYZE(R.string.tab_analyze, R.drawable.ic_analyze),
+    PLAN(R.string.tab_plan, R.drawable.ic_plan),
+    SLEEP(R.string.tab_sleep, R.drawable.ic_moon)
 }
 
 @Composable
@@ -153,17 +153,17 @@ fun KimonApp() {
         }
     }
 
-    // Dynamic Root Tabs (Sleep is visible only when sleep monitoring is enabled)
+    // Dynamic Root Tabs: Focus > Analyze > Plan > Sleep (when enabled)
     val enabledTabs = remember(settingsState.sleepMonitoringEnabled) {
         if (settingsState.sleepMonitoringEnabled) {
-            listOf(KimonTab.SLEEP, KimonTab.PLAN, KimonTab.FOCUS, KimonTab.ANALYZE)
+            listOf(KimonTab.FOCUS, KimonTab.ANALYZE, KimonTab.PLAN, KimonTab.SLEEP)
         } else {
-            listOf(KimonTab.PLAN, KimonTab.FOCUS, KimonTab.ANALYZE)
+            listOf(KimonTab.FOCUS, KimonTab.ANALYZE, KimonTab.PLAN)
         }
     }
 
     val mainTabPagerState = rememberPagerState(
-        initialPage = if (settingsState.sleepMonitoringEnabled) 2 else 1,
+        initialPage = 0,
         pageCount = { enabledTabs.size }
     )
 
