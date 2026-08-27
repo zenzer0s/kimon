@@ -136,7 +136,7 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             val todayText = if (todayHours > 0) "Today ${todayHours}h ${todayMins}m" else "Today ${todayMins}m"
 
             views.setTextViewText(R.id.widget_today_badge, todayText)
-            views.setTextViewText(R.id.widget_streak_badge, "🔥 ${streaksResult.currentStreakDays}d")
+            views.setTextViewText(R.id.widget_streak_badge, "${streaksResult.currentStreakDays}d Streak")
 
             // Click Action to open MainActivity
             val intent = Intent(context, MainActivity::class.java).apply {
