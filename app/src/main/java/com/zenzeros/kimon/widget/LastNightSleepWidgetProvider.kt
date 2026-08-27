@@ -42,7 +42,10 @@ class LastNightSleepWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_UPDATE_WIDGET) {
+        if (intent.action == ACTION_UPDATE_WIDGET ||
+            intent.action == Intent.ACTION_MY_PACKAGE_REPLACED ||
+            intent.action == Intent.ACTION_BOOT_COMPLETED
+        ) {
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -63,10 +66,16 @@ class LastNightSleepWidgetProvider : AppWidgetProvider() {
         const val ACTION_UPDATE_WIDGET = "com.zenzeros.kimon.widget.ACTION_UPDATE_SLEEP_WIDGET"
 
         fun updateAllWidgets(context: Context) {
-            val intent = Intent(context, LastNightSleepWidgetProvider::class.java).apply {
-                action = ACTION_UPDATE_WIDGET
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val thisWidget = ComponentName(context, LastNightSleepWidgetProvider::class.java)
+            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+            if (allWidgetIds.isNotEmpty()) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    for (appWidgetId in allWidgetIds) {
+                        updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
+                    }
+                }
             }
-            context.sendBroadcast(intent)
         }
 
         fun updateAppWidget(
