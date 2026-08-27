@@ -205,4 +205,6 @@
     <!-- Widgets -->
     <string name="widget_sleep_title">Last Night\'s Sleep</string>
     <string name="widget_sleep_desc">Glance at last night\'s sleep duration, quality score, and goal progress</string>
+    <string name="widget_heatmap_title">Focus Heatmap</string>
+    <string name="widget_heatmap_desc">16-week visual activity heatmap and streak tracker</string>
 </resources>
