@@ -372,6 +372,8 @@ fun SleepSettingsScreen(
                 modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
             )
 
+            val syncGroupSize = if (state.healthConnectSyncEnabled) switchItems.size + 1 else switchItems.size
+
             switchItems.forEachIndexed { index, item ->
                 SegmentedListItem(
                     leadingContent = {
@@ -417,7 +419,7 @@ fun SleepSettingsScreen(
                             colors = switchColors
                         )
                     },
-                    shapes = segmentedListItemShapes(index, switchItems.size),
+                    shapes = segmentedListItemShapes(index, syncGroupSize),
                     colors = listItemColors,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -435,6 +437,63 @@ fun SleepSettingsScreen(
                         )
                         Text(
                             text = stringResource(item.description),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 12.5.sp,
+                                lineHeight = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            if (state.healthConnectSyncEnabled) {
+                SegmentedListItem(
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sparkles),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    },
+                    trailingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_chevron_right),
+                            contentDescription = stringResource(R.string.settings_sync_now),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    shapes = segmentedListItemShapes(switchItems.size, syncGroupSize),
+                    colors = listItemColors,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        coroutineScope.launch {
+                            kimonApp.sleepRepository.syncFromHealthConnect()
+                            kimonApp.sleepRepository.syncUnsyncedToHealthConnect()
+                            Toast.makeText(context, context.getString(R.string.settings_sync_success), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = stringResource(R.string.settings_sync_now),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 15.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_sync_now_desc),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontSize = 12.5.sp,
                                 lineHeight = 16.sp
