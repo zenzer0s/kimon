@@ -48,7 +48,10 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_UPDATE_WIDGET) {
+        if (intent.action == ACTION_UPDATE_WIDGET ||
+            intent.action == Intent.ACTION_MY_PACKAGE_REPLACED ||
+            intent.action == Intent.ACTION_BOOT_COMPLETED
+        ) {
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -70,10 +73,16 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
         private val WEEK_DAYS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
         fun updateAllWidgets(context: Context) {
-            val intent = Intent(context, FocusHeatmapWidgetProvider::class.java).apply {
-                action = ACTION_UPDATE_WIDGET
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val thisWidget = ComponentName(context, FocusHeatmapWidgetProvider::class.java)
+            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+            if (allWidgetIds.isNotEmpty()) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    for (appWidgetId in allWidgetIds) {
+                        updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
+                    }
+                }
             }
-            context.sendBroadcast(intent)
         }
 
         fun updateAppWidget(
