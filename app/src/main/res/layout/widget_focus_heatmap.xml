@@ -64,11 +64,11 @@
             android:background="@drawable/widget_score_badge"
             android:paddingHorizontal="7dp"
             android:paddingVertical="3dp"
-            android:text="🔥 0d"
+            android:text="0d Streak"
             android:textColor="@color/widget_accent_primary"
             android:textSize="10.5sp"
             android:textStyle="bold"
-            tools:text="🔥 5d" />
+            tools:text="5d Streak" />
     </LinearLayout>
 
     <!-- ==========================================
