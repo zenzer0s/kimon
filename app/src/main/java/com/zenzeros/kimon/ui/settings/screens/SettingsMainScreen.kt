@@ -92,6 +92,12 @@ fun SettingsMainScreen(
                 subtitle = "Google Sleep API, Health Connect & sleep tracking"
             ),
             SettingsNavCategory(
+                key = KimonNavKey.BackupSettings,
+                icon = R.drawable.ic_backup,
+                title = R.string.settings_section_data,
+                subtitle = "JSON backup, restore & data management"
+            ),
+            SettingsNavCategory(
                 key = KimonNavKey.AboutSettings,
                 icon = R.drawable.ic_profile,
                 title = R.string.settings_section_about,

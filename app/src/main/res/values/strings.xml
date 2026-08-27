@@ -183,8 +183,22 @@
     <string name="sleep_action_log_manual">Log Sleep</string>
     <string name="sleep_empty_history">No sleep sessions recorded yet.\nSleep tracking will automatically log your rest.</string>
 
-    <string name="settings_section_data">Data &amp; Reset</string>
+    <string name="settings_section_data">Data &amp; Backup</string>
+    <string name="settings_data_desc">Backup, restore &amp; manage app data</string>
+    <string name="backup_create_title">Create Backup</string>
+    <string name="backup_create_desc">Export all focus sessions, tasks, sleep logs &amp; settings to a JSON file</string>
+    <string name="backup_restore_title">Restore Backup</string>
+    <string name="backup_restore_desc">Import data from a previously created Kimon JSON backup file</string>
+    <string name="backup_restore_mode_title">Restore Mode</string>
+    <string name="backup_restore_replace">Replace Current Data</string>
+    <string name="backup_restore_replace_desc">Wipes current database and replaces with backup data</string>
+    <string name="backup_restore_merge">Merge with Current Data</string>
+    <string name="backup_restore_merge_desc">Appends new records and retains existing data</string>
+    <string name="backup_success">Backup created successfully</string>
+    <string name="restore_success">Data restored successfully</string>
+    <string name="backup_error">Backup operation failed</string>
+    <string name="restore_error">Failed to restore backup. Invalid JSON file.</string>
     <string name="reset_data_title">Erase &amp; Reset All Data</string>
-    <string name="reset_data_desc">Permanently delete all focus history, stats, and settings</string>
-    <string name="reset_data_confirm_message">Are you sure you want to erase all data? This action cannot be undone.</string>
+    <string name="reset_data_desc">Permanently delete all focus history, stats, tags, sleep logs &amp; settings</string>
+    <string name="reset_data_confirm_message">Are you sure you want to erase all data? This will reset all records and settings to factory defaults. This action cannot be undone.</string>
 </resources>

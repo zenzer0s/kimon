@@ -76,6 +76,7 @@ import com.zenzeros.kimon.ui.settings.SettingsViewModel
 import com.zenzeros.kimon.ui.settings.screens.AboutSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.AlarmSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.AppearanceSettingsScreen
+import com.zenzeros.kimon.ui.settings.screens.BackupSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.SettingsMainScreen
 import com.zenzeros.kimon.ui.settings.screens.SleepSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.TimerSettingsScreen
@@ -185,9 +186,9 @@ fun KimonApp() {
     }
 
     // Handle back press from other tabs to return to Focus
-    BackHandler(enabled = !isSettingsOpen && mainTabPagerState.currentPage != 2) {
+    BackHandler(enabled = !isSettingsOpen && mainTabPagerState.currentPage != 0) {
         coroutineScope.launch {
-            mainTabPagerState.scrollToPage(2)
+            mainTabPagerState.scrollToPage(0)
         }
     }
 
@@ -245,6 +246,11 @@ fun KimonApp() {
                     onToggleSleepMonitoring = { settingsViewModel.toggleSleepMonitoring(it) },
                     onToggleHealthConnectSync = { settingsViewModel.toggleHealthConnectSync(it) },
                     onSetSleepGoal = { settingsViewModel.setSleepGoal(it) },
+                    onBack = navigateBack
+                )
+            }
+            entry<KimonNavKey.BackupSettings> {
+                BackupSettingsScreen(
                     onBack = navigateBack
                 )
             }

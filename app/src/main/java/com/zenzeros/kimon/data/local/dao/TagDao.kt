@@ -29,6 +29,12 @@ interface TagDao {
     @Delete
     suspend fun deleteTag(tag: TagEntity)
 
+    @Query("SELECT * FROM tags ORDER BY id ASC")
+    suspend fun getAllTagsList(): List<TagEntity>
+
+    @Query("DELETE FROM tags")
+    suspend fun deleteAllTags()
+
     @Query("SELECT COUNT(*) FROM tags")
     suspend fun getTagsCount(): Int
 }

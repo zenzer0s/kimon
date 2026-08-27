@@ -17,9 +17,18 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: TaskEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(tasks: List<TaskEntity>)
+
     @Update
     suspend fun updateTask(task: TaskEntity)
 
     @Delete
     suspend fun deleteTask(task: TaskEntity)
+
+    @Query("SELECT * FROM tasks ORDER BY createdAtEpochMs ASC")
+    suspend fun getAllTasksList(): List<TaskEntity>
+
+    @Query("DELETE FROM tasks")
+    suspend fun deleteAllTasks()
 }
