@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -49,10 +50,10 @@
             android:background="@drawable/widget_score_badge"
             android:paddingHorizontal="7dp"
             android:paddingVertical="3dp"
-            android:text="Optimal • 88"
             android:textColor="@color/widget_accent_primary"
             android:textSize="10.5sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="Optimal • 88" />
     </LinearLayout>
 
     <!-- ==========================================
@@ -65,27 +66,29 @@
         android:layout_above="@id/widget_bottom_container"
         android:layout_below="@id/widget_header"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <TextView
             android:id="@+id/widget_duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:letterSpacing="-0.02"
-            android:text="7h 45m"
             android:textColor="@color/widget_accent_primary"
             android:textSize="30sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="7h 45m" />
 
         <TextView
             android:id="@+id/widget_goal_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="1dp"
-            android:text="Time Asleep • 96% of 8h goal"
             android:textColor="@color/widget_text_secondary"
             android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="Time Asleep • 96% of 8h goal" />
 
         <ProgressBar
             android:id="@+id/widget_progress"
@@ -94,7 +97,7 @@
             android:layout_height="5dp"
             android:layout_marginTop="6dp"
             android:max="100"
-            android:progress="96"
+            android:progress="0"
             android:progressDrawable="@drawable/widget_progress_bar" />
     </LinearLayout>
 
@@ -106,7 +109,9 @@
         android:layout_width="match_parent"
         android:layout_height="46dp"
         android:layout_alignParentBottom="true"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <!-- Left Tile: Bedtime -->
         <LinearLayout
@@ -142,10 +147,10 @@
                     android:id="@+id/widget_bedtime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="11:18 PM"
                     android:textColor="@color/widget_text_primary"
                     android:textSize="11.5sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    tools:text="11:18 PM" />
             </LinearLayout>
         </LinearLayout>
 
@@ -183,16 +188,16 @@
                     android:id="@+id/widget_wake_up"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="07:03 AM"
                     android:textColor="@color/widget_text_primary"
                     android:textSize="11.5sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    tools:text="07:03 AM" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
     <!-- ==========================================
-         4. Empty State
+         4. Empty State (Active when no sleep data)
          ========================================== -->
     <LinearLayout
         android:id="@+id/widget_empty_container"
@@ -201,7 +206,7 @@
         android:layout_centerInParent="true"
         android:gravity="center"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <TextView
             android:layout_width="wrap_content"
