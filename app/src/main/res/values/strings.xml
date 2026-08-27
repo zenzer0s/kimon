@@ -201,4 +201,8 @@
     <string name="reset_data_title">Erase &amp; Reset All Data</string>
     <string name="reset_data_desc">Permanently delete all focus history, stats, tags, sleep logs &amp; settings</string>
     <string name="reset_data_confirm_message">Are you sure you want to erase all data? This will reset all records and settings to factory defaults. This action cannot be undone.</string>
+
+    <!-- Widgets -->
+    <string name="widget_sleep_title">Last Night\'s Sleep</string>
+    <string name="widget_sleep_desc">Glance at last night\'s sleep duration, quality score, and goal progress</string>
 </resources>

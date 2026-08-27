@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget Semantic Colors (Dark Theme) -->
+    <color name="widget_background">#FF141619</color>
+    <color name="widget_surface_container">#FF1F2226</color>
+    <color name="widget_surface_container_highest">#FF2A2E33</color>
+    <color name="widget_text_primary">#FFE2E2E6</color>
+    <color name="widget_text_secondary">#FF91969E</color>
+    <color name="widget_accent_primary">#FFA2C9EB</color>
+    <color name="widget_accent_container">#FF204B6D</color>
+    <color name="widget_accent_on_container">#FFD0E4FF</color>
+    <color name="widget_border">#20FFFFFF</color>
+    <color name="widget_progress_track">#FF2D3137</color>
+    <color name="widget_progress_indicator">#FFA2C9EB</color>
+</resources>

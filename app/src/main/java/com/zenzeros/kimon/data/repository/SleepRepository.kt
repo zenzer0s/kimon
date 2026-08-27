@@ -11,6 +11,7 @@ import java.util.Date
 import java.util.Locale
 
 class SleepRepository(
+    private val context: android.content.Context,
     private val sleepSessionDao: SleepSessionDao,
     val sleepMonitorManager: SleepMonitorManager,
     val healthConnectManager: HealthConnectManager
@@ -37,12 +38,19 @@ class SleepRepository(
                 sleepSessionDao.updateSession(session.copy(id = id, syncedToHealthConnect = true))
             }
         }
+        com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
         return id
     }
 
-    suspend fun deleteSession(session: SleepSessionEntity) = sleepSessionDao.deleteSession(session)
+    suspend fun deleteSession(session: SleepSessionEntity) {
+        sleepSessionDao.deleteSession(session)
+        com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
+    }
 
-    suspend fun clearAllSessions() = sleepSessionDao.deleteAllSessions()
+    suspend fun clearAllSessions() {
+        sleepSessionDao.deleteAllSessions()
+        com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
+    }
 
     suspend fun syncFromHealthConnect(): Int {
         if (!healthConnectManager.isAvailable() || !healthConnectManager.hasPermissions()) return 0
@@ -55,6 +63,7 @@ class SleepRepository(
         val healthConnectSessions = healthConnectManager.readSleepSessions(startTime, endTime)
         if (healthConnectSessions.isNotEmpty()) {
             sleepSessionDao.insertAll(healthConnectSessions)
+            com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
         }
         return healthConnectSessions.size
     }

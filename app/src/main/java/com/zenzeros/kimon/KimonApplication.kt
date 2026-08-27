@@ -23,9 +23,10 @@ class KimonApplication : Application() {
     val healthConnectManager by lazy { com.zenzeros.kimon.service.health.HealthConnectManager(this) }
     val sleepRepository by lazy {
         com.zenzeros.kimon.data.repository.SleepRepository(
-            database.sleepSessionDao(),
-            sleepMonitorManager,
-            healthConnectManager
+            context = this,
+            sleepSessionDao = database.sleepSessionDao(),
+            sleepMonitorManager = sleepMonitorManager,
+            healthConnectManager = healthConnectManager
         )
     }
 
