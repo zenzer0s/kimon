@@ -29,7 +29,7 @@ class SleepRepository(
 
     fun getTotalSessionsCount(): Flow<Int> = sleepSessionDao.getTotalSessionsCount()
 
-    suspend fun recordSession(session: SleepSessionEntity): Long {
+    suspend fun recordSession(session: SleepSessionEntity, sendNotification: Boolean = true): Long {
         val id = sleepSessionDao.insertSession(session)
         // Automatically attempt Health Connect sync if available and permitted
         if (healthConnectManager.isAvailable() && healthConnectManager.hasPermissions()) {
@@ -39,6 +39,9 @@ class SleepRepository(
             }
         }
         com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
+        if (sendNotification) {
+            com.zenzeros.kimon.service.sleep.SleepNotificationHelper.sendSleepSummaryNotification(context, session.copy(id = id))
+        }
         return id
     }
 
