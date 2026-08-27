@@ -209,15 +209,15 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             val leftMargin = 62f
             val topHeaderHeight = 44f
             val spacing = 7f
-            val cols = 6
+            val colsPerMonth = 6
+            val totalCols = 12
             val rows = 7
             val cornerRadius = 9f
 
-            val totalInnerWidth = width - leftMargin - 16f
-            val monthGap = 20f
-            val singleMonthWidth = (totalInnerWidth - monthGap) / 2f
-            val cellWidth = (singleMonthWidth - (cols - 1) * spacing) / cols
+            val totalGridWidth = width - leftMargin - 16f
+            val cellWidth = (totalGridWidth - (totalCols - 1) * spacing) / totalCols
             val cellHeight = (height - topHeaderHeight - (rows - 1) * spacing - 6f) / rows
+            val singleMonthWidth = colsPerMonth * cellWidth + (colsPerMonth - 1) * spacing
 
             val weekdayMetrics = weekdayPaint.fontMetrics
             val weekdayYOffset = (cellHeight / 2f) - (weekdayMetrics.ascent + weekdayMetrics.descent) / 2f
@@ -233,9 +233,9 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
             val textMetrics = textPaint.fontMetrics
             val textYOffset = (cellHeight / 2f) - (textMetrics.ascent + textMetrics.descent) / 2f
 
-            // Draw 2 Months
+            // Draw 2 Months (Seamlessly joined with unified spacing)
             months.forEachIndexed { mIndex, (year, month) ->
-                val startX = leftMargin + mIndex * (singleMonthWidth + monthGap)
+                val startX = leftMargin + mIndex * (colsPerMonth * (cellWidth + spacing))
                 val ym = YearMonth.of(year, month)
                 val maxDays = ym.lengthOfMonth()
                 val firstDayOfWeek = LocalDate.of(year, month, 1).dayOfWeek.value - 1 // Monday = 0 ... Sunday = 6
@@ -246,7 +246,7 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
                 canvas.drawText(monthName, monthCenterX, topHeaderHeight - 12f, titlePaint)
 
                 // Draw Grid
-                for (col in 0 until cols) {
+                for (col in 0 until colsPerMonth) {
                     for (row in 0 until rows) {
                         val slotIndex = col * 7 + row
                         val dayNumber = slotIndex - firstDayOfWeek + 1
