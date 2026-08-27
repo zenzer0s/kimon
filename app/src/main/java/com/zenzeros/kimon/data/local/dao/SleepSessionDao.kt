@@ -26,6 +26,9 @@ interface SleepSessionDao {
     @Query("SELECT * FROM sleep_sessions ORDER BY startTimeEpochMs DESC")
     fun getAllSessions(): Flow<List<SleepSessionEntity>>
 
+    @Query("SELECT * FROM sleep_sessions ORDER BY startTimeEpochMs ASC")
+    suspend fun getAllSessionsList(): List<SleepSessionEntity>
+
     @Query("SELECT * FROM sleep_sessions ORDER BY startTimeEpochMs DESC LIMIT 1")
     fun getLatestSession(): Flow<SleepSessionEntity?>
 

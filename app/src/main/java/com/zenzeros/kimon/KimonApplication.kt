@@ -29,6 +29,14 @@ class KimonApplication : Application() {
         )
     }
 
+    val backupRepository by lazy {
+        com.zenzeros.kimon.data.backup.BackupRepository(
+            context = this,
+            database = database,
+            userSettingsRepository = userSettingsRepository
+        )
+    }
+
     val getOverviewStatsUseCase by lazy { GetOverviewStatsUseCase(sessionRepository) }
     val getDayStatsUseCase by lazy { GetDayStatsUseCase(sessionRepository) }
     val getWeekStatsUseCase by lazy { GetWeekStatsUseCase(sessionRepository) }

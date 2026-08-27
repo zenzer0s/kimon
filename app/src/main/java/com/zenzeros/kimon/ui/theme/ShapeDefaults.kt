@@ -33,6 +33,9 @@ object KimonShapeDefaults {
                 bottomEnd = shapes.large.bottomEnd
             )
 
+    val singleListItemShape: CornerBasedShape
+        @Composable get() = shapes.large
+
     val cardShape: CornerBasedShape
         @Composable get() = shapes.large
 

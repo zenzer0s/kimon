@@ -15,11 +15,17 @@ interface FocusSessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: FocusSessionEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(sessions: List<FocusSessionEntity>)
+
     @Delete
     suspend fun deleteSession(session: FocusSessionEntity)
 
     @Query("SELECT * FROM focus_sessions ORDER BY startTimeEpochMs DESC")
     fun getAllSessions(): Flow<List<FocusSessionEntity>>
+
+    @Query("SELECT * FROM focus_sessions ORDER BY startTimeEpochMs ASC")
+    suspend fun getAllSessionsList(): List<FocusSessionEntity>
 
     @Transaction
     @Query("SELECT * FROM focus_sessions WHERE startTimeEpochMs >= :startTimeMs AND startTimeEpochMs <= :endTimeMs ORDER BY startTimeEpochMs ASC")
