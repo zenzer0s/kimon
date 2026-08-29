@@ -238,6 +238,7 @@ fun KimonApp() {
                     onSetThemeMode = { settingsViewModel.setThemeMode(it) },
                     onSetThemeColor = { settingsViewModel.setThemeColor(it) },
                     onToggleAmoledBlack = { settingsViewModel.toggleAmoledBlack(it) },
+                    onToggleNothingOsTheme = { settingsViewModel.toggleNothingOsTheme(it) },
                     onBack = navigateBack
                 )
             }
@@ -271,7 +272,8 @@ fun KimonApp() {
         darkTheme = isDark,
         seedColor = settingsState.themeColor,
         dynamicColor = settingsState.themeColor == androidx.compose.ui.graphics.Color.White,
-        blackTheme = settingsState.amoledBlack
+        blackTheme = settingsState.amoledBlack,
+        nothingOsTheme = settingsState.nothingOsTheme
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),

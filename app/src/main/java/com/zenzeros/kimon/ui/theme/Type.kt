@@ -21,7 +21,32 @@ data class AppFonts(
 )
 
 @Composable
-fun typography(): Typography {
+fun typography(isNothingOs: Boolean = false): Typography {
+    if (isNothingOs) {
+        val ndot = FontFamily(Font(R.font.ndot, FontWeight.Normal))
+        val ntype = FontFamily(Font(R.font.ntype82, FontWeight.Normal))
+
+        return remember {
+            Typography(
+                displayLarge = TYPOGRAPHY.displayLarge.copy(fontFamily = ndot),
+                displayMedium = TYPOGRAPHY.displayMedium.copy(fontFamily = ndot),
+                displaySmall = TYPOGRAPHY.displaySmall.copy(fontFamily = ndot),
+                headlineLarge = TYPOGRAPHY.headlineLarge.copy(fontFamily = ndot),
+                headlineMedium = TYPOGRAPHY.headlineMedium.copy(fontFamily = ndot),
+                headlineSmall = TYPOGRAPHY.headlineSmall.copy(fontFamily = ndot),
+                titleLarge = TYPOGRAPHY.titleLarge.copy(fontFamily = ntype, fontWeight = FontWeight.Bold),
+                titleMedium = TYPOGRAPHY.titleMedium.copy(fontFamily = ntype, fontWeight = FontWeight.SemiBold),
+                titleSmall = TYPOGRAPHY.titleSmall.copy(fontFamily = ntype, fontWeight = FontWeight.Medium),
+                bodyLarge = TYPOGRAPHY.bodyLarge.copy(fontFamily = ntype),
+                bodyMedium = TYPOGRAPHY.bodyMedium.copy(fontFamily = ntype),
+                bodySmall = TYPOGRAPHY.bodySmall.copy(fontFamily = ntype),
+                labelLarge = TYPOGRAPHY.labelLarge.copy(fontFamily = ntype, fontWeight = FontWeight.SemiBold),
+                labelMedium = TYPOGRAPHY.labelMedium.copy(fontFamily = ntype, fontWeight = FontWeight.Medium),
+                labelSmall = TYPOGRAPHY.labelSmall.copy(fontFamily = ntype, fontWeight = FontWeight.Medium)
+            )
+        }
+    }
+
     val googleFlex400 = FontFamily(
         Font(
             R.font.google_sans_flex,
@@ -108,7 +133,16 @@ fun typography(): Typography {
 }
 
 @Composable
-fun getAppFonts(): AppFonts {
+fun getAppFonts(isNothingOs: Boolean = false): AppFonts {
+    if (isNothingOs) {
+        val ndot = FontFamily(Font(R.font.ndot, FontWeight.Normal))
+        val ntype = FontFamily(Font(R.font.ntype82, FontWeight.Normal))
+        return AppFonts(
+            topBarTitle = ndot,
+            annotatedString = ntype
+        )
+    }
+
     val robotoFlexTopBar = FontFamily(
         Font(
             R.font.google_sans_flex,

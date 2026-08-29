@@ -42,6 +42,7 @@ class UserSettingsRepository(private val context: Context) {
         val THEME_PALETTE = stringPreferencesKey("theme_palette")
         val THEME_COLOR = stringPreferencesKey("theme_color")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
+        val NOTHING_OS_THEME = booleanPreferencesKey("nothing_os_theme")
         val CLOCK_STYLE = stringPreferencesKey("clock_style")
 
         // Sleep Monitor
@@ -135,6 +136,10 @@ class UserSettingsRepository(private val context: Context) {
 
     val amoledBlack: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[PreferencesKeys.AMOLED_BLACK] ?: false
+    }
+
+    val nothingOsTheme: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.NOTHING_OS_THEME] ?: false
     }
 
     val sleepMonitoringEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -279,6 +284,10 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setAmoledBlack(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.AMOLED_BLACK] = enabled }
+    }
+
+    suspend fun setNothingOsTheme(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.NOTHING_OS_THEME] = enabled }
     }
 
     suspend fun setClockStyle(style: String) {

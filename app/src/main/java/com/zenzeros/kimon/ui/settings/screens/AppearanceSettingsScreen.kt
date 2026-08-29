@@ -58,13 +58,14 @@ fun AppearanceSettingsScreen(
     onSetThemeMode: (String) -> Unit,
     onSetThemeColor: (Color) -> Unit,
     onToggleAmoledBlack: (Boolean) -> Unit,
+    onToggleNothingOsTheme: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
     val hasDynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val totalItems = if (hasDynamicColor) 4 else 3
+    val totalItems = if (hasDynamicColor) 5 else 4
 
     Scaffold(
         topBar = {
@@ -149,7 +150,23 @@ fun AppearanceSettingsScreen(
                 }
             )
 
-            // Item 4: Black Theme (Pure AMOLED) -> bottomListItemShape
+            // Item 4: Nothing OS Theme (NDot & Red Accent) -> middleListItemShape
+            AppearanceSwitchRow(
+                item = SettingsSwitchItem(
+                    checked = state.nothingOsTheme,
+                    icon = R.drawable.ic_sparkles,
+                    label = R.string.settings_nothing_os_theme,
+                    description = R.string.settings_nothing_os_theme_desc,
+                    onClick = onToggleNothingOsTheme
+                ),
+                shape = middleListItemShape,
+                onToggle = { enabled ->
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onToggleNothingOsTheme(enabled)
+                }
+            )
+
+            // Item 5: Black Theme (Pure AMOLED) -> bottomListItemShape
             AppearanceSwitchRow(
                 item = SettingsSwitchItem(
                     checked = state.amoledBlack,

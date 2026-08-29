@@ -151,6 +151,8 @@
     <string name="settings_color_scheme">Color scheme</string>
     <string name="settings_amoled_black">Black theme</string>
     <string name="settings_amoled_black_desc">Use a pure black dark theme</string>
+    <string name="settings_nothing_os_theme">Nothing OS Theme</string>
+    <string name="settings_nothing_os_theme_desc">Dot matrix NDot typography, signature red accents &amp; dark aesthetics</string>
     <string name="settings_section_about">About &amp; Developer</string>
     <string name="settings_about_desc">zenzeros, donations, open source &amp; info</string>
 

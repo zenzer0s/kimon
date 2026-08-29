@@ -65,6 +65,7 @@ data class SettingsUiState(
     val themePalette: String = "DYNAMIC",
     val themeColor: Color = Color.White,
     val amoledBlack: Boolean = false,
+    val nothingOsTheme: Boolean = false,
     val sleepMonitoringEnabled: Boolean = false,
     val healthConnectSyncEnabled: Boolean = false,
     val sleepGoalMinutes: Int = 480,
@@ -113,6 +114,7 @@ class SettingsViewModel(
         val themePalette: String,
         val themeColor: String,
         val amoledBlack: Boolean,
+        val nothingOsTheme: Boolean,
         val sleepMonitoring: Boolean,
         val healthConnect: Boolean,
         val sleepGoal: Int,
@@ -158,28 +160,29 @@ class SettingsViewModel(
                 userSettingsRepository.themePalette,
                 userSettingsRepository.themeColor,
                 userSettingsRepository.amoledBlack,
-                userSettingsRepository.sleepMonitoringEnabled
-            ) { mode, palette, color, amoled, sleep ->
-                Tuple5(mode, palette, color, amoled, sleep)
+                userSettingsRepository.nothingOsTheme
+            ) { mode, palette, color, amoled, nothingOs ->
+                Tuple5(mode, palette, color, amoled, nothingOs)
             },
             combine(
+                userSettingsRepository.sleepMonitoringEnabled,
                 userSettingsRepository.healthConnectSyncEnabled,
                 userSettingsRepository.sleepGoalMinutes,
                 userSettingsRepository.sleepScheduledMode,
-                userSettingsRepository.targetBedtimeHour,
-                userSettingsRepository.targetBedtimeMinute
-            ) { hc, goal, sched, bh, bm ->
-                Tuple5(hc, goal, sched, bh, bm)
+                userSettingsRepository.targetBedtimeHour
+            ) { sleep, hc, goal, sched, bh ->
+                Tuple5(sleep, hc, goal, sched, bh)
             },
             combine(
+                userSettingsRepository.targetBedtimeMinute,
                 userSettingsRepository.targetWakeHour,
                 userSettingsRepository.targetWakeMinute,
                 userSettingsRepository.appUsageAccessEnabled
-            ) { wh, wm, usage ->
-                Triple(wh, wm, usage)
+            ) { bm, wh, wm, usage ->
+                Tuple4(bm, wh, wm, usage)
             }
-        ) { (mode, palette, color, amoled, sleep), (hc, goal, sched, bh, bm), (wh, wm, usage) ->
-            SleepAndThemeGroup(mode, palette, color, amoled, sleep, hc, goal, sched, bh, bm, wh, wm, usage)
+        ) { (mode, palette, color, amoled, nothingOs), (sleep, hc, goal, sched, bh), (bm, wh, wm, usage) ->
+            SleepAndThemeGroup(mode, palette, color, amoled, nothingOs, sleep, hc, goal, sched, bh, bm, wh, wm, usage)
         }
     ) { timer, auto, sound, appGroup ->
         SettingsUiState(
@@ -203,6 +206,7 @@ class SettingsViewModel(
             themePalette = appGroup.themePalette,
             themeColor = appGroup.themeColor.toColor(),
             amoledBlack = appGroup.amoledBlack,
+            nothingOsTheme = appGroup.nothingOsTheme,
             sleepMonitoringEnabled = appGroup.sleepMonitoring,
             healthConnectSyncEnabled = appGroup.healthConnect,
             sleepGoalMinutes = appGroup.sleepGoal,
@@ -295,6 +299,10 @@ class SettingsViewModel(
         userSettingsRepository.setAmoledBlack(enabled)
     }
 
+    fun toggleNothingOsTheme(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setNothingOsTheme(enabled)
+    }
+
     fun toggleSleepMonitoring(enabled: Boolean) = viewModelScope.launch {
         userSettingsRepository.setSleepMonitoringEnabled(enabled)
         (application as? KimonApplication)?.sleepMonitorManager?.syncMonitoringState()
@@ -337,6 +345,13 @@ class SettingsViewModel(
         val c: C,
         val d: D,
         val e: E
+    )
+
+    private data class Tuple4<A, B, C, D>(
+        val a: A,
+        val b: B,
+        val c: C,
+        val d: D
     )
 
     private data class SleepConfigGroup(
