@@ -23,5 +23,6 @@ data class SleepSessionEntity(
     val source: String = "GOOGLE_SLEEP_API", // "GOOGLE_SLEEP_API", "HEALTH_CONNECT", "MANUAL"
     val dateString: String, // YYYY-MM-DD
     val syncedToHealthConnect: Boolean = false,
-    val notes: String? = null
+    val notes: String? = null,
+    val appUsageJson: String? = null
 )

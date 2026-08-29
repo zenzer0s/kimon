@@ -73,6 +73,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.data.local.entity.SleepSessionEntity
+import com.zenzeros.kimon.service.sleep.usage.SleepAppUsageEvent
+import kotlinx.serialization.json.Json
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
@@ -102,11 +104,16 @@ fun SleepScreen(
 
     val timeFormat = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     val dateFormat = remember { SimpleDateFormat("EEE, MMM d", Locale.getDefault()) }
+    val appUsageJsonParser = remember { Json { ignoreUnknownKeys = true } }
 
     val totalSectionsGroup = 3
     val heroShapesGroup = ListItemDefaults.segmentedShapes(index = 0, count = totalSectionsGroup)
     val chartShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
     val historyShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        (context.applicationContext as KimonApplication).sleepMonitorManager.checkAndFinalizeMorningSession()
+    }
 
     Column(
         modifier = modifier
@@ -298,6 +305,90 @@ fun SleepScreen(
                             label = stringResource(R.string.sleep_wake_up),
                             value = timeFormat.format(Date(latest.endTimeEpochMs))
                         )
+                    }
+
+                    // Mid-Sleep App Usage (if recorded)
+                    val appUsageEvents = remember(latest.appUsageJson) {
+                        try {
+                            if (!latest.appUsageJson.isNullOrBlank()) {
+                                appUsageJsonParser.decodeFromString<List<SleepAppUsageEvent>>(latest.appUsageJson)
+                            } else emptyList()
+                        } catch (e: Exception) {
+                            emptyList()
+                        }
+                    }
+
+                    if (appUsageEvents.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f))
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_screen_awake),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.sleep_mid_sleep_apps),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.5.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            appUsageEvents.forEach { appEvent ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = appEvent.appName,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 13.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "${timeFormat.format(Date(appEvent.startTimeEpochMs))} – ${timeFormat.format(Date(appEvent.endTimeEpochMs))}",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 11.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+                                    ) {
+                                        Text(
+                                            text = if (appEvent.durationSeconds >= 60) "${appEvent.durationSeconds / 60}m" else "${appEvent.durationSeconds}s",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 11.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.onErrorContainer,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else {
                     Column(

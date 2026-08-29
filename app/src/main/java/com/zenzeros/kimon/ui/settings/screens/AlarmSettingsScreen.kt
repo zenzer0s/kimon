@@ -110,7 +110,8 @@ fun AlarmSettingsScreen(
                         onClick = onBack,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = listItemColors.containerColor
-                        )
+                        ),
+                        modifier = Modifier.padding(start = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_left),

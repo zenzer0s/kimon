@@ -89,7 +89,7 @@ fun SettingsMainScreen(
                 key = KimonNavKey.SleepSettings,
                 icon = R.drawable.ic_moon,
                 title = R.string.settings_section_sleep,
-                subtitle = "Google Sleep API, Health Connect & sleep tracking"
+                subtitle = "Native SleepCore, Health Connect & sleep tracking"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.BackupSettings,
@@ -125,7 +125,8 @@ fun SettingsMainScreen(
                         onClick = onBack,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = listItemColors.containerColor
-                        )
+                        ),
+                        modifier = Modifier.padding(start = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_left),
@@ -166,11 +167,10 @@ fun SettingsMainScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val (iconContainerColor, iconContentColor) = when (index) {
+                    val (iconContainerColor, iconContentColor) = when (index % 3) {
                         0 -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
                         1 -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-                        2 -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-                        else -> MaterialTheme.colorScheme.surfaceContainerHighest to MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
                     }
 
                     Row(

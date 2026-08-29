@@ -102,8 +102,7 @@ dependencies {
     // Coil Image Loading
     implementation(libs.coil.compose)
 
-    // Google Play Services Location (Sleep API) & Health Connect
-    implementation(libs.play.services.location)
+    // Health Connect
     implementation(libs.androidx.health.connect)
 
     testImplementation(libs.junit)
@@ -115,3 +114,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+tasks.register<Exec>("buildRustSleepCore") {
+    workingDir = file("${project.rootDir}/native/sleep_core")
+    commandLine("cargo", "ndk", "-t", "arm64-v8a", "-o", "${projectDir}/src/main/jniLibs", "build", "--release")
+}
+

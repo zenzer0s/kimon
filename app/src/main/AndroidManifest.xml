@@ -2,13 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.WRITE_SLEEP" />
 
@@ -58,10 +62,11 @@
 
         <receiver
             android:name=".service.sleep.SleepReceiver"
-            android:exported="true"
-            android:permission="com.google.android.gms.permission.ACTIVITY_RECOGNITION">
+            android:exported="true">
             <intent-filter>
-                <action android:name="com.zenzeros.kimon.ACTION_SLEEP_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="com.zenzeros.kimon.service.sleep.ACTION_RESTART_MONITORING" />
             </intent-filter>
         </receiver>
 
@@ -92,6 +97,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_focus_heatmap_info" />
         </receiver>
+
+        <service
+            android:name=".service.sleep.CustomSleepService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="sleep_monitoring_engine" />
+        </service>
 
         <service
             android:name=".service.PomodoroTimerService"

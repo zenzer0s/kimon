@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [FocusSessionEntity::class, TagEntity::class, TaskEntity::class, SleepSessionEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class KimonDatabase : RoomDatabase() {

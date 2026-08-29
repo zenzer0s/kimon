@@ -48,6 +48,12 @@ class UserSettingsRepository(private val context: Context) {
         val SLEEP_MONITORING_ENABLED = booleanPreferencesKey("sleep_monitoring_enabled")
         val HEALTH_CONNECT_SYNC_ENABLED = booleanPreferencesKey("health_connect_sync_enabled")
         val SLEEP_GOAL_MINUTES = intPreferencesKey("sleep_goal_minutes")
+        val SLEEP_SCHEDULED_MODE = booleanPreferencesKey("sleep_scheduled_mode")
+        val TARGET_BEDTIME_HOUR = intPreferencesKey("target_bedtime_hour")
+        val TARGET_BEDTIME_MINUTE = intPreferencesKey("target_bedtime_minute")
+        val TARGET_WAKE_HOUR = intPreferencesKey("target_wake_hour")
+        val TARGET_WAKE_MINUTE = intPreferencesKey("target_wake_minute")
+        val APP_USAGE_ACCESS_ENABLED = booleanPreferencesKey("app_usage_access_enabled")
     }
 
     // --- Flows ---
@@ -143,9 +149,55 @@ class UserSettingsRepository(private val context: Context) {
         prefs[PreferencesKeys.SLEEP_GOAL_MINUTES] ?: 480
     }
 
+    val sleepScheduledMode: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.SLEEP_SCHEDULED_MODE] ?: true
+    }
+
+    val targetBedtimeHour: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TARGET_BEDTIME_HOUR] ?: 23
+    }
+
+    val targetBedtimeMinute: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TARGET_BEDTIME_MINUTE] ?: 0
+    }
+
+    val targetWakeHour: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TARGET_WAKE_HOUR] ?: 7
+    }
+
+    val targetWakeMinute: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TARGET_WAKE_MINUTE] ?: 0
+    }
+
+    val appUsageAccessEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.APP_USAGE_ACCESS_ENABLED] ?: true
+    }
+
     // --- Setters ---
     suspend fun setSleepGoalMinutes(minutes: Int) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.SLEEP_GOAL_MINUTES] = minutes }
+    }
+
+    suspend fun setSleepScheduledMode(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.SLEEP_SCHEDULED_MODE] = enabled }
+    }
+
+    suspend fun setTargetBedtime(hour: Int, minute: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.TARGET_BEDTIME_HOUR] = hour
+            prefs[PreferencesKeys.TARGET_BEDTIME_MINUTE] = minute
+        }
+    }
+
+    suspend fun setTargetWakeTime(hour: Int, minute: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.TARGET_WAKE_HOUR] = hour
+            prefs[PreferencesKeys.TARGET_WAKE_MINUTE] = minute
+        }
+    }
+
+    suspend fun setAppUsageAccessEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.APP_USAGE_ACCESS_ENABLED] = enabled }
     }
 
     suspend fun setWorkDurationMinutes(minutes: Int) {
