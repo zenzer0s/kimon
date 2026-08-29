@@ -43,6 +43,8 @@ import com.zenzeros.kimon.ui.settings.SettingsSwitchItem
 import com.zenzeros.kimon.ui.settings.SettingsUiState
 import com.zenzeros.kimon.ui.settings.components.ColorSchemePickerCard
 import com.zenzeros.kimon.ui.settings.components.ThemePickerListItem
+import com.zenzeros.kimon.ui.theme.CustomColors
+import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
@@ -96,7 +98,7 @@ fun AppearanceSettingsScreen(
                 colors = topBarColors
             )
         },
-        containerColor = topBarColors.containerColor,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -197,6 +199,7 @@ private fun AppearanceSwitchRow(
     Surface(
         shape = shape,
         color = listItemColors.containerColor,
+        border = CustomColors.cardBorder,
         onClick = {
             if (item.enabled) {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)

@@ -75,6 +75,7 @@ fun SessionPreviewCard(
     Surface(
         shape = RoundedCornerShape(22.dp),
         color = CustomColors.cardContainerColor,
+        border = CustomColors.cardBorder,
         tonalElevation = 1.dp,
         modifier = modifier.fillMaxWidth()
     ) {

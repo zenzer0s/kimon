@@ -55,6 +55,8 @@ import com.zenzeros.kimon.ui.settings.SettingsUiState
 import com.zenzeros.kimon.ui.settings.components.MinuteInputField
 import com.zenzeros.kimon.ui.settings.components.MinutesInputTransformation3Digits
 import com.zenzeros.kimon.ui.settings.components.SessionPreviewCard
+import com.zenzeros.kimon.ui.theme.CustomColors
+import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
@@ -197,7 +199,7 @@ fun TimerSettingsScreen(
                 colors = topBarColors
             )
         },
-        containerColor = topBarColors.containerColor,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -532,6 +534,7 @@ fun TimerSettingsScreen(
                 Surface(
                     shape = itemShape,
                     color = listItemColors.containerColor,
+                    border = CustomColors.cardBorder,
                     onClick = {
                         if (item.enabled) {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)

@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.settings.SettingsSwitchItem
 import com.zenzeros.kimon.ui.settings.SettingsUiState
+import com.zenzeros.kimon.ui.theme.CustomColors
+import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
@@ -122,7 +124,7 @@ fun AlarmSettingsScreen(
                 colors = topBarColors
             )
         },
-        containerColor = topBarColors.containerColor,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -245,6 +247,7 @@ private fun SettingsNavigationRow(
     Surface(
         shape = shape,
         color = listItemColors.containerColor,
+        border = CustomColors.cardBorder,
         onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -304,6 +307,7 @@ private fun SettingsSwitchRow(
     Surface(
         shape = shape,
         color = listItemColors.containerColor,
+        border = CustomColors.cardBorder,
         onClick = {
             if (item.enabled) {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)

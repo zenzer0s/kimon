@@ -4,6 +4,7 @@ package com.zenzeros.kimon.ui.settings.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 
 @Composable
@@ -76,6 +78,7 @@ fun MinuteInputField(
                         ).value,
                         shape
                     )
+                    .border(cardBorder, shape)
             ) { innerTextField() }
         }
     )

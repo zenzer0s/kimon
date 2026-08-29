@@ -44,6 +44,7 @@ fun ColorSchemePickerCard(
     Surface(
         shape = shape,
         color = listItemColors.containerColor,
+        border = com.zenzeros.kimon.ui.theme.CustomColors.cardBorder,
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
