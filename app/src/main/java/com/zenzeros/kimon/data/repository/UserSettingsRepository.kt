@@ -44,6 +44,7 @@ class UserSettingsRepository(private val context: Context) {
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
         val NOTHING_OS_THEME = booleanPreferencesKey("nothing_os_theme")
         val CLOCK_STYLE = stringPreferencesKey("clock_style")
+        val DIAL_TICK_ANIMATION = booleanPreferencesKey("dial_tick_animation")
 
         // Sleep Monitor
         val SLEEP_MONITORING_ENABLED = booleanPreferencesKey("sleep_monitoring_enabled")
@@ -96,6 +97,10 @@ class UserSettingsRepository(private val context: Context) {
 
     val clockStyle: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[PreferencesKeys.CLOCK_STYLE] ?: "DIAL"
+    }
+
+    val dialTickAnimation: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.DIAL_TICK_ANIMATION] ?: false
     }
 
     val soundEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -292,6 +297,10 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setClockStyle(style: String) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.CLOCK_STYLE] = style }
+    }
+
+    suspend fun setDialTickAnimation(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.DIAL_TICK_ANIMATION] = enabled }
     }
 
     suspend fun setSleepMonitoringEnabled(enabled: Boolean) {
