@@ -55,6 +55,7 @@ data class SettingsUiState(
     val keepScreenOn: Boolean = false,
     val dndEnabled: Boolean = false,
     val clockStyle: String = "DIAL",
+    val dialTickAnimation: Boolean = false,
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val mediaVolumeForAlarm: Boolean = false,
@@ -98,7 +99,8 @@ class SettingsViewModel(
         val aPomodoros: Boolean,
         val keepScreen: Boolean,
         val dnd: Boolean,
-        val clockStyle: String
+        val clockStyle: String,
+        val dialTick: Boolean
     )
 
     private data class SoundSettingsGroup(
@@ -141,9 +143,12 @@ class SettingsViewModel(
             userSettingsRepository.autoStartPomodoros,
             userSettingsRepository.keepScreenOn,
             userSettingsRepository.dndEnabled,
-            userSettingsRepository.clockStyle
-        ) { aBreaks, aPomodoros, keepScreen, dnd, clockStyle ->
-            AutomationSettingsGroup(aBreaks, aPomodoros, keepScreen, dnd, clockStyle)
+            combine(
+                userSettingsRepository.clockStyle,
+                userSettingsRepository.dialTickAnimation
+            ) { clockStyle, dialTick -> Pair(clockStyle, dialTick) }
+        ) { aBreaks, aPomodoros, keepScreen, dnd, (clockStyle, dialTick) ->
+            AutomationSettingsGroup(aBreaks, aPomodoros, keepScreen, dnd, clockStyle, dialTick)
         },
         combine(
             userSettingsRepository.soundEnabled,
@@ -196,6 +201,7 @@ class SettingsViewModel(
             keepScreenOn = auto.keepScreen,
             dndEnabled = auto.dnd,
             clockStyle = auto.clockStyle,
+            dialTickAnimation = auto.dialTick,
             soundEnabled = sound.sound,
             vibrationEnabled = sound.vibration,
             mediaVolumeForAlarm = sound.headphone,
@@ -261,6 +267,10 @@ class SettingsViewModel(
 
     fun setClockStyle(style: String) = viewModelScope.launch {
         userSettingsRepository.setClockStyle(style)
+    }
+
+    fun toggleDialTickAnimation(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setDialTickAnimation(enabled)
     }
 
     fun toggleSound(enabled: Boolean) = viewModelScope.launch {

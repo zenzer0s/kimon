@@ -35,6 +35,7 @@ data class KimonSettingsBackup(
     val themeColor: String = "Color.White",
     val amoledBlack: Boolean = false,
     val clockStyle: String = "DIAL",
+    val dialTickAnimation: Boolean = false,
     val sleepMonitoringEnabled: Boolean = false,
     val healthConnectSyncEnabled: Boolean = false,
     val sleepGoalMinutes: Int = 480

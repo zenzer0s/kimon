@@ -102,6 +102,7 @@ class BackupRepository(
             themeColor = userSettingsRepository.themeColor.first(),
             amoledBlack = userSettingsRepository.amoledBlack.first(),
             clockStyle = userSettingsRepository.clockStyle.first(),
+            dialTickAnimation = userSettingsRepository.dialTickAnimation.first(),
             sleepMonitoringEnabled = userSettingsRepository.sleepMonitoringEnabled.first(),
             healthConnectSyncEnabled = userSettingsRepository.healthConnectSyncEnabled.first(),
             sleepGoalMinutes = userSettingsRepository.sleepGoalMinutes.first()
@@ -239,6 +240,7 @@ class BackupRepository(
                 userSettingsRepository.setThemeColor(s.themeColor)
                 userSettingsRepository.setAmoledBlack(s.amoledBlack)
                 userSettingsRepository.setClockStyle(s.clockStyle)
+                userSettingsRepository.setDialTickAnimation(s.dialTickAnimation)
                 userSettingsRepository.setSleepMonitoringEnabled(s.sleepMonitoringEnabled)
                 userSettingsRepository.setHealthConnectSyncEnabled(s.healthConnectSyncEnabled)
                 userSettingsRepository.setSleepGoalMinutes(s.sleepGoalMinutes)

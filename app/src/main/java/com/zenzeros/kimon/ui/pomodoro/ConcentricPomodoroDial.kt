@@ -8,6 +8,7 @@ import android.graphics.RectF as AndroidRectF
 import android.graphics.Typeface
 import android.os.Build
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -33,6 +34,7 @@ import kotlin.math.sin
 @Composable
 fun ConcentricPomodoroDial(
     remainingSeconds: Int,
+    isTickAnimation: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -76,11 +78,17 @@ fun ConcentricPomodoroDial(
     val secondsAngleAnimatable = remember { Animatable(targetSecondsAngle) }
     val minutesAngleAnimatable = remember { Animatable(targetMinutesAngle) }
 
-    LaunchedEffect(targetSecondsAngle) {
+    LaunchedEffect(targetSecondsAngle, isTickAnimation) {
         val diff = abs(targetSecondsAngle - secondsAngleAnimatable.value)
         if (diff > 12f) {
             // Instant snap for restart, reset, or setting change
             secondsAngleAnimatable.snapTo(targetSecondsAngle)
+        } else if (isTickAnimation) {
+            // Crisp 120ms mechanical tick motion per second
+            secondsAngleAnimatable.animateTo(
+                targetValue = targetSecondsAngle,
+                animationSpec = tween(durationMillis = 120, easing = FastOutSlowInEasing)
+            )
         } else {
             // Smooth 1-second linear transition for active ticking
             secondsAngleAnimatable.animateTo(

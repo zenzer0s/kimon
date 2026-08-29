@@ -133,6 +133,8 @@
     <string name="settings_keep_screen_on_desc">Prevent screen from sleeping during active sessions</string>
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_desc">Silence notifications while focusing</string>
+    <string name="settings_dial_tick_motion">Tick-tick dial motion</string>
+    <string name="settings_dial_tick_motion_desc">Rotate outer seconds dial in discrete ticks instead of smooth sweep</string>
     <string name="settings_section_sound">Sound &amp; Vibration</string>
     <string name="settings_alarm_sound_picker">Alarm sound</string>
     <string name="settings_sound_enabled">Sound</string>

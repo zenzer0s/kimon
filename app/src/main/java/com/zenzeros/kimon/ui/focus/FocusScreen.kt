@@ -69,6 +69,7 @@ fun FocusScreen(
     remainingSeconds: Int,
     timerStatus: TimerStatus,
     clockStyle: String = "DIAL",
+    dialTickAnimation: Boolean = false,
     selectedTag: TagEntity? = null,
     tags: List<TagEntity> = emptyList(),
     onSelectTag: (TagEntity?) -> Unit = {},
@@ -196,7 +197,8 @@ fun FocusScreen(
                 }
             } else {
                 ConcentricPomodoroDial(
-                    remainingSeconds = remainingSeconds
+                    remainingSeconds = remainingSeconds,
+                    isTickAnimation = dialTickAnimation
                 )
 
                 // Integrated Center Tag Complication (Below big minutes text)

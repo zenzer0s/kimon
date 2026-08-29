@@ -82,6 +82,7 @@ fun TimerSettingsScreen(
     onSetSessionsBeforeLongBreak: (Int) -> Unit,
     onSetDailyGoal: (Int) -> Unit,
     onSetClockStyle: (String) -> Unit,
+    onToggleDialTickAnimation: (Boolean) -> Unit,
     onToggleAutoStartBreaks: (Boolean) -> Unit,
     onToggleAutoStartPomodoros: (Boolean) -> Unit,
     onToggleKeepScreenOn: (Boolean) -> Unit,
@@ -312,11 +313,12 @@ fun TimerSettingsScreen(
                 modifier = Modifier.padding(start = 6.dp, bottom = 6.dp)
             )
 
+            val isDial = state.clockStyle != "FLIP"
+            val clockGroupCount = if (isDial) 2 else 1
             val clockOptions = listOf("DIAL" to "Dial", "FLIP" to "Flip clock")
             val currentClockIndex = clockOptions.indexOfFirst { it.first == state.clockStyle }.coerceAtLeast(0)
 
             SegmentedListItem(
-                onClick = {},
                 leadingContent = {
                     Icon(
                         painter = painterResource(
@@ -358,8 +360,67 @@ fun TimerSettingsScreen(
                     }
                 },
                 colors = listItemColors,
-                shapes = segmentedListItemShapes(0, 1)
+                shapes = segmentedListItemShapes(0, clockGroupCount)
             )
+
+            if (isDial) {
+                SegmentedListItem(
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_focus),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = state.dialTickAnimation,
+                            onCheckedChange = null,
+                            thumbContent = {
+                                if (state.dialTickAnimation) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.check),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(R.drawable.clear),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                }
+                            },
+                            colors = switchColors
+                        )
+                    },
+                    shapes = segmentedListItemShapes(1, clockGroupCount),
+                    colors = listItemColors,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onToggleDialTickAnimation(!state.dialTickAnimation)
+                    }
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = stringResource(R.string.settings_dial_tick_motion),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 15.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_dial_tick_motion_desc),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 12.5.sp,
+                                lineHeight = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             Spacer(Modifier.height(14.dp))
 
