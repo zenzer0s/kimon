@@ -1,0 +1,5 @@
+target/
+**/*.rs.bk
+*.rej
+.DS_Store
+jniLibs/

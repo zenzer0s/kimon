@@ -112,6 +112,7 @@ fun KimonApp() {
 
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(
+            application = kimonApp,
             userSettingsRepository = kimonApp.userSettingsRepository,
             sessionRepository = kimonApp.sessionRepository,
             tagRepository = kimonApp.tagRepository,
@@ -246,6 +247,10 @@ fun KimonApp() {
                     onToggleSleepMonitoring = { settingsViewModel.toggleSleepMonitoring(it) },
                     onToggleHealthConnectSync = { settingsViewModel.toggleHealthConnectSync(it) },
                     onSetSleepGoal = { settingsViewModel.setSleepGoal(it) },
+                    onToggleScheduledMode = { settingsViewModel.toggleSleepScheduledMode(it) },
+                    onSetBedtime = { h, m -> settingsViewModel.setTargetBedtime(h, m) },
+                    onSetWakeTime = { h, m -> settingsViewModel.setTargetWakeTime(h, m) },
+                    onToggleAppUsageAccess = { settingsViewModel.toggleAppUsageAccess(it) },
                     onBack = navigateBack
                 )
             }
@@ -335,32 +340,15 @@ fun KimonApp() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Expressive App Brand Header
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.5.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontFamily = LocalAppFonts.current.topBarTitle,
-                                    fontSize = 24.sp,
-                                    letterSpacing = (-0.3).sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            // Expressive Brand Accent Dot
-                            Box(
-                                modifier = Modifier
-                                    .size(5.dp)
-                                    .align(Alignment.Bottom)
-                                    .padding(bottom = 4.5.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = CircleShape
-                                    )
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontFamily = LocalAppFonts.current.topBarTitle,
+                                fontSize = 24.sp,
+                                letterSpacing = (-0.3).sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
                         // Settings Action Button with Expressive Circle Shape
                         FilledTonalIconButton(

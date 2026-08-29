@@ -1,9 +1,11 @@
 package com.zenzeros.kimon.ui.settings
 
+import android.app.Application
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.data.repository.SessionRepository
 import com.zenzeros.kimon.data.repository.TagRepository
 import com.zenzeros.kimon.data.repository.TaskRepository
@@ -65,15 +67,62 @@ data class SettingsUiState(
     val amoledBlack: Boolean = false,
     val sleepMonitoringEnabled: Boolean = false,
     val healthConnectSyncEnabled: Boolean = false,
-    val sleepGoalMinutes: Int = 480
+    val sleepGoalMinutes: Int = 480,
+    val sleepScheduledMode: Boolean = true,
+    val targetBedtimeHour: Int = 23,
+    val targetBedtimeMinute: Int = 0,
+    val targetWakeHour: Int = 7,
+    val targetWakeMinute: Int = 0,
+    val appUsageAccessEnabled: Boolean = true
 )
 
 class SettingsViewModel(
+    private val application: Application? = null,
     private val userSettingsRepository: UserSettingsRepository,
     private val sessionRepository: SessionRepository,
     private val tagRepository: TagRepository,
     private val taskRepository: TaskRepository
 ) : ViewModel() {
+
+    private data class TimerSettingsGroup(
+        val work: Int,
+        val sBreak: Int,
+        val lBreak: Int,
+        val sessions: Int,
+        val goal: Int
+    )
+
+    private data class AutomationSettingsGroup(
+        val aBreaks: Boolean,
+        val aPomodoros: Boolean,
+        val keepScreen: Boolean,
+        val dnd: Boolean,
+        val clockStyle: String
+    )
+
+    private data class SoundSettingsGroup(
+        val sound: Boolean,
+        val vibration: Boolean,
+        val headphone: Boolean,
+        val uri: String,
+        val title: String
+    )
+
+    private data class SleepAndThemeGroup(
+        val themeMode: String,
+        val themePalette: String,
+        val themeColor: String,
+        val amoledBlack: Boolean,
+        val sleepMonitoring: Boolean,
+        val healthConnect: Boolean,
+        val sleepGoal: Int,
+        val scheduledMode: Boolean,
+        val bHour: Int,
+        val bMin: Int,
+        val wHour: Int,
+        val wMin: Int,
+        val appUsage: Boolean
+    )
 
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(
@@ -83,7 +132,7 @@ class SettingsViewModel(
             userSettingsRepository.sessionsBeforeLongBreak,
             userSettingsRepository.dailyGoalMinutes
         ) { work, sBreak, lBreak, sessions, goal ->
-            work to (sBreak to (lBreak to (sessions to goal)))
+            TimerSettingsGroup(work, sBreak, lBreak, sessions, goal)
         },
         combine(
             userSettingsRepository.autoStartBreaks,
@@ -92,7 +141,7 @@ class SettingsViewModel(
             userSettingsRepository.dndEnabled,
             userSettingsRepository.clockStyle
         ) { aBreaks, aPomodoros, keepScreen, dnd, clockStyle ->
-            aBreaks to (aPomodoros to (keepScreen to (dnd to clockStyle)))
+            AutomationSettingsGroup(aBreaks, aPomodoros, keepScreen, dnd, clockStyle)
         },
         combine(
             userSettingsRepository.soundEnabled,
@@ -101,61 +150,68 @@ class SettingsViewModel(
             userSettingsRepository.alarmSoundUri,
             userSettingsRepository.alarmSoundTitle
         ) { sound, vibration, hMode, soundUri, soundTitle ->
-            Triple(sound, vibration, Triple(hMode, soundUri, soundTitle))
+            SoundSettingsGroup(sound, vibration, hMode, soundUri, soundTitle)
         },
         combine(
-            userSettingsRepository.themeMode,
-            userSettingsRepository.themePalette,
-            userSettingsRepository.themeColor,
-            userSettingsRepository.amoledBlack,
-            userSettingsRepository.sleepMonitoringEnabled
-        ) { mode, palette, colorStr, amoled, sleepEnabled ->
-            Triple(mode, palette, Triple(colorStr, amoled, sleepEnabled))
-        },
-        combine(
-            userSettingsRepository.healthConnectSyncEnabled,
-            userSettingsRepository.sleepGoalMinutes
-        ) { healthConnectEnabled, sleepGoal ->
-            healthConnectEnabled to sleepGoal
+            combine(
+                userSettingsRepository.themeMode,
+                userSettingsRepository.themePalette,
+                userSettingsRepository.themeColor,
+                userSettingsRepository.amoledBlack,
+                userSettingsRepository.sleepMonitoringEnabled
+            ) { mode, palette, color, amoled, sleep ->
+                Tuple5(mode, palette, color, amoled, sleep)
+            },
+            combine(
+                userSettingsRepository.healthConnectSyncEnabled,
+                userSettingsRepository.sleepGoalMinutes,
+                userSettingsRepository.sleepScheduledMode,
+                userSettingsRepository.targetBedtimeHour,
+                userSettingsRepository.targetBedtimeMinute
+            ) { hc, goal, sched, bh, bm ->
+                Tuple5(hc, goal, sched, bh, bm)
+            },
+            combine(
+                userSettingsRepository.targetWakeHour,
+                userSettingsRepository.targetWakeMinute,
+                userSettingsRepository.appUsageAccessEnabled
+            ) { wh, wm, usage ->
+                Triple(wh, wm, usage)
+            }
+        ) { (mode, palette, color, amoled, sleep), (hc, goal, sched, bh, bm), (wh, wm, usage) ->
+            SleepAndThemeGroup(mode, palette, color, amoled, sleep, hc, goal, sched, bh, bm, wh, wm, usage)
         }
-    ) { (work, rest1), (aBreaks, rest2), soundGroup, appearanceTriple, (healthConnectEnabled, sleepGoal) ->
-        val (sBreak, rest1b) = rest1
-        val (lBreak, rest1c) = rest1b
-        val (sessions, goal) = rest1c
-
-        val (aPomodoros, rest2b) = rest2
-        val (keepScreen, rest2c) = rest2b
-        val (dnd, clockStyle) = rest2c
-
-        val (sound, vibration, soundMeta) = soundGroup
-        val (hMode, soundUri, soundTitle) = soundMeta
-        val (mode, palette, appDetails) = appearanceTriple
-        val (colorStr, amoled, sleepEnabled) = appDetails
-
+    ) { timer, auto, sound, appGroup ->
         SettingsUiState(
-            workDurationMinutes = work,
-            shortBreakMinutes = sBreak,
-            longBreakMinutes = lBreak,
-            sessionsBeforeLongBreak = sessions,
-            dailyGoalMinutes = goal,
-            autoStartBreaks = aBreaks,
-            autoStartPomodoros = aPomodoros,
-            keepScreenOn = keepScreen,
-            dndEnabled = dnd,
-            clockStyle = clockStyle,
-            soundEnabled = sound,
-            vibrationEnabled = vibration,
-            mediaVolumeForAlarm = hMode,
-            headphoneMode = hMode,
-            alarmSoundUri = soundUri,
-            alarmSoundTitle = soundTitle,
-            themeMode = mode,
-            themePalette = palette,
-            themeColor = colorStr.toColor(),
-            amoledBlack = amoled,
-            sleepMonitoringEnabled = sleepEnabled,
-            healthConnectSyncEnabled = healthConnectEnabled,
-            sleepGoalMinutes = sleepGoal
+            workDurationMinutes = timer.work,
+            shortBreakMinutes = timer.sBreak,
+            longBreakMinutes = timer.lBreak,
+            sessionsBeforeLongBreak = timer.sessions,
+            dailyGoalMinutes = timer.goal,
+            autoStartBreaks = auto.aBreaks,
+            autoStartPomodoros = auto.aPomodoros,
+            keepScreenOn = auto.keepScreen,
+            dndEnabled = auto.dnd,
+            clockStyle = auto.clockStyle,
+            soundEnabled = sound.sound,
+            vibrationEnabled = sound.vibration,
+            mediaVolumeForAlarm = sound.headphone,
+            headphoneMode = sound.headphone,
+            alarmSoundUri = sound.uri,
+            alarmSoundTitle = sound.title,
+            themeMode = appGroup.themeMode,
+            themePalette = appGroup.themePalette,
+            themeColor = appGroup.themeColor.toColor(),
+            amoledBlack = appGroup.amoledBlack,
+            sleepMonitoringEnabled = appGroup.sleepMonitoring,
+            healthConnectSyncEnabled = appGroup.healthConnect,
+            sleepGoalMinutes = appGroup.sleepGoal,
+            sleepScheduledMode = appGroup.scheduledMode,
+            targetBedtimeHour = appGroup.bHour,
+            targetBedtimeMinute = appGroup.bMin,
+            targetWakeHour = appGroup.wHour,
+            targetWakeMinute = appGroup.wMin,
+            appUsageAccessEnabled = appGroup.appUsage
         )
     }.stateIn(
         scope = viewModelScope,
@@ -241,6 +297,7 @@ class SettingsViewModel(
 
     fun toggleSleepMonitoring(enabled: Boolean) = viewModelScope.launch {
         userSettingsRepository.setSleepMonitoringEnabled(enabled)
+        (application as? KimonApplication)?.sleepMonitorManager?.syncMonitoringState()
     }
 
     fun toggleHealthConnectSync(enabled: Boolean) = viewModelScope.launch {
@@ -251,12 +308,47 @@ class SettingsViewModel(
         userSettingsRepository.setSleepGoalMinutes(minutes.coerceIn(240, 720))
     }
 
+    fun toggleSleepScheduledMode(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setSleepScheduledMode(enabled)
+        (application as? KimonApplication)?.sleepMonitorManager?.syncMonitoringState()
+    }
+
+    fun setTargetBedtime(hour: Int, minute: Int) = viewModelScope.launch {
+        userSettingsRepository.setTargetBedtime(hour, minute)
+        (application as? KimonApplication)?.sleepMonitorManager?.syncMonitoringState()
+    }
+
+    fun setTargetWakeTime(hour: Int, minute: Int) = viewModelScope.launch {
+        userSettingsRepository.setTargetWakeTime(hour, minute)
+    }
+
+    fun toggleAppUsageAccess(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setAppUsageAccessEnabled(enabled)
+    }
+
     fun resetAllData() = viewModelScope.launch {
         sessionRepository.clearAllSessions()
         userSettingsRepository.clearAllSettings()
     }
 
+    private data class Tuple5<A, B, C, D, E>(
+        val a: A,
+        val b: B,
+        val c: C,
+        val d: D,
+        val e: E
+    )
+
+    private data class SleepConfigGroup(
+        val healthConnectEnabled: Boolean,
+        val sleepGoal: Int,
+        val scheduledMode: Boolean,
+        val bedtimeHour: Int,
+        val bedtimeMinute: Int
+    )
+
     class Factory(
+        private val application: Application? = null,
         private val userSettingsRepository: UserSettingsRepository,
         private val sessionRepository: SessionRepository,
         private val tagRepository: TagRepository,
@@ -265,6 +357,7 @@ class SettingsViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return SettingsViewModel(
+                application = application,
                 userSettingsRepository = userSettingsRepository,
                 sessionRepository = sessionRepository,
                 tagRepository = tagRepository,

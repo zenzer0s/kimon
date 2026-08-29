@@ -102,6 +102,10 @@ class SleepRepository(
             val duration = durations[i]
             val endTime = startTime + (duration * 60 * 1000)
 
+            val sampleAppUsage = if (i == 0 || i == 3) {
+                """[{"package_name":"com.whatsapp","app_name":"WhatsApp","start_time_ms":${startTime + 180 * 60000},"end_time_ms":${startTime + 186 * 60000},"duration_seconds":360}]"""
+            } else null
+
             sampleList.add(
                 SleepSessionEntity(
                     startTimeEpochMs = startTime,
@@ -109,9 +113,10 @@ class SleepRepository(
                     durationMinutes = duration,
                     qualityScore = qualityScores[i],
                     status = 0,
-                    source = if (i % 2 == 0) "GOOGLE_SLEEP_API" else "HEALTH_CONNECT",
+                    source = if (i % 2 == 0) "NATIVE_RUST_ENGINE" else "HEALTH_CONNECT",
                     dateString = dateFormat.format(Date(endTime)),
-                    syncedToHealthConnect = true
+                    syncedToHealthConnect = true,
+                    appUsageJson = sampleAppUsage
                 )
             )
         }

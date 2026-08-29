@@ -62,6 +62,7 @@ import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.middleListItemShape
+import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.singleListItemShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.topListItemShape
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import java.text.SimpleDateFormat
@@ -70,9 +71,8 @@ import java.util.Locale
 
 private const val GITHUB_PROFILE_URL = "https://github.com/zenzer0s"
 private const val GITHUB_AVATAR_URL = "https://avatars.githubusercontent.com/u/151006009?v=4"
+private const val TELEGRAM_SUPPORT_URL = "https://t.me/zenzer0s_support"
 private const val BUYMEACOFFEE_URL = "https://buymeacoffee.com/zenzer0s"
-private const val PAYPAL_URL = "https://www.paypal.me/zenzer0s"
-private const val PAYPAL_USERNAME = "zenzer0s"
 private const val UPI_ID = "zenzero@slc"
 
 @Composable
@@ -110,7 +110,8 @@ fun AboutSettingsScreen(
                         onClick = onBack,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = listItemColors.containerColor
-                        )
+                        ),
+                        modifier = Modifier.padding(start = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_chevron_left),
@@ -182,7 +183,7 @@ fun AboutSettingsScreen(
                 }
             }
 
-            // --- 2. Action Badges Row (PayPal, UPI, Coffee) ---
+            // --- 2. Action Badges Row (UPI, Coffee) ---
             item {
                 Row(
                     modifier = Modifier
@@ -191,33 +192,6 @@ fun AboutSettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // PayPal Badge
-                    Surface(
-                        onClick = { openPayPal(context, PAYPAL_USERNAME) },
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_paypal),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "PayPal",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
                     // UPI Badge
                     Surface(
                         onClick = { openUpiPayment(context, UPI_ID, "zenzeros") },
@@ -308,18 +282,7 @@ fun AboutSettingsScreen(
                     title = "zenzeros",
                     subtitle = "Lead Developer",
                     subtitleColor = MaterialTheme.colorScheme.primary,
-                    shape = topListItemShape,
-                    isExternal = true,
-                    onClick = { openUrl(context, GITHUB_PROFILE_URL) }
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = R.drawable.ic_github,
-                    title = "GitHub Profile",
-                    subtitle = "github.com/zenzer0s",
-                    shape = bottomListItemShape,
+                    shape = singleListItemShape,
                     isExternal = true,
                     onClick = { openUrl(context, GITHUB_PROFILE_URL) }
                 )
@@ -341,10 +304,21 @@ fun AboutSettingsScreen(
 
             item {
                 AboutItem(
+                    icon = R.drawable.ic_telegram,
+                    title = "Support Group",
+                    subtitle = "t.me/zenzer0s_support",
+                    shape = topListItemShape,
+                    isExternal = true,
+                    onClick = { openUrl(context, TELEGRAM_SUPPORT_URL) }
+                )
+            }
+
+            item {
+                AboutItem(
                     icon = R.drawable.ic_github,
                     title = "GitHub Repository",
                     subtitle = "github.com/zenzer0s",
-                    shape = topListItemShape,
+                    shape = middleListItemShape,
                     isExternal = true,
                     onClick = { openUrl(context, GITHUB_PROFILE_URL) }
                 )
@@ -504,18 +478,6 @@ private fun openUrl(context: Context, url: String) {
         context.startActivity(intent)
     } catch (e: Exception) {
         Toast.makeText(context, "Could not open link: $url", Toast.LENGTH_SHORT).show()
-    }
-}
-
-private fun openPayPal(context: Context, username: String) {
-    val webUrl = "https://www.paypal.me/$username"
-    try {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(webUrl)).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        Toast.makeText(context, "Could not open PayPal: $webUrl", Toast.LENGTH_SHORT).show()
     }
 }
 

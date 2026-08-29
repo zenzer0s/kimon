@@ -4,22 +4,17 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.google.android.gms.location.SleepClassifyEvent
-import com.google.android.gms.location.SleepSegmentEvent
 import com.zenzeros.kimon.KimonApplication
-import com.zenzeros.kimon.data.local.entity.SleepSessionEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class SleepReceiver : BroadcastReceiver() {
 
     companion object {
         const val TAG = "SleepReceiver"
-        const val ACTION_SLEEP_UPDATE = "com.zenzeros.kimon.ACTION_SLEEP_UPDATE"
+        const val ACTION_RESTART_MONITORING = "com.zenzeros.kimon.service.sleep.ACTION_RESTART_MONITORING"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -28,42 +23,40 @@ class SleepReceiver : BroadcastReceiver() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                if (SleepSegmentEvent.hasEvents(intent)) {
-                    val sleepSegmentEvents = SleepSegmentEvent.extractEvents(intent)
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                Log.i(TAG, "🔔 [SleepReceiver] Received broadcast intent action: ${intent.action}")
 
-                    for (event in sleepSegmentEvents) {
-                        val durationMinutes = (event.endTimeMillis - event.startTimeMillis) / (1000 * 60)
-                        if (durationMinutes > 15) { // Filter out micro-segments (< 15 mins)
-                            // Calculate a reasonable sleep quality score
-                            val quality = when (event.status) {
-                                SleepSegmentEvent.STATUS_SUCCESSFUL -> 88
-                                SleepSegmentEvent.STATUS_MISSING_DATA -> 70
-                                else -> 60
+                when (intent.action) {
+                    Intent.ACTION_BOOT_COMPLETED,
+                    Intent.ACTION_MY_PACKAGE_REPLACED,
+                    ACTION_RESTART_MONITORING -> {
+                        val isEnabled = appContext.userSettingsRepository.sleepMonitoringEnabled.first()
+                        val isScheduled = appContext.userSettingsRepository.sleepScheduledMode.first()
+
+                        if (isEnabled) {
+                            if (isScheduled) {
+                                Log.i(TAG, "⏰ [SleepReceiver] Rescheduling bedtime alarm after device boot...")
+                                SleepAlarmScheduler.scheduleNextBedtimeAlarm(context)
+                            } else {
+                                Log.i(TAG, "🔄 [SleepReceiver] Continuous mode enabled. Starting CustomSleepService...")
+                                CustomSleepService.start(context)
                             }
-
-                            val sleepSession = SleepSessionEntity(
-                                startTimeEpochMs = event.startTimeMillis,
-                                endTimeEpochMs = event.endTimeMillis,
-                                durationMinutes = durationMinutes,
-                                qualityScore = quality,
-                                status = event.status,
-                                source = "GOOGLE_SLEEP_API",
-                                dateString = dateFormat.format(Date(event.startTimeMillis))
-                            )
-
-                            appContext.sleepRepository.recordSession(sleepSession)
-                            Log.d(TAG, "Recorded sleep segment: $durationMinutes mins on ${sleepSession.dateString}")
+                        } else {
+                            Log.d(TAG, "💤 [SleepReceiver] Sleep monitoring is disabled in settings. Skipping.")
                         }
                     }
-                }
 
-                if (SleepClassifyEvent.hasEvents(intent)) {
-                    val classifyEvents = SleepClassifyEvent.extractEvents(intent)
-                    Log.d(TAG, "Received ${classifyEvents.size} sleep classify events")
+                    SleepAlarmScheduler.ACTION_START_SCHEDULED_MONITORING -> {
+                        Log.i(TAG, "⏰ [SleepReceiver] Bedtime window reached! Auto-starting CustomSleepService (1h before bedtime)...")
+                        CustomSleepService.start(context)
+                    }
+
+                    SleepAlarmScheduler.ACTION_STOP_SCHEDULED_MONITORING -> {
+                        Log.i(TAG, "⏰ [SleepReceiver] Scheduled window ended. Stopping CustomSleepService...")
+                        CustomSleepService.stop(context)
+                    }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error processing sleep intent", e)
+                Log.e(TAG, "Error handling broadcast in SleepReceiver", e)
             } finally {
                 pendingResult.finish()
             }

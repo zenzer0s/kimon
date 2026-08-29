@@ -46,3 +46,10 @@
 # Coil
 -dontwarn coil.**
 -keep class coil.** { *; }
+
+# Native Rust JNI Sleep Engine
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+-keep class com.zenzeros.kimon.service.sleep.native.** { *; }
+
