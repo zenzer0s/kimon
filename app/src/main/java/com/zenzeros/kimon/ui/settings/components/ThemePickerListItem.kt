@@ -43,7 +43,6 @@ fun ThemePickerListItem(
     }
 
     SegmentedListItem(
-        onClick = {},
         leadingContent = {
             AnimatedContent(themeMap[theme]?.first ?: R.drawable.brightness_auto) { iconRes ->
                 Icon(

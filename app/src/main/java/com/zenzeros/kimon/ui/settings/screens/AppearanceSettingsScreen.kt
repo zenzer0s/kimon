@@ -247,10 +247,7 @@ private fun AppearanceSwitchRow(
             Switch(
                 checked = item.checked,
                 enabled = item.enabled,
-                onCheckedChange = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onToggle(it)
-                },
+                onCheckedChange = null,
                 thumbContent = {
                     if (item.checked) {
                         Icon(

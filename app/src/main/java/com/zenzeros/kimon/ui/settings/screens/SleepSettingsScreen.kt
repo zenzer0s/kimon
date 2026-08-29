@@ -446,10 +446,7 @@ fun SleepSettingsScreen(
                 trailingContent = {
                     Switch(
                         checked = state.sleepScheduledMode,
-                        onCheckedChange = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onToggleScheduledMode(it)
-                        },
+                        onCheckedChange = null,
                         colors = switchColors
                     )
                 },
@@ -672,10 +669,7 @@ fun SleepSettingsScreen(
                     trailingContent = {
                         Switch(
                             checked = item.checked,
-                            onCheckedChange = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                item.onClick(it)
-                            },
+                            onCheckedChange = null,
                             thumbContent = {
                                 if (item.checked) {
                                     Icon(
