@@ -241,7 +241,7 @@ fun SleepSettingsScreen(
                 colors = topBarColors
             )
         },
-        containerColor = topBarColors.containerColor,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(

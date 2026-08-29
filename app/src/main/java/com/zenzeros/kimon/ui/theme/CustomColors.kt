@@ -21,15 +21,15 @@ object CustomColors {
     val topBarColors: TopAppBarColors
         @Composable get() =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface,
-                scrolledContainerColor = if (!black) colorScheme.surfaceContainer else colorScheme.surface
+                containerColor = colorScheme.surfaceContainerLow,
+                scrolledContainerColor = colorScheme.surfaceContainerLow
             )
 
     val detailPaneTopBarColors: TopAppBarColors
         @Composable get() =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = if (!black) colorScheme.surfaceContainerLow else colorScheme.surface,
-                scrolledContainerColor = if (!black) colorScheme.surfaceContainerLow else colorScheme.surface
+                containerColor = colorScheme.surfaceContainerLow,
+                scrolledContainerColor = colorScheme.surfaceContainerLow
             )
 
     val cardContainerColor: androidx.compose.ui.graphics.Color

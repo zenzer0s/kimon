@@ -427,7 +427,7 @@ fun KimonApp() {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(CustomColors.topBarColors.containerColor)
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
                     ) {
                         if (settingsBackStack.isNotEmpty()) {
                             NavDisplay(

@@ -122,7 +122,7 @@ fun AboutSettingsScreen(
                 colors = topBarColors
             )
         },
-        containerColor = topBarColors.containerColor,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         LazyColumn(
@@ -404,6 +404,7 @@ private fun AboutItem(
     Surface(
         shape = shape,
         color = listItemColors.containerColor,
+        border = CustomColors.cardBorder,
         onClick = { onClick?.invoke() },
         enabled = onClick != null,
         modifier = modifier.fillMaxWidth()

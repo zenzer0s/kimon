@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.ui.navigation.KimonNavKey
 import com.zenzeros.kimon.ui.settings.SettingsUiState
+import com.zenzeros.kimon.ui.theme.CustomColors
+import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.bottomListItemShape
@@ -83,7 +85,7 @@ fun SettingsMainScreen(
                 key = KimonNavKey.AppearanceSettings,
                 icon = R.drawable.palette,
                 title = R.string.settings_section_appearance,
-                subtitle = "Theme mode, Dynamic color, Color scheme, Black theme"
+                subtitle = "Nothing OS, Theme mode, Dynamic color, Black theme"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.SleepSettings,
@@ -137,7 +139,7 @@ fun SettingsMainScreen(
                 colors = topBarColors
             )
         },
-        containerColor = topBarColors.containerColor,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -161,6 +163,7 @@ fun SettingsMainScreen(
                 Surface(
                     shape = shape,
                     color = listItemColors.containerColor,
+                    border = CustomColors.cardBorder,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         onNavigate(cat.key)
