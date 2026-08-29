@@ -70,6 +70,8 @@ import java.util.Date
 import java.util.Locale
 
 private const val GITHUB_PROFILE_URL = "https://github.com/zenzer0s"
+private const val GITHUB_REPO_URL = "https://github.com/zenzer0s/kimon"
+private const val GITHUB_ISSUES_URL = "https://github.com/zenzer0s/kimon/issues"
 private const val GITHUB_AVATAR_URL = "https://avatars.githubusercontent.com/u/151006009?v=4"
 private const val TELEGRAM_SUPPORT_URL = "https://t.me/zenzer0s_support"
 private const val BUYMEACOFFEE_URL = "https://buymeacoffee.com/zenzer0s"
@@ -317,10 +319,10 @@ fun AboutSettingsScreen(
                 AboutItem(
                     icon = R.drawable.ic_github,
                     title = "GitHub Repository",
-                    subtitle = "github.com/zenzer0s",
+                    subtitle = "github.com/zenzer0s/kimon",
                     shape = middleListItemShape,
                     isExternal = true,
-                    onClick = { openUrl(context, GITHUB_PROFILE_URL) }
+                    onClick = { openUrl(context, GITHUB_REPO_URL) }
                 )
             }
 
@@ -328,10 +330,10 @@ fun AboutSettingsScreen(
                 AboutItem(
                     icon = R.drawable.ic_sparkles,
                     title = "Contribute & Feedback",
-                    subtitle = "Open issues, feature requests & ideas",
+                    subtitle = "github.com/zenzer0s/kimon/issues",
                     shape = bottomListItemShape,
                     isExternal = true,
-                    onClick = { openUrl(context, GITHUB_PROFILE_URL) }
+                    onClick = { openUrl(context, GITHUB_ISSUES_URL) }
                 )
             }
 
