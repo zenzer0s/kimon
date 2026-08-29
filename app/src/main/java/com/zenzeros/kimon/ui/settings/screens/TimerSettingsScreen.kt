@@ -450,10 +450,7 @@ fun TimerSettingsScreen(
                 trailingContent = {
                     Switch(
                         checked = isLongBreakEnabled,
-                        onCheckedChange = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            isLongBreakEnabled = it
-                        },
+                        onCheckedChange = null,
                         thumbContent = {
                             if (isLongBreakEnabled) {
                                 Icon(
@@ -582,10 +579,7 @@ fun TimerSettingsScreen(
                         Switch(
                             checked = item.checked,
                             enabled = item.enabled,
-                            onCheckedChange = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                item.onClick(it)
-                            },
+                            onCheckedChange = null,
                             thumbContent = {
                                 if (item.checked) {
                                     Icon(
