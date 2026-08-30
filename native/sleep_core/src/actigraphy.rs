@@ -40,8 +40,8 @@ impl ActigraphyEngine {
                 67.0  * a_p2
             );
 
-            // Bias with ambient light (lux > 50 in bedroom indicates wakefulness / lights on)
-            let light_penalty = if epochs[i].mean_light_lux > 60.0 { 0.8 } else { 0.0 };
+            // Bias with ambient light if there is accompanying physical movement
+            let light_penalty = if epochs[i].mean_light_lux > 60.0 && epochs[i].activity_count > 2.0 { 0.4 } else { 0.0 };
 
             if (d + light_penalty) >= 1.0 {
                 states[i] = SleepState::Wake;
@@ -82,7 +82,7 @@ impl ActigraphyEngine {
     /// Filters out early pre-bed "table stillness" that is followed by active phone usage / prolonged wakefulness.
     pub fn find_consolidated_sleep_window(states: &[SleepState], epochs: &[EpochData]) -> Option<(usize, usize)> {
         let n = states.len();
-        if n < 15 {
+        if n < 10 {
             return None;
         }
 
@@ -114,7 +114,7 @@ impl ActigraphyEngine {
                     
                     if is_active_wake {
                         let seg_end = i.saturating_sub(consecutive_wake);
-                        if seg_sleep_count >= 15 {
+                        if seg_sleep_count >= 8 {
                             segments.push((seg_start, seg_end, seg_sleep_count));
                         }
                         in_segment = false;
@@ -125,7 +125,7 @@ impl ActigraphyEngine {
             }
         }
 
-        if in_segment && seg_sleep_count >= 15 {
+        if in_segment && seg_sleep_count >= 8 {
             let seg_end = (n - 1).saturating_sub(consecutive_wake);
             segments.push((seg_start, seg_end, seg_sleep_count));
         }
