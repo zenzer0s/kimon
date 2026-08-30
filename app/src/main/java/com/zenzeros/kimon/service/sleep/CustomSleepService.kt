@@ -371,13 +371,18 @@ class CustomSleepService : Service(), SensorEventListener {
     private fun evaluateCurrentData() {
         serviceScope.launch {
             flushCurrentEpoch()
+            val currentCal = Calendar.getInstance()
+            val currentHour = currentCal.get(Calendar.HOUR_OF_DAY)
+            val currentMinute = currentCal.get(Calendar.MINUTE)
+            val isMorningWindow = currentHour in 5..12 || (currentHour == 4 && currentMinute >= 30)
+
             val epochs = overnightEpochs.toList()
             val analysis = NativeSleepEngine.analyzeEpochs(epochs)
-            if (analysis != null && analysis.sleepDurationMinutes >= 30) {
-                Log.i(TAG, "📊 [CurrentEvaluation] Sleep detected (${analysis.sleepDurationMinutes}m). Finalizing session.")
+            if (analysis != null && isMorningWindow && analysis.sleepDurationMinutes >= 45) {
+                Log.i(TAG, "📊 [CurrentEvaluation] Morning sleep detected (${analysis.sleepDurationMinutes}m). Finalizing session.")
                 finalizeSessionAndSave()
             } else {
-                Log.d(TAG, "📊 [CurrentEvaluation] No consolidated sleep detected yet (${epochs.size} epochs).")
+                Log.d(TAG, "📊 [CurrentEvaluation] Still monitoring overnight (${epochs.size} epochs).")
             }
         }
     }
