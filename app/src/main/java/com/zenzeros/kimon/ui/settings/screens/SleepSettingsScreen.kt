@@ -157,7 +157,6 @@ fun SleepSettingsScreen(
     }
 
     var showBedtimePicker by remember { mutableStateOf(false) }
-    var showWakeTimePicker by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     var refreshKey by remember { mutableIntStateOf(0) }
@@ -238,79 +237,6 @@ fun SleepSettingsScreen(
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onSetBedtime(bedtimePickerState.hour, bedtimePickerState.minute)
                                 showBedtimePicker = false
-                            }
-                        ) {
-                            Text(
-                                text = stringResource(R.string.confirm),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showWakeTimePicker) {
-        val wakeTimePickerState = rememberTimePickerState(
-            initialHour = state.targetWakeHour,
-            initialMinute = state.targetWakeMinute,
-            is24Hour = android.text.format.DateFormat.is24HourFormat(context)
-        )
-
-        Dialog(
-            onDismissRequest = { showWakeTimePicker = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                tonalElevation = 6.dp,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier
-                    .width(IntrinsicSize.Min)
-                    .padding(horizontal = 24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(R.string.settings_target_wake),
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    TimePicker(
-                        state = wakeTimePickerState,
-                        colors = TimePickerDefaults.colors()
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                showWakeTimePicker = false
-                            }
-                        ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        TextButton(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onSetWakeTime(wakeTimePickerState.hour, wakeTimePickerState.minute)
-                                showWakeTimePicker = false
                             }
                         ) {
                             Text(
@@ -596,7 +522,7 @@ fun SleepSettingsScreen(
 
                     Spacer(Modifier.height(4.dp))
 
-                    val scheduleGroupCount = if (state.sleepScheduledMode) 3 else 1
+                    val scheduleGroupCount = if (state.sleepScheduledMode) 2 else 1
 
                     // 2. Bedtime Scheduled Mode Switch
                     SegmentedListItem(
@@ -723,71 +649,6 @@ fun SleepSettingsScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                        }
-
-                        // 4. Target Wake Time Picker
-                        SegmentedListItem(
-                            leadingContent = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_alarm_sound),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            },
-                            trailingContent = {
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        showWakeTimePicker = true
-                                    }
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                    ) {
-                                        Text(
-                                            text = formatTime12h(state.targetWakeHour, state.targetWakeMinute),
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_chevron_right),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                            },
-                            shapes = segmentedListItemShapes(2, scheduleGroupCount),
-                            colors = listItemColors,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                showWakeTimePicker = true
-                            }
-                        ) {
-                            Text(
-                                text = stringResource(R.string.settings_target_wake),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
                         }
                     }
 
