@@ -428,24 +428,14 @@ fun SleepSettingsScreen(
                     }
                 }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        text = stringResource(R.string.settings_sleep_master_title),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.5.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_sleep_master_desc),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 12.5.sp,
-                            lineHeight = 16.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.settings_sleep_master_title),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.5.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             // ==========================================
