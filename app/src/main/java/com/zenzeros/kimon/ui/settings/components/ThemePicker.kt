@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.theme.AppTheme
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
@@ -65,7 +66,9 @@ fun ThemePicker(
             )
 
             LazyRow(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .bouncyScroll(androidx.compose.foundation.gestures.Orientation.Horizontal),
                 state = listState,
                 contentPadding = PaddingValues(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

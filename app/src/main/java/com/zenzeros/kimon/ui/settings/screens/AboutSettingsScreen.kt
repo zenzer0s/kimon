@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
@@ -132,6 +133,7 @@ fun AboutSettingsScreen(
             contentPadding = innerPadding,
             modifier = Modifier
                 .fillMaxSize()
+                .bouncyScroll()
                 .padding(horizontal = 16.dp)
         ) {
             // --- 1. Vivi-Music Styled Big Header & Subtitle Pill ---

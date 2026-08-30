@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.settings.SettingsSwitchItem
 import com.zenzeros.kimon.ui.settings.SettingsUiState
 import com.zenzeros.kimon.ui.settings.components.MinuteInputField
@@ -207,6 +208,7 @@ fun TimerSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .bouncyScroll()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
