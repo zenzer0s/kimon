@@ -32,9 +32,11 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 class CustomSleepService : Service(), SensorEventListener {
@@ -317,31 +319,51 @@ class CustomSleepService : Service(), SensorEventListener {
                 return@launch
             }
 
-            val analysis = NativeSleepEngine.analyzeEpochs(overnightEpochs.toList())
-            if (analysis != null) {
-                Log.i(
-                    TAG,
-                    "🛌 [Actigraphy Status] In-bed: ${analysis.totalDurationMinutes}m, Sleep: ${analysis.sleepDurationMinutes}m, " +
-                            "Awakenings: ${analysis.wakeCount}, Efficiency: ${"%.1f".format(analysis.sleepEfficiency)}%, Quality: ${analysis.qualityScore}%"
-                )
+            val analysis = NativeSleepEngine.analyzeEpochs(overnightEpochs.toList()) ?: return@launch
+            Log.i(
+                TAG,
+                "🛌 [Actigraphy Status] In-bed: ${analysis.totalDurationMinutes}m, Sleep: ${analysis.sleepDurationMinutes}m, " +
+                        "Awakenings: ${analysis.wakeCount}, Efficiency: ${"%.1f".format(analysis.sleepEfficiency)}%, Quality: ${analysis.qualityScore}%"
+            )
 
-                // If user has slept >= 60 mins and is currently active / interacting with phone
-                val lastEpochs = overnightEpochs.takeLast(3)
-                val isWakeActivity = isScreenOn || lastEpochs.any { it.screenOn || it.activityCount > 15f }
-                if (analysis.sleepDurationMinutes >= 60 && isWakeActivity) {
-                    Log.i(TAG, "🌅 [MorningDetected] Morning wake-up confirmed. Finalizing sleep session.")
-                    finalizeSessionAndSave()
+            val app = applicationContext as? KimonApplication
+            val targetWakeHour = app?.userSettingsRepository?.targetWakeHour?.first() ?: 7
+            val targetWakeMinute = app?.userSettingsRepository?.targetWakeMinute?.first() ?: 0
 
-                    // Auto-stop service in scheduled mode & reschedule next night
-                    val app = applicationContext as? KimonApplication
-                    val isScheduled = app?.userSettingsRepository?.sleepScheduledMode?.first() ?: true
-                    if (isScheduled) {
-                        Log.i(TAG, "⏰ [SleepService] Scheduled mode active. Stopping service and arming next night's alarm.")
-                        SleepAlarmScheduler.scheduleNextBedtimeAlarm(this@CustomSleepService)
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                        stopSelf()
-                    }
+            val currentCal = Calendar.getInstance()
+            val currentHour = currentCal.get(Calendar.HOUR_OF_DAY)
+            val currentMinute = currentCal.get(Calendar.MINUTE)
+            val currentMinsOfDay = currentHour * 60 + currentMinute
+            val targetWakeMinsOfDay = targetWakeHour * 60 + targetWakeMinute
+
+            // A wake-up is considered a true morning wake-up ONLY if:
+            // 1. Current time is in morning window (e.g. 4:30 AM to 12:00 PM, or within 2.5 hours before/after target wake time)
+            // 2. AND user has logged at least 90 minutes of sleep (or is within 1 hour of target wake time with >= 45m sleep)
+            // 3. AND there is active interaction / sustained wake activity
+            val isMorningHour = currentHour in 5..12 || (currentHour == 4 && currentMinute >= 30)
+            val isNearTargetWake = abs(currentMinsOfDay - targetWakeMinsOfDay) <= 150
+
+            val lastEpochs = overnightEpochs.takeLast(3)
+            val isWakeActivity = isScreenOn || lastEpochs.any { it.screenOn || it.activityCount > 15f }
+
+            val isTrueMorningWakeUp = (isMorningHour || isNearTargetWake) &&
+                ((analysis.sleepDurationMinutes >= 90 && isWakeActivity) ||
+                 (analysis.sleepDurationMinutes >= 45 && abs(currentMinsOfDay - targetWakeMinsOfDay) <= 60 && isWakeActivity))
+
+            if (isTrueMorningWakeUp) {
+                Log.i(TAG, "🌅 [MorningDetected] True morning wake-up confirmed at $currentHour:${"%02d".format(currentMinute)}. Finalizing sleep session.")
+                finalizeSessionAndSave()
+
+                // Auto-stop service in scheduled mode & reschedule next night
+                val isScheduled = app?.userSettingsRepository?.sleepScheduledMode?.first() ?: true
+                if (isScheduled) {
+                    Log.i(TAG, "⏰ [SleepService] Scheduled mode active. Stopping service and arming next night's alarm.")
+                    SleepAlarmScheduler.scheduleNextBedtimeAlarm(this@CustomSleepService)
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
                 }
+            } else {
+                Log.d(TAG, "🌙 [CheckWake] Mid-night phone activity detected at $currentHour:${"%02d".format(currentMinute)}. Continuing overnight sleep tracking...")
             }
         }
     }
