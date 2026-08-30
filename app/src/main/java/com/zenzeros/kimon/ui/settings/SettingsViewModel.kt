@@ -10,6 +10,7 @@ import com.zenzeros.kimon.data.repository.SessionRepository
 import com.zenzeros.kimon.data.repository.TagRepository
 import com.zenzeros.kimon.data.repository.TaskRepository
 import com.zenzeros.kimon.data.repository.UserSettingsRepository
+import com.zenzeros.kimon.ui.theme.AppTheme
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -64,6 +65,7 @@ data class SettingsUiState(
     val alarmSoundUri: String = "",
     val alarmSoundTitle: String = "Default",
     val themeMode: String = "SYSTEM",
+    val appTheme: AppTheme = AppTheme.Dynamic,
     val themePalette: String = "DYNAMIC",
     val themeColor: Color = Color.White,
     val amoledBlack: Boolean = false,
@@ -114,10 +116,8 @@ class SettingsViewModel(
 
     private data class SleepAndThemeGroup(
         val themeMode: String,
-        val themePalette: String,
-        val themeColor: String,
+        val appTheme: AppTheme,
         val amoledBlack: Boolean,
-        val nothingOsTheme: Boolean,
         val sleepMonitoring: Boolean,
         val healthConnect: Boolean,
         val sleepGoal: Int,
@@ -163,12 +163,10 @@ class SettingsViewModel(
         combine(
             combine(
                 userSettingsRepository.themeMode,
-                userSettingsRepository.themePalette,
-                userSettingsRepository.themeColor,
-                userSettingsRepository.amoledBlack,
-                userSettingsRepository.nothingOsTheme
-            ) { mode, palette, color, amoled, nothingOs ->
-                Tuple5(mode, palette, color, amoled, nothingOs)
+                userSettingsRepository.appTheme,
+                userSettingsRepository.amoledBlack
+            ) { mode, appTheme, amoled ->
+                Triple(mode, appTheme, amoled)
             },
             combine(
                 userSettingsRepository.sleepMonitoringEnabled,
@@ -187,8 +185,8 @@ class SettingsViewModel(
             ) { bm, wh, wm, usage ->
                 Tuple4(bm, wh, wm, usage)
             }
-        ) { (mode, palette, color, amoled, nothingOs), (sleep, hc, goal, sched, bh), (bm, wh, wm, usage) ->
-            SleepAndThemeGroup(mode, palette, color, amoled, nothingOs, sleep, hc, goal, sched, bh, bm, wh, wm, usage)
+        ) { (mode, appTheme, amoled), (sleep, hc, goal, sched, bh), (bm, wh, wm, usage) ->
+            SleepAndThemeGroup(mode, appTheme, amoled, sleep, hc, goal, sched, bh, bm, wh, wm, usage)
         }
     ) { timer, auto, sound, appGroup ->
         SettingsUiState(
@@ -211,10 +209,11 @@ class SettingsViewModel(
             alarmSoundUri = sound.uri,
             alarmSoundTitle = sound.title,
             themeMode = appGroup.themeMode,
-            themePalette = appGroup.themePalette,
-            themeColor = appGroup.themeColor.toColor(),
+            appTheme = appGroup.appTheme,
+            themePalette = appGroup.appTheme.name,
+            themeColor = appGroup.appTheme.primaryLight,
             amoledBlack = appGroup.amoledBlack,
-            nothingOsTheme = appGroup.nothingOsTheme,
+            nothingOsTheme = appGroup.appTheme.isNothingOs,
             sleepMonitoringEnabled = appGroup.sleepMonitoring,
             healthConnectSyncEnabled = appGroup.healthConnect,
             sleepGoalMinutes = appGroup.sleepGoal,
@@ -305,6 +304,10 @@ class SettingsViewModel(
 
     fun setThemeColor(color: Color) = viewModelScope.launch {
         userSettingsRepository.setThemeColor(color.toString())
+    }
+
+    fun setAppTheme(theme: AppTheme) = viewModelScope.launch {
+        userSettingsRepository.setAppTheme(theme)
     }
 
     fun toggleAmoledBlack(enabled: Boolean) = viewModelScope.launch {

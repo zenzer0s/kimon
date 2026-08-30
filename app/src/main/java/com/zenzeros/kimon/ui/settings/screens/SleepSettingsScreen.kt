@@ -641,7 +641,7 @@ fun SleepSettingsScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Starts 1h prior at ${formatTime12h((state.targetBedtimeHour - 1 + 24) % 24, state.targetBedtimeMinute)}",
+                                    text = "Starts at ${formatTime12h((state.targetBedtimeHour - 1 + 24) % 24, state.targetBedtimeMinute)}",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontSize = 12.5.sp,
                                         lineHeight = 16.sp
