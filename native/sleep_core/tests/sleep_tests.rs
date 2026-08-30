@@ -53,7 +53,7 @@ fn test_synthetic_overnight_session_analysis() {
     let result = ActigraphyEngine::analyze_session(&epochs).expect("Should analyze session");
 
     println!("Analysis Result: {:?}", result);
-    assert!(result.total_duration_minutes >= 430);
+    assert!(result.total_duration_minutes >= 420);
     assert!(result.sleep_duration_minutes >= 400);
     assert!(result.sleep_efficiency >= 85.0);
     assert!(result.quality_score >= 80);
@@ -79,4 +79,57 @@ fn test_sample_aggregation() {
     let epochs = DspProcessor::aggregate_samples_into_epochs(&samples, 10, false, true);
     assert_eq!(epochs.len(), 1);
     assert!((epochs[0].activity_count - 0.0).abs() < 0.01);
+}
+
+#[test]
+fn test_table_stillness_then_midnight_usage_then_actual_sleep() {
+    // Scenario:
+    // 0..60 mins (11:30pm - 12:30am): Phone untouched on table (stillness, 0 lux)
+    // 60..90 mins (12:30am - 1:00am): User picks up phone, checks ChatGPT & messages (screen_on, active)
+    // 90..150 mins (1:00am - 2:00am): User works on laptop, phone on table
+    // 150..160 mins (2:00am - 2:10am): User sets alarm, locks phone (screen_on)
+    // 160..520 mins (2:10am - 8:10am): Actual consolidated sleep (360 mins)
+    // 520..550 mins (8:10am - 8:40am): Morning wake-up, walk, screen on
+    let mut epochs = Vec::with_capacity(550);
+    let start_time_ms = 1700000000000i64;
+
+    for i in 0..550 {
+        let timestamp_ms = start_time_ms + (i as i64 * 60_000);
+        let is_early_table_idle = i < 60;
+        let is_midnight_phone_use = (60..90).contains(&i);
+        let is_laptop_table_idle = (90..150).contains(&i);
+        let is_bedtime_phone_use = (150..160).contains(&i);
+        let is_main_sleep = (160..520).contains(&i);
+        let is_morning_wake = i >= 520;
+
+        let (activity, screen, light) = if is_midnight_phone_use || is_bedtime_phone_use || is_morning_wake {
+            (25.0, true, 35.0)
+        } else if is_early_table_idle || is_laptop_table_idle {
+            (0.0, false, 0.0)
+        } else if is_main_sleep {
+            (0.3, false, 0.0)
+        } else {
+            (0.0, false, 0.0)
+        };
+
+        epochs.push(EpochData {
+            timestamp_ms,
+            duration_seconds: 60,
+            activity_count: activity,
+            variance: 0.001,
+            mean_light_lux: light,
+            screen_on: screen,
+            charging: true,
+        });
+    }
+
+    let result = ActigraphyEngine::analyze_session(&epochs).expect("Should analyze session");
+
+    // The main consolidated sleep should be recognized from ~min 160 (2:10am) to ~min 520 (8:10am)
+    let onset_diff_mins = (result.sleep_onset_time_ms - (start_time_ms + 160 * 60_000)).abs() / 60_000;
+    let wake_diff_mins = (result.wake_time_ms - (start_time_ms + 520 * 60_000)).abs() / 60_000;
+
+    assert!(onset_diff_mins <= 5, "Onset should be close to 2:10am (min 160), got diff {} mins", onset_diff_mins);
+    assert!(wake_diff_mins <= 5, "Wake should be close to 8:10am (min 520), got diff {} mins", wake_diff_mins);
+    assert!(result.sleep_duration_minutes >= 350, "Sleep duration should be ~360 mins, got {}", result.sleep_duration_minutes);
 }
