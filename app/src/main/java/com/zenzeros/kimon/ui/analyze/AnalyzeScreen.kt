@@ -183,10 +183,9 @@ fun AnalyzeScreen(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // 2. Smooth Swipeable HorizontalPager with Full Pre-warming for 60/120fps Swiping
         HorizontalPager(
             state = pagerState,
-            beyondViewportPageCount = 3,
+            beyondViewportPageCount = 1,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)

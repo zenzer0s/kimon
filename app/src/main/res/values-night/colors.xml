@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="launch_background">#FF141619</color>
+
     <!-- Widget Semantic Colors (Dark Theme) -->
     <color name="widget_background">#FF141619</color>
     <color name="widget_surface_container">#FF1F2226</color>

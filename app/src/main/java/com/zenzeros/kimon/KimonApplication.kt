@@ -13,12 +13,6 @@ import com.zenzeros.kimon.domain.usecase.GetYearStatsUseCase
 
 class KimonApplication : Application() {
 
-    override fun onCreate() {
-        super.onCreate()
-        com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(this)
-        com.zenzeros.kimon.widget.FocusHeatmapWidgetProvider.updateAllWidgets(this)
-    }
-
     val database by lazy { KimonDatabase.getInstance(this) }
     val sessionRepository by lazy { SessionRepository(database.focusSessionDao(), this) }
     val tagRepository by lazy { TagRepository(database.tagDao()) }

@@ -73,14 +73,11 @@ class FocusHeatmapWidgetProvider : AppWidgetProvider() {
         private const val TOTAL_COLS = 10
 
         fun updateAllWidgets(context: Context) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val thisWidget = ComponentName(context, FocusHeatmapWidgetProvider::class.java)
-            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
-            if (allWidgetIds.isNotEmpty()) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    for (appWidgetId in allWidgetIds) {
-                        updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
-                    }
+            CoroutineScope(Dispatchers.IO).launch {
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val thisWidget = ComponentName(context, FocusHeatmapWidgetProvider::class.java)
+                for (appWidgetId in appWidgetManager.getAppWidgetIds(thisWidget)) {
+                    updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
                 }
             }
         }
