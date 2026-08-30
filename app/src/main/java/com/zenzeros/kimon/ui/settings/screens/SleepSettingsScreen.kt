@@ -76,9 +76,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.data.repository.UserSettingsRepository
 import com.zenzeros.kimon.service.health.HealthConnectManager
 import com.zenzeros.kimon.service.sleep.SpecialAccessHelper
 import com.zenzeros.kimon.service.sleep.usage.AppUsageHelper
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.settings.SettingsUiState
 import com.zenzeros.kimon.ui.sleep.SleepViewModel
 import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
@@ -286,6 +288,7 @@ fun SleepSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .bouncyScroll()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)

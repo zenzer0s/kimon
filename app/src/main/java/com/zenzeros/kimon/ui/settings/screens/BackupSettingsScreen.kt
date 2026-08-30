@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
@@ -144,6 +145,7 @@ fun BackupSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .bouncyScroll()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)

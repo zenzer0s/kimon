@@ -53,6 +53,7 @@ import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
 import java.text.SimpleDateFormat
@@ -92,6 +93,7 @@ fun WeekTab(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .bouncyScroll()
             .verticalScroll(scrollState)
     ) {
         Spacer(modifier = Modifier.height(4.dp))

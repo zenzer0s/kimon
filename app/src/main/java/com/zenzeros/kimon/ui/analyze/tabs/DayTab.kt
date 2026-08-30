@@ -49,7 +49,9 @@ import com.zenzeros.kimon.ui.analyze.AnalyzeViewModel
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
+import com.zenzeros.kimon.ui.analyze.components.CompactSummaryTile
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
+import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import com.zenzeros.kimon.ui.theme.CustomColors
 import java.text.SimpleDateFormat
@@ -84,6 +86,7 @@ fun DayTab(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .bouncyScroll()
             .verticalScroll(scrollState)
     ) {
         Spacer(modifier = Modifier.height(4.dp))
