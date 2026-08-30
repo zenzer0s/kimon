@@ -367,23 +367,20 @@ fun SleepSettingsScreen(
             Spacer(Modifier.height(6.dp))
 
             // ==========================================
-            // MASTER SWITCH (AT TOP)
+            // MASTER SWITCH (AT TOP - MONOCHROME)
             // ==========================================
             SegmentedListItem(
                 leadingContent = {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .background(
-                                if (state.sleepMonitoringEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                CircleShape
-                            ),
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_moon),
                             contentDescription = null,
-                            tint = if (state.sleepMonitoringEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -466,7 +463,7 @@ fun SleepSettingsScreen(
                     Spacer(Modifier.height(14.dp))
 
                     // ==========================================
-                    // CATEGORY 1: SCHEDULE & TARGET GOALS
+                    // CATEGORY 1: SCHEDULE & TARGET GOALS (MONOCHROME)
                     // ==========================================
                     Text(
                         text = stringResource(R.string.settings_section_sleep_goals_schedule),
@@ -484,13 +481,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_bed),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -529,7 +526,7 @@ fun SleepSettingsScreen(
                                         fontSize = 14.5.sp,
                                         fontFamily = LocalAppFonts.current.topBarTitle
                                     ),
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.padding(horizontal = 4.dp)
                                 )
 
@@ -587,10 +584,10 @@ fun SleepSettingsScreen(
                             val isSelected = state.sleepGoalMinutes == mins
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                                color = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerLow,
                                 border = androidx.compose.foundation.BorderStroke(
                                     width = 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                    color = if (isSelected) MaterialTheme.colorScheme.outline.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                                 ),
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -610,7 +607,7 @@ fun SleepSettingsScreen(
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                             fontSize = 11.5.sp
                                         ),
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -627,16 +624,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(
-                                        if (state.sleepScheduledMode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        CircleShape
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_alarm_sound),
                                     contentDescription = null,
-                                    tint = if (state.sleepScheduledMode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -682,13 +676,13 @@ fun SleepSettingsScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(40.dp)
-                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_moon),
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        tint = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -696,7 +690,7 @@ fun SleepSettingsScreen(
                             trailingContent = {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         showBedtimePicker = true
@@ -713,12 +707,12 @@ fun SleepSettingsScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp
                                             ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Icon(
                                             painter = painterResource(R.drawable.ic_chevron_right),
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -757,13 +751,13 @@ fun SleepSettingsScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(40.dp)
-                                        .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_alarm_sound),
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        tint = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -771,7 +765,7 @@ fun SleepSettingsScreen(
                             trailingContent = {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         showWakeTimePicker = true
@@ -788,12 +782,12 @@ fun SleepSettingsScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp
                                             ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Icon(
                                             painter = painterResource(R.drawable.ic_chevron_right),
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -830,7 +824,7 @@ fun SleepSettingsScreen(
                     Spacer(Modifier.height(14.dp))
 
                     // ==========================================
-                    // CATEGORY 2: SYNC & PHONE TRACKING
+                    // CATEGORY 2: SYNC & PHONE TRACKING (MONOCHROME)
                     // ==========================================
                     Text(
                         text = stringResource(R.string.settings_section_sleep_tracking_sync),
@@ -850,16 +844,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(
-                                        if (state.appUsageAccessEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        CircleShape
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_screen_awake),
                                     contentDescription = null,
-                                    tint = if (state.appUsageAccessEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -924,16 +915,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(
-                                        if (state.healthConnectSyncEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        CircleShape
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_sparkles),
                                     contentDescription = null,
-                                    tint = if (state.healthConnectSyncEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -1004,13 +992,13 @@ fun SleepSettingsScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(40.dp)
-                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_sparkles),
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        tint = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -1058,7 +1046,7 @@ fun SleepSettingsScreen(
                     Spacer(Modifier.height(14.dp))
 
                     // ==========================================
-                    // CATEGORY 3: SYSTEM ACCESS & RELIABILITY
+                    // CATEGORY 3: SYSTEM ACCESS & RELIABILITY (MONOCHROME)
                     // ==========================================
                     Text(
                         text = stringResource(R.string.settings_section_special_access),
@@ -1076,16 +1064,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(
-                                        if (canExactAlarm) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        CircleShape
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_alarm_sound),
                                     contentDescription = null,
-                                    tint = if (canExactAlarm) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -1093,7 +1078,7 @@ fun SleepSettingsScreen(
                         trailingContent = {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (canExactAlarm) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
+                                color = if (canExactAlarm) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     SpecialAccessHelper.openExactAlarmSettings(context)
@@ -1105,7 +1090,7 @@ fun SleepSettingsScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp
                                     ),
-                                    color = if (canExactAlarm) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                                    color = if (canExactAlarm) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onErrorContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -1143,16 +1128,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(
-                                        if (isBatteryUnrestricted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        CircleShape
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_bolt),
                                     contentDescription = null,
-                                    tint = if (isBatteryUnrestricted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -1160,7 +1142,7 @@ fun SleepSettingsScreen(
                         trailingContent = {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (isBatteryUnrestricted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                                color = if (isBatteryUnrestricted) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     SpecialAccessHelper.openBatteryOptimizationSettings(context)
@@ -1172,7 +1154,7 @@ fun SleepSettingsScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp
                                     ),
-                                    color = if (isBatteryUnrestricted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                                    color = if (isBatteryUnrestricted) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onErrorContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -1210,16 +1192,13 @@ fun SleepSettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(
-                                        if (hasUsageAccess) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        CircleShape
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_screen_awake),
                                     contentDescription = null,
-                                    tint = if (hasUsageAccess) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -1227,7 +1206,7 @@ fun SleepSettingsScreen(
                         trailingContent = {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (hasUsageAccess) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                                color = if (hasUsageAccess) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     SpecialAccessHelper.openUsageAccessSettings(context)
@@ -1239,7 +1218,7 @@ fun SleepSettingsScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp
                                     ),
-                                    color = if (hasUsageAccess) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                                    color = if (hasUsageAccess) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onErrorContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -1298,7 +1277,7 @@ fun SleepSettingsScreen(
             }
 
             // ==========================================
-            // INFO CARD (PRIVACY & METHOD)
+            // INFO CARD (PRIVACY & METHOD - MONOCHROME)
             // ==========================================
             Surface(
                 shape = cardShape,
@@ -1317,13 +1296,13 @@ fun SleepSettingsScreen(
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
-                                .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_moon),
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
