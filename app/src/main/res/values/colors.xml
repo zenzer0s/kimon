@@ -8,6 +8,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <color name="launch_background">#FFF8F9FB</color>
+
     <!-- Widget Semantic Colors (Light Theme) -->
     <color name="widget_background">#FFF8F9FB</color>
     <color name="widget_surface_container">#FFEEF2F6</color>

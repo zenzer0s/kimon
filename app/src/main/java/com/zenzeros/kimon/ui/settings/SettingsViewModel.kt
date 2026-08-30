@@ -45,6 +45,7 @@ fun String.toColor(): Color {
 }
 
 data class SettingsUiState(
+    val isLoaded: Boolean = false,
     val workDurationMinutes: Int = 25,
     val shortBreakMinutes: Int = 5,
     val longBreakMinutes: Int = 15,
@@ -191,6 +192,7 @@ class SettingsViewModel(
         }
     ) { timer, auto, sound, appGroup ->
         SettingsUiState(
+            isLoaded = true,
             workDurationMinutes = timer.work,
             shortBreakMinutes = timer.sBreak,
             longBreakMinutes = timer.lBreak,
@@ -225,7 +227,7 @@ class SettingsViewModel(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
+        started = SharingStarted.Eagerly,
         initialValue = SettingsUiState()
     )
 

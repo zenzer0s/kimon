@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "kimon"
 include(":app")
+include(":baselineprofile")

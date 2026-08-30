@@ -46,9 +46,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -96,7 +98,7 @@ private enum class KimonTab(val titleRes: Int, val iconRes: Int) {
 }
 
 @Composable
-fun KimonApp() {
+fun KimonApp(onContentReady: () -> Unit = {}) {
     val context = LocalContext.current
     val kimonApp = context.applicationContext as KimonApplication
     val coroutineScope = rememberCoroutineScope()
@@ -122,6 +124,9 @@ fun KimonApp() {
         )
     )
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+    if (!settingsState.isLoaded) return
+    SideEffect { onContentReady() }
 
     val isDark = when (settingsState.themeMode) {
         "LIGHT" -> false
@@ -195,22 +200,22 @@ fun KimonApp() {
         }
     }
 
-    // Dedicated Settings Entry Provider
-    val settingsEntryProvider = remember(settingsState) {
+    val currentSettings = rememberUpdatedState(settingsState)
+    val settingsEntryProvider = remember {
         entryProvider<NavKey> {
             entry<KimonNavKey.Focus> { Box(Modifier.fillMaxSize()) }
             entry<KimonNavKey.Plan> { Box(Modifier.fillMaxSize()) }
             entry<KimonNavKey.Analyze> { Box(Modifier.fillMaxSize()) }
             entry<KimonNavKey.SettingsMain> {
                 SettingsMainScreen(
-                    state = settingsState,
+                    state = currentSettings.value,
                     onNavigate = { key -> settingsBackStack.add(key) },
                     onBack = navigateBack
                 )
             }
             entry<KimonNavKey.TimerSettings> {
                 TimerSettingsScreen(
-                    state = settingsState,
+                    state = currentSettings.value,
                     onSetWorkDuration = { settingsViewModel.setWorkDuration(it) },
                     onSetShortBreak = { settingsViewModel.setShortBreak(it) },
                     onSetLongBreak = { settingsViewModel.setLongBreak(it) },
@@ -227,7 +232,7 @@ fun KimonApp() {
             }
             entry<KimonNavKey.AlarmSettings> {
                 AlarmSettingsScreen(
-                    state = settingsState,
+                    state = currentSettings.value,
                     onToggleSound = { settingsViewModel.toggleSound(it) },
                     onToggleVibration = { settingsViewModel.toggleVibration(it) },
                     onToggleMediaVolume = { settingsViewModel.toggleMediaVolume(it) },
@@ -237,7 +242,7 @@ fun KimonApp() {
             }
             entry<KimonNavKey.AppearanceSettings> {
                 AppearanceSettingsScreen(
-                    state = settingsState,
+                    state = currentSettings.value,
                     onSetThemeMode = { settingsViewModel.setThemeMode(it) },
                     onSetThemeColor = { settingsViewModel.setThemeColor(it) },
                     onToggleAmoledBlack = { settingsViewModel.toggleAmoledBlack(it) },
@@ -247,7 +252,7 @@ fun KimonApp() {
             }
             entry<KimonNavKey.SleepSettings> {
                 SleepSettingsScreen(
-                    state = settingsState,
+                    state = currentSettings.value,
                     onToggleSleepMonitoring = { settingsViewModel.toggleSleepMonitoring(it) },
                     onToggleHealthConnectSync = { settingsViewModel.toggleHealthConnectSync(it) },
                     onSetSleepGoal = { settingsViewModel.setSleepGoal(it) },
@@ -381,7 +386,7 @@ fun KimonApp() {
                     // 2. Pre-warmed Main Root Content Tabs (Dynamic: Plan, Focus, Analyze + optional Sleep)
                     HorizontalPager(
                         state = mainTabPagerState,
-                        beyondViewportPageCount = 3,
+                        beyondViewportPageCount = 1,
                         userScrollEnabled = false,
                         modifier = Modifier
                             .fillMaxWidth()

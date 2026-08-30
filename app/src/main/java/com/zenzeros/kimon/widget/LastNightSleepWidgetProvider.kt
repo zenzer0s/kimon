@@ -66,14 +66,11 @@ class LastNightSleepWidgetProvider : AppWidgetProvider() {
         const val ACTION_UPDATE_WIDGET = "com.zenzeros.kimon.widget.ACTION_UPDATE_SLEEP_WIDGET"
 
         fun updateAllWidgets(context: Context) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val thisWidget = ComponentName(context, LastNightSleepWidgetProvider::class.java)
-            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
-            if (allWidgetIds.isNotEmpty()) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    for (appWidgetId in allWidgetIds) {
-                        updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
-                    }
+            CoroutineScope(Dispatchers.IO).launch {
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val thisWidget = ComponentName(context, LastNightSleepWidgetProvider::class.java)
+                for (appWidgetId in appWidgetManager.getAppWidgetIds(thisWidget)) {
+                    updateAppWidgetInternal(context, appWidgetManager, appWidgetId)
                 }
             }
         }
