@@ -78,6 +78,85 @@ impl ActigraphyEngine {
         }
     }
 
+    /// Find the primary consolidated sleep window in a sequence of scored epoch states.
+    /// Filters out early pre-bed "table stillness" that is followed by active phone usage / prolonged wakefulness.
+    pub fn find_consolidated_sleep_window(states: &[SleepState], epochs: &[EpochData]) -> Option<(usize, usize)> {
+        let n = states.len();
+        if n < 15 {
+            return None;
+        }
+
+        // 1. Identify all candidate sleep segments (contiguous blocks of Sleep, allowing brief WASO gaps <= 5 mins)
+        let mut segments: Vec<(usize, usize, usize)> = Vec::new(); // (start_idx, end_idx, sleep_epoch_count)
+        let mut in_segment = false;
+        let mut seg_start = 0;
+        let mut seg_sleep_count = 0;
+        let mut consecutive_wake = 0;
+
+        for i in 0..n {
+            let is_sleep = states[i] == SleepState::Sleep && !epochs[i].screen_on;
+            if is_sleep {
+                if !in_segment {
+                    in_segment = true;
+                    seg_start = i;
+                    seg_sleep_count = 1;
+                    consecutive_wake = 0;
+                } else {
+                    seg_sleep_count += 1;
+                    consecutive_wake = 0;
+                }
+            } else {
+                if in_segment {
+                    consecutive_wake += 1;
+                    // If wake continues for > 15 consecutive minutes (or explicit screen-on > 3 mins), the sleep segment closes
+                    let is_active_wake = consecutive_wake >= 15 || 
+                        (consecutive_wake >= 3 && (0..consecutive_wake).all(|w| epochs[i - w].screen_on));
+                    
+                    if is_active_wake {
+                        let seg_end = i.saturating_sub(consecutive_wake);
+                        if seg_sleep_count >= 15 {
+                            segments.push((seg_start, seg_end, seg_sleep_count));
+                        }
+                        in_segment = false;
+                        seg_sleep_count = 0;
+                        consecutive_wake = 0;
+                    }
+                }
+            }
+        }
+
+        if in_segment && seg_sleep_count >= 15 {
+            let seg_end = (n - 1).saturating_sub(consecutive_wake);
+            segments.push((seg_start, seg_end, seg_sleep_count));
+        }
+
+        if segments.is_empty() {
+            return None;
+        }
+
+        // 2. Select the dominant / main sleep segment (highest sleep volume)
+        let max_seg = segments.iter().max_by_key(|s| s.2)?;
+        
+        let mut merged_start = max_seg.0;
+        let mut merged_end = max_seg.1;
+
+        for seg in &segments {
+            // If another segment is after max_seg and separated by < 20 mins, merge it
+            if seg.0 > merged_end && (seg.0 - merged_end) <= 20 {
+                merged_end = seg.1;
+            }
+            // If another segment is before max_seg and separated by < 20 mins without active screen usage, merge it
+            if seg.1 < merged_start && (merged_start - seg.1) <= 20 {
+                let has_screen_in_gap = (seg.1..merged_start).any(|idx| epochs[idx].screen_on);
+                if !has_screen_in_gap {
+                    merged_start = seg.0;
+                }
+            }
+        }
+
+        Some((merged_start, merged_end))
+    }
+
     /// Analyze overnight epochs and produce a comprehensive SleepAnalysisResult
     pub fn analyze_session(epochs: &[EpochData]) -> Option<SleepAnalysisResult> {
         if epochs.is_empty() {
@@ -87,38 +166,7 @@ impl ActigraphyEngine {
         let states = Self::score_cole_kripke(epochs);
         let n = states.len();
 
-        // 1. Find Sleep Onset: First occurrence of >= 3 consecutive sleep epochs
-        let mut onset_idx = 0;
-        let mut consecutive_sleep = 0;
-        let mut found_onset = false;
-        for (i, state) in states.iter().enumerate() {
-            if *state == SleepState::Sleep {
-                consecutive_sleep += 1;
-                if consecutive_sleep >= 3 {
-                    onset_idx = i.saturating_sub(2);
-                    found_onset = true;
-                    break;
-                }
-            } else {
-                consecutive_sleep = 0;
-            }
-        }
-
-        if !found_onset {
-            // No sustained sleep found
-            return None;
-        }
-
-        // 2. Find Final Morning Wake Time: Last occurrence of sleep epoch
-        let mut last_sleep_idx = onset_idx;
-        for i in (onset_idx..n).rev() {
-            if states[i] == SleepState::Sleep {
-                last_sleep_idx = i;
-                break;
-            }
-        }
-
-        let wake_idx = (last_sleep_idx + 1).min(n - 1);
+        let (onset_idx, wake_idx) = Self::find_consolidated_sleep_window(&states, epochs)?;
 
         let onset_time_ms = epochs[onset_idx].timestamp_ms;
         let wake_time_ms = epochs[wake_idx].timestamp_ms + ((epochs[wake_idx].duration_seconds as i64) * 1000);
@@ -132,7 +180,7 @@ impl ActigraphyEngine {
         let mut epoch_stages = Vec::with_capacity(n);
 
         for (i, state) in states.iter().enumerate() {
-            if i < onset_idx || i >= wake_idx {
+            if i < onset_idx || i > wake_idx {
                 epoch_stages.push(SleepStage::Awake as u8);
                 continue;
             }
