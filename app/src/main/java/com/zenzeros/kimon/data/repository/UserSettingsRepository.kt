@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.zenzeros.kimon.ui.theme.AppTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -39,6 +40,7 @@ class UserSettingsRepository(private val context: Context) {
 
         // Appearance
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val APP_THEME = stringPreferencesKey("app_theme")
         val THEME_PALETTE = stringPreferencesKey("theme_palette")
         val THEME_COLOR = stringPreferencesKey("theme_color")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")
@@ -129,6 +131,21 @@ class UserSettingsRepository(private val context: Context) {
 
     val themeMode: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[PreferencesKeys.THEME_MODE] ?: "SYSTEM"
+    }
+
+    val appTheme: Flow<AppTheme> = context.dataStore.data.map { prefs ->
+        val raw = prefs[PreferencesKeys.APP_THEME]
+        if (raw != null) {
+            try {
+                AppTheme.valueOf(raw)
+            } catch (e: Exception) {
+                AppTheme.Dynamic
+            }
+        } else if (prefs[PreferencesKeys.NOTHING_OS_THEME] == true) {
+            AppTheme.NothingOS
+        } else {
+            AppTheme.Dynamic
+        }
     }
 
     val themePalette: Flow<String> = context.dataStore.data.map { prefs ->
@@ -277,6 +294,13 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setThemeMode(mode: String) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.THEME_MODE] = mode }
+    }
+
+    suspend fun setAppTheme(theme: AppTheme) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.APP_THEME] = theme.name
+            prefs[PreferencesKeys.NOTHING_OS_THEME] = (theme == AppTheme.NothingOS)
+        }
     }
 
     suspend fun setThemePalette(palette: String) {

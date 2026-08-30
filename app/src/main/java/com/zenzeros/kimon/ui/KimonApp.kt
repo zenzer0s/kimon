@@ -244,9 +244,8 @@ fun KimonApp(onContentReady: () -> Unit = {}) {
                 AppearanceSettingsScreen(
                     state = currentSettings.value,
                     onSetThemeMode = { settingsViewModel.setThemeMode(it) },
-                    onSetThemeColor = { settingsViewModel.setThemeColor(it) },
+                    onSetAppTheme = { settingsViewModel.setAppTheme(it) },
                     onToggleAmoledBlack = { settingsViewModel.toggleAmoledBlack(it) },
-                    onToggleNothingOsTheme = { settingsViewModel.toggleNothingOsTheme(it) },
                     onBack = navigateBack
                 )
             }
@@ -278,10 +277,8 @@ fun KimonApp(onContentReady: () -> Unit = {}) {
 
     KimonTheme(
         darkTheme = isDark,
-        seedColor = settingsState.themeColor,
-        dynamicColor = settingsState.themeColor == androidx.compose.ui.graphics.Color.White,
-        blackTheme = settingsState.amoledBlack,
-        nothingOsTheme = settingsState.nothingOsTheme
+        appTheme = settingsState.appTheme,
+        blackTheme = settingsState.amoledBlack
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),

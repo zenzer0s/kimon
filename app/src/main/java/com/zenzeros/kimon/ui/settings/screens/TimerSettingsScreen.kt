@@ -319,19 +319,10 @@ fun TimerSettingsScreen(
             val currentClockIndex = clockOptions.indexOfFirst { it.first == state.clockStyle }.coerceAtLeast(0)
 
             SegmentedListItem(
-                leadingContent = {
-                    Icon(
-                        painter = painterResource(
-                            if (state.clockStyle == "FLIP") R.drawable.ic_plan else R.drawable.ic_focus
-                        ),
-                        contentDescription = null
-                    )
-                },
-                content = { Text("Display mode") },
-                supportingContent = {
+                content = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         clockOptions.forEachIndexed { optIndex, (styleKey, title) ->
                             val isSelected = currentClockIndex == optIndex
@@ -365,13 +356,6 @@ fun TimerSettingsScreen(
 
             if (isDial) {
                 SegmentedListItem(
-                    leadingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_focus),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
                     trailingContent = {
                         Switch(
                             checked = state.dialTickAnimation,
@@ -401,24 +385,14 @@ fun TimerSettingsScreen(
                         onToggleDialTickAnimation(!state.dialTickAnimation)
                     }
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = stringResource(R.string.settings_dial_tick_motion),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = stringResource(R.string.settings_dial_tick_motion_desc),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 12.5.sp,
-                                lineHeight = 16.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.settings_dial_tick_motion),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 15.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
 

@@ -73,37 +73,37 @@ fun SettingsMainScreen(
                 key = KimonNavKey.TimerSettings,
                 icon = R.drawable.ic_focus,
                 title = R.string.settings_section_timer,
-                subtitle = "Durations, auto-start, screen & DND"
+                subtitle = "Durations, auto-start & display"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.AlarmSettings,
                 icon = R.drawable.ic_alarm_sound,
                 title = R.string.settings_section_sound,
-                subtitle = "Alarm sound, Vibration, Headphone mode"
+                subtitle = "Alarm sound, vibration & volume"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.AppearanceSettings,
                 icon = R.drawable.palette,
                 title = R.string.settings_section_appearance,
-                subtitle = "Nothing OS, Theme mode, Dynamic color, Black theme"
+                subtitle = "Theme, dynamic color & Nothing OS"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.SleepSettings,
                 icon = R.drawable.ic_moon,
                 title = R.string.settings_section_sleep,
-                subtitle = "Native SleepCore, Health Connect & sleep tracking"
+                subtitle = "Targets, bedtime schedule & sync"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.BackupSettings,
                 icon = R.drawable.ic_backup,
                 title = R.string.settings_section_data,
-                subtitle = "JSON backup, restore & data management"
+                subtitle = "Backup, restore & reset data"
             ),
             SettingsNavCategory(
                 key = KimonNavKey.AboutSettings,
                 icon = R.drawable.ic_profile,
                 title = R.string.settings_section_about,
-                subtitle = "zenzeros, donations, open source & info"
+                subtitle = "App info, donations & developer"
             )
         )
     }
@@ -170,12 +170,6 @@ fun SettingsMainScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val (iconContainerColor, iconContentColor) = when (index % 3) {
-                        0 -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-                        1 -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-                        else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-                    }
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -186,13 +180,13 @@ fun SettingsMainScreen(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(iconContainerColor, CircleShape),
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 painter = painterResource(cat.icon),
                                 contentDescription = null,
-                                tint = iconContentColor,
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
