@@ -553,24 +553,14 @@ fun SleepSettingsScreen(
                         colors = listItemColors,
                         onClick = {}
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = stringResource(R.string.settings_sleep_goal),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_sleep_goal_desc),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 16.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.settings_sleep_goal),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 15.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
 
                     // Quick Goal Preset Chips
@@ -800,24 +790,14 @@ fun SleepSettingsScreen(
                                 showWakeTimePicker = true
                             }
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(
-                                    text = stringResource(R.string.settings_target_wake),
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 15.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Target morning wake-up schedule",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = 12.5.sp,
-                                        lineHeight = 16.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Text(
+                                text = stringResource(R.string.settings_target_wake),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 15.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
 
@@ -1022,24 +1002,14 @@ fun SleepSettingsScreen(
                                 }
                             }
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(
-                                    text = stringResource(R.string.settings_sync_now),
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 15.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = stringResource(R.string.settings_sync_now_desc),
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = 12.5.sp,
-                                        lineHeight = 16.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Text(
+                                text = stringResource(R.string.settings_sync_now),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 15.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
 
