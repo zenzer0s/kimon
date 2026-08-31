@@ -78,7 +78,6 @@ import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
 import com.zenzeros.kimon.data.repository.UserSettingsRepository
 import com.zenzeros.kimon.service.health.HealthConnectManager
-import com.zenzeros.kimon.service.sleep.SpecialAccessHelper
 import com.zenzeros.kimon.service.sleep.usage.AppUsageHelper
 import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.settings.SettingsUiState
@@ -114,23 +113,24 @@ fun SleepSettingsScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val sleepPermissionsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { notificationGranted ->
-        val granted = notificationGranted || (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-            } else true
-        )
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val activityRecognitionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions[Manifest.permission.ACTIVITY_RECOGNITION] ?: (
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
+            )
+        } else true
 
-        if (granted) {
+        if (activityRecognitionGranted) {
             kimonApp.sleepMonitorManager.startSleepMonitoring(
                 onSuccess = { onToggleSleepMonitoring(true) },
                 onFailure = {
-                    Toast.makeText(context, "Failed to start sleep monitoring: ${it.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Failed to start Google Sleep API: ${it.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    onToggleSleepMonitoring(false)
                 }
             )
         } else {
-            Toast.makeText(context, "Notification permission required for sleep tracking status", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Physical Activity permission required for Google Sleep API", Toast.LENGTH_LONG).show()
             onToggleSleepMonitoring(false)
         }
     }
@@ -151,106 +151,6 @@ fun SleepSettingsScreen(
     }
 
     val sleepGoalPresets = listOf(420, 450, 480, 510, 540)
-
-    fun formatTime12h(hour: Int, minute: Int): String {
-        val amPm = if (hour >= 12) "PM" else "AM"
-        val h12 = if (hour % 12 == 0) 12 else hour % 12
-        return String.format(Locale.getDefault(), "%d:%02d %s", h12, minute, amPm)
-    }
-
-    var showBedtimePicker by remember { mutableStateOf(false) }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var refreshKey by remember { mutableIntStateOf(0) }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                refreshKey++
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
-    val canExactAlarm = remember(refreshKey) { SpecialAccessHelper.canScheduleExactAlarms(context) }
-    val isBatteryUnrestricted = remember(refreshKey) { SpecialAccessHelper.isIgnoringBatteryOptimizations(context) }
-    val hasUsageAccess = remember(refreshKey) { SpecialAccessHelper.hasUsageAccess(context) }
-
-    if (showBedtimePicker) {
-        val bedtimePickerState = rememberTimePickerState(
-            initialHour = state.targetBedtimeHour,
-            initialMinute = state.targetBedtimeMinute,
-            is24Hour = android.text.format.DateFormat.is24HourFormat(context)
-        )
-
-        Dialog(
-            onDismissRequest = { showBedtimePicker = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                tonalElevation = 6.dp,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier
-                    .width(IntrinsicSize.Min)
-                    .padding(horizontal = 24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(R.string.settings_target_bedtime),
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    TimePicker(
-                        state = bedtimePickerState,
-                        colors = TimePickerDefaults.colors()
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                showBedtimePicker = false
-                            }
-                        ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        TextButton(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onSetBedtime(bedtimePickerState.hour, bedtimePickerState.minute)
-                                showBedtimePicker = false
-                            }
-                        ) {
-                            Text(
-                                text = stringResource(R.string.confirm),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -342,8 +242,16 @@ fun SleepSettingsScreen(
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     val target = !state.sleepMonitoringEnabled
                     if (target) {
-                        if (!kimonApp.sleepMonitorManager.hasPermission() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            sleepPermissionsLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        if (!kimonApp.sleepMonitorManager.hasPermission()) {
+                            val permissions = buildList {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    add(Manifest.permission.ACTIVITY_RECOGNITION)
+                                }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    add(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            }
+                            sleepPermissionsLauncher.launch(permissions.toTypedArray())
                         } else {
                             kimonApp.sleepMonitorManager.startSleepMonitoring(
                                 onSuccess = { onToggleSleepMonitoring(true) },
@@ -385,7 +293,7 @@ fun SleepSettingsScreen(
                     // CATEGORY 1: SCHEDULE & TARGET GOALS (MONOCHROME)
                     // ==========================================
                     Text(
-                        text = stringResource(R.string.settings_section_sleep_goals_schedule),
+                        text = stringResource(R.string.settings_section_sleep_goal),
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
@@ -519,138 +427,6 @@ fun SleepSettingsScreen(
                                         color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(4.dp))
-
-                    val scheduleGroupCount = if (state.sleepScheduledMode) 2 else 1
-
-                    // 2. Bedtime Scheduled Mode Switch
-                    SegmentedListItem(
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_alarm_sound),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked = state.sleepScheduledMode,
-                                onCheckedChange = null,
-                                colors = switchColors
-                            )
-                        },
-                        shapes = segmentedListItemShapes(0, scheduleGroupCount),
-                        colors = listItemColors,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onToggleScheduledMode(!state.sleepScheduledMode)
-                        }
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = stringResource(R.string.settings_sleep_scheduled_mode),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_sleep_scheduled_mode_desc),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 16.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    if (state.sleepScheduledMode) {
-                        // 3. Target Bedtime Picker
-                        SegmentedListItem(
-                            leadingContent = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_moon),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            },
-                            trailingContent = {
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        showBedtimePicker = true
-                                    }
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                    ) {
-                                        Text(
-                                            text = formatTime12h(state.targetBedtimeHour, state.targetBedtimeMinute),
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_chevron_right),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                            },
-                            shapes = segmentedListItemShapes(1, scheduleGroupCount),
-                            colors = listItemColors,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                showBedtimePicker = true
-                            }
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(
-                                    text = stringResource(R.string.settings_target_bedtime),
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 15.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Starts at ${formatTime12h((state.targetBedtimeHour - 1 + 24) % 24, state.targetBedtimeMinute)}",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = 12.5.sp,
-                                        lineHeight = 16.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
                             }
                         }
                     }
@@ -863,213 +639,6 @@ fun SleepSettingsScreen(
                                     fontSize = 15.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-
-                    // ==========================================
-                    // CATEGORY 3: SYSTEM ACCESS & RELIABILITY (MONOCHROME)
-                    // ==========================================
-                    Text(
-                        text = stringResource(R.string.settings_section_special_access),
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                        modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
-                    )
-
-                    // 1. Alarms & Reminders
-                    SegmentedListItem(
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_alarm_sound),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        trailingContent = {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (canExactAlarm) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    SpecialAccessHelper.openExactAlarmSettings(context)
-                                }
-                            ) {
-                                Text(
-                                    text = if (canExactAlarm) stringResource(R.string.settings_permission_allowed) else stringResource(R.string.settings_permission_tap_to_grant),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
-                                    ),
-                                    color = if (canExactAlarm) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        },
-                        shapes = segmentedListItemShapes(0, 3),
-                        colors = listItemColors,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            SpecialAccessHelper.openExactAlarmSettings(context)
-                        }
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = stringResource(R.string.settings_exact_alarms),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_exact_alarms_desc),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 16.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    // 2. Unrestricted Battery
-                    SegmentedListItem(
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_bolt),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        trailingContent = {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isBatteryUnrestricted) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    SpecialAccessHelper.openBatteryOptimizationSettings(context)
-                                }
-                            ) {
-                                Text(
-                                    text = if (isBatteryUnrestricted) stringResource(R.string.settings_permission_allowed) else stringResource(R.string.settings_permission_tap_to_grant),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
-                                    ),
-                                    color = if (isBatteryUnrestricted) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        },
-                        shapes = segmentedListItemShapes(1, 3),
-                        colors = listItemColors,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            SpecialAccessHelper.openBatteryOptimizationSettings(context)
-                        }
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = stringResource(R.string.settings_battery_unrestricted),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_battery_unrestricted_desc),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 16.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    // 3. Usage Access
-                    SegmentedListItem(
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_screen_awake),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        trailingContent = {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (hasUsageAccess) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    SpecialAccessHelper.openUsageAccessSettings(context)
-                                }
-                            ) {
-                                Text(
-                                    text = if (hasUsageAccess) stringResource(R.string.settings_permission_allowed) else stringResource(R.string.settings_permission_tap_to_grant),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
-                                    ),
-                                    color = if (hasUsageAccess) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        },
-                        shapes = segmentedListItemShapes(2, 3),
-                        colors = listItemColors,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            SpecialAccessHelper.openUsageAccessSettings(context)
-                        }
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = stringResource(R.string.settings_usage_stats_access),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_usage_stats_access_desc),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 16.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }

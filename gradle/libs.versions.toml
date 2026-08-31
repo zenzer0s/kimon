@@ -18,8 +18,10 @@ coreSplashscreen = "1.2.0"
 profileinstaller = "1.4.1"
 benchmark = "1.5.0-rc02"
 uiautomator = "2.4.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

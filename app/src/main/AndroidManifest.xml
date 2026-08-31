@@ -9,9 +9,6 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
@@ -98,15 +95,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_focus_heatmap_info" />
         </receiver>
-
-        <service
-            android:name=".service.sleep.CustomSleepService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="sleep_monitoring_engine" />
-        </service>
 
         <service
             android:name=".service.PomodoroTimerService"

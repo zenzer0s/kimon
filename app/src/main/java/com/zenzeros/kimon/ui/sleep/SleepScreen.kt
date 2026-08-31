@@ -111,10 +111,6 @@ fun SleepScreen(
     val chartShapesGroup = ListItemDefaults.segmentedShapes(index = 1, count = totalSectionsGroup)
     val historyShapesGroup = ListItemDefaults.segmentedShapes(index = 2, count = totalSectionsGroup)
 
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        (context.applicationContext as KimonApplication).sleepMonitorManager.checkAndFinalizeMorningSession()
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
