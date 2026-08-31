@@ -1,11 +1,9 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
-
 package com.zenzeros.kimon.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -23,27 +21,32 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
- * Adds native Material 3 Expressive spring motion and tactile haptics when scrolling reaches boundaries.
+ * A calm, natural, critically damped overscroll motion engine with progressive resistance and zero oscillation.
  */
 fun Modifier.bouncyScroll(
     orientation: Orientation = Orientation.Vertical,
-    maxOverscroll: Float = 220f,
-    resistance: Float = 0.28f
+    maxOverscroll: Float = 55f,
+    resistance: Float = 0.14f
 ): Modifier = composed {
     val coroutineScope = rememberCoroutineScope()
     val offset = remember { Animatable(0f) }
     val haptic = LocalHapticFeedback.current
-    val spatialSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
-    val fastSpatialSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
 
-    val nestedScrollConnection = remember(orientation, maxOverscroll, resistance, haptic, spatialSpec, fastSpatialSpec) {
+    // Calm, critically-damped spring: smooth, fluid settle with zero wobble or rubber-banding
+    val calmSpringSpec = remember {
+        spring<Float>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    }
+
+    val nestedScrollConnection = remember(orientation, maxOverscroll, resistance, haptic, calmSpringSpec) {
         object : NestedScrollConnection {
             private var currentOffset: Float = 0f
             private var hasTriggeredDragHaptic = false
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val delta = if (orientation == Orientation.Vertical) available.y else available.x
-                // Only intercept when actively stretched past the boundary to smoothly return to zero
                 if (abs(currentOffset) > 0.5f) {
                     val isMovingTowardsZero = (currentOffset > 0 && delta < 0) || (currentOffset < 0 && delta > 0)
                     if (isMovingTowardsZero) {
@@ -78,13 +81,15 @@ fun Modifier.bouncyScroll(
                 source: NestedScrollSource
             ): Offset {
                 val delta = if (orientation == Orientation.Vertical) available.y else available.x
-                // Only stretch when user is actively dragging past boundary edges
                 if (source == NestedScrollSource.UserInput && abs(delta) > 0.5f) {
                     if (!hasTriggeredDragHaptic && abs(currentOffset) < 1f) {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         hasTriggeredDragHaptic = true
                     }
-                    currentOffset = (currentOffset + delta * resistance).coerceIn(-maxOverscroll, maxOverscroll)
+                    // Progressive resistance: gentle initial pull, smoothly tightens
+                    val progress = (abs(currentOffset) / maxOverscroll).coerceIn(0f, 1f)
+                    val dynamicResistance = resistance * (1f - progress * 0.65f)
+                    currentOffset = (currentOffset + delta * dynamicResistance).coerceIn(-maxOverscroll, maxOverscroll)
                     val snapVal = currentOffset
                     coroutineScope.launch {
                         offset.snapTo(snapVal)
@@ -96,13 +101,12 @@ fun Modifier.bouncyScroll(
 
             override suspend fun onPreFling(available: Velocity): Velocity {
                 hasTriggeredDragHaptic = false
-                // When released from drag overscroll, spring back using native M3 Expressive spatial motion
                 if (abs(currentOffset) > 0.5f) {
                     val consumed = available
                     currentOffset = 0f
                     offset.animateTo(
                         targetValue = 0f,
-                        animationSpec = spatialSpec
+                        animationSpec = calmSpringSpec
                     )
                     return consumed
                 }
@@ -112,11 +116,10 @@ fun Modifier.bouncyScroll(
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
                 hasTriggeredDragHaptic = false
                 val velocity = if (orientation == Orientation.Vertical) available.y else available.x
-                // Expressive boundary bounce when fling reaches the end of the scroll container
-                if (abs(velocity) > 100f) {
-                    val flingOverscroll = (velocity * 0.035f).coerceIn(-maxOverscroll * 0.45f, maxOverscroll * 0.45f)
-                    if (abs(flingOverscroll) > 2f) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                // Subtle, gentle edge cushion on fling (soft 10-15px cushion max)
+                if (abs(velocity) > 250f) {
+                    val flingOverscroll = (velocity * 0.008f).coerceIn(-maxOverscroll * 0.35f, maxOverscroll * 0.35f)
+                    if (abs(flingOverscroll) > 1.5f) {
                         currentOffset = flingOverscroll
                         offset.snapTo(flingOverscroll)
                     }
@@ -125,7 +128,7 @@ fun Modifier.bouncyScroll(
                     currentOffset = 0f
                     offset.animateTo(
                         targetValue = 0f,
-                        animationSpec = fastSpatialSpec
+                        animationSpec = calmSpringSpec
                     )
                 } else {
                     currentOffset = 0f

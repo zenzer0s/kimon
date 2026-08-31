@@ -28,12 +28,20 @@ object AppUsageHelper {
     private val IGNORED_PACKAGES = setOf(
         "android",
         "com.android.systemui",
+        "com.android.settings",
         "com.google.android.apps.nexuslauncher",
         "com.google.android.launcher",
+        "com.android.launcher3",
         "com.sec.android.app.launcher",
         "com.miui.home",
         "com.huawei.android.launcher",
         "com.oppo.launcher",
+        "com.oplus.launcher",
+        "com.oneplus.launcher",
+        "net.oneplus.launcher",
+        "com.coloros.launcher",
+        "com.google.android.inputmethod.latin",
+        "com.google.android.permissioncontroller",
         "com.zenzeros.kimon",
         "com.zenzeros.kimon.dev"
     )
@@ -99,17 +107,22 @@ object AppUsageHelper {
                         val start = openEvents.remove(pkg)
                         if (start != null && timestamp > start) {
                             val durationSec = (timestamp - start) / 1000
-                            if (durationSec >= 3) { // Filter out micro-transitions (< 3 seconds)
+                            if (durationSec >= 10) { // Filter out micro-transitions (< 10 seconds)
                                 val appName = getAppLabel(pm, pkg)
-                                resultEvents.add(
-                                    SleepAppUsageEvent(
-                                        packageName = pkg,
-                                        appName = appName,
-                                        startTimeEpochMs = start,
-                                        endTimeEpochMs = timestamp,
-                                        durationSeconds = durationSec
+                                if (!appName.equals("System Launcher", ignoreCase = true) &&
+                                    !appName.equals("android", ignoreCase = true) &&
+                                    !pkg.contains("launcher", ignoreCase = true)
+                                ) {
+                                    resultEvents.add(
+                                        SleepAppUsageEvent(
+                                            packageName = pkg,
+                                            appName = appName,
+                                            startTimeEpochMs = start,
+                                            endTimeEpochMs = timestamp,
+                                            durationSeconds = durationSec
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     }

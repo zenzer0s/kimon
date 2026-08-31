@@ -38,6 +38,9 @@ interface SleepSessionDao {
     @Query("SELECT * FROM sleep_sessions WHERE syncedToHealthConnect = 0")
     suspend fun getUnsyncedSessions(): List<SleepSessionEntity>
 
+    @Query("SELECT * FROM sleep_sessions WHERE (startTimeEpochMs BETWEEN :startTimeMs - 900000 AND :startTimeMs + 900000) OR (endTimeEpochMs BETWEEN :endTimeMs - 900000 AND :endTimeMs + 900000) LIMIT 1")
+    suspend fun findDuplicateOrOverlappingSession(startTimeMs: Long, endTimeMs: Long): SleepSessionEntity?
+
     @Query("SELECT AVG(durationMinutes) FROM sleep_sessions WHERE startTimeEpochMs >= :sinceEpochMs")
     fun getAverageDurationMinutesSince(sinceEpochMs: Long): Flow<Double?>
 

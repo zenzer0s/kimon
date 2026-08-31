@@ -53,8 +53,7 @@ android {
             )
         }
         debug {
-            applicationIdSuffix = ".dev"
-            versionNameSuffix = ".dev"
+            versionNameSuffix = "-debug"
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -106,6 +105,9 @@ dependencies {
     // Health Connect
     implementation(libs.androidx.health.connect)
 
+    // Google Play Services Location & Sleep API
+    implementation(libs.play.services.location)
+
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.profileinstaller)
     baselineProfile(project(":baselineprofile"))
@@ -118,10 +120,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-}
-
-tasks.register<Exec>("buildRustSleepCore") {
-    workingDir = file("${project.rootDir}/native/sleep_core")
-    commandLine("cargo", "ndk", "-t", "arm64-v8a", "-o", "${projectDir}/src/main/jniLibs", "build", "--release")
 }
 

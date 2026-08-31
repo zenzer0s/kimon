@@ -1,27 +1,40 @@
 package com.zenzeros.kimon.service.sleep
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.SleepSegmentRequest
 import com.zenzeros.kimon.KimonApplication
-import com.zenzeros.kimon.service.sleep.native.NativeSleepEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
 class SleepMonitorManager(private val context: Context) {
 
     companion object {
         private const val TAG = "SleepMonitorManager"
+        private const val SLEEP_REQUEST_CODE = 4040
     }
 
     fun hasPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACTIVITY_RECOGNITION
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    fun hasNotificationPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
@@ -32,37 +45,46 @@ class SleepMonitorManager(private val context: Context) {
         }
     }
 
-    fun isNativeEngineAvailable(): Boolean = NativeSleepEngine.isAvailable()
-
-    fun getNativeEngineVersion(): String = NativeSleepEngine.getVersion()
-
-    fun isMonitoringActive(): Boolean = CustomSleepService.isRunning
+    private fun getSleepPendingIntent(): PendingIntent {
+        val intent = Intent(context, SleepReceiver::class.java)
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        return PendingIntent.getBroadcast(context, SLEEP_REQUEST_CODE, intent, flags)
+    }
 
     fun startSleepMonitoring(onSuccess: () -> Unit = {}, onFailure: (Exception) -> Unit = {}) {
         val app = context.applicationContext as? KimonApplication
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                app?.userSettingsRepository?.setSleepMonitoringEnabled(true)
-                val isScheduled = app?.userSettingsRepository?.sleepScheduledMode?.first() ?: true
-
-                if (isScheduled) {
-                    Log.i(TAG, "⏰ [SleepMonitorManager] Scheduled Mode enabled. Arming bedtime alarm...")
-                    SleepAlarmScheduler.scheduleNextBedtimeAlarm(context, forceEnable = true)
-
-                    // Check if current time is already inside the bedtime window
-                    if (isCurrentlyInBedtimeWindow(app)) {
-                        Log.i(TAG, "🌙 [SleepMonitorManager] Current time is within bedtime window. Starting CustomSleepService immediately...")
-                        CustomSleepService.start(context)
-                    }
-                } else {
-                    Log.i(TAG, "🚀 [SleepMonitorManager] 24/7 Continuous Mode: Starting CustomSleepService...")
-                    CustomSleepService.start(context)
+                if (!hasPermission()) {
+                    val err = SecurityException("Missing ACTIVITY_RECOGNITION permission")
+                    Log.e(TAG, "[SleepMonitorManager] Cannot start Google Sleep API: $err")
+                    onFailure(err)
+                    return@launch
                 }
 
-                Log.i(TAG, "✅ [SleepMonitorManager] Sleep monitoring initiated. Native Engine: ${NativeSleepEngine.getVersion()}")
-                onSuccess()
+                Log.i(TAG, "[SleepMonitorManager] Registering Google Play Services Sleep API updates...")
+                val request = SleepSegmentRequest.getDefaultSleepSegmentRequest()
+                val pendingIntent = getSleepPendingIntent()
+                val client = ActivityRecognition.getClient(context)
+
+                client.requestSleepSegmentUpdates(pendingIntent, request)
+                    .addOnSuccessListener {
+                        Log.i(TAG, "[SleepMonitorManager] Google Play Services Sleep API successfully registered!")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            app?.userSettingsRepository?.setSleepMonitoringEnabled(true)
+                        }
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "[SleepMonitorManager] Failed to register Google Play Services Sleep API", e)
+                        onFailure(e)
+                    }
             } catch (e: Exception) {
-                Log.e(TAG, "❌ [SleepMonitorManager] Failed to start sleep monitoring", e)
+                Log.e(TAG, "[SleepMonitorManager] Error starting sleep monitoring", e)
                 onFailure(e)
             }
         }
@@ -72,25 +94,26 @@ class SleepMonitorManager(private val context: Context) {
         val app = context.applicationContext as? KimonApplication
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                Log.i(TAG, "🛑 [SleepMonitorManager] Stopping sleep monitoring and canceling alarms...")
-                app?.userSettingsRepository?.setSleepMonitoringEnabled(false)
-                SleepAlarmScheduler.cancelScheduledAlarms(context)
-                CustomSleepService.stop(context)
-                Log.i(TAG, "✅ [SleepMonitorManager] Sleep monitoring stopped successfully.")
-                onSuccess()
+                Log.i(TAG, "[SleepMonitorManager] Removing Google Play Services Sleep API updates...")
+                val pendingIntent = getSleepPendingIntent()
+                val client = ActivityRecognition.getClient(context)
+
+                client.removeSleepSegmentUpdates(pendingIntent)
+                    .addOnSuccessListener {
+                        Log.i(TAG, "[SleepMonitorManager] Google Sleep API updates successfully removed.")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            app?.userSettingsRepository?.setSleepMonitoringEnabled(false)
+                        }
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "[SleepMonitorManager] Error unregistering Google Sleep API", e)
+                        onFailure(e)
+                    }
             } catch (e: Exception) {
-                Log.e(TAG, "❌ [SleepMonitorManager] Error stopping sleep monitoring", e)
+                Log.e(TAG, "[SleepMonitorManager] Error stopping sleep monitoring", e)
                 onFailure(e)
             }
-        }
-    }
-
-    fun checkAndFinalizeMorningSession() {
-        if (CustomSleepService.isRunning) {
-            val intent = Intent(context, CustomSleepService::class.java).apply {
-                action = CustomSleepService.ACTION_FORCE_EVALUATE
-            }
-            context.startService(intent)
         }
     }
 
@@ -99,63 +122,16 @@ class SleepMonitorManager(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val isMonitoringEnabled = app.userSettingsRepository.sleepMonitoringEnabled.first()
-                val isScheduled = app.userSettingsRepository.sleepScheduledMode.first()
-
-                if (!isMonitoringEnabled) {
-                    Log.i(TAG, "💤 [Sync] Sleep monitoring disabled. Canceling alarms and stopping service.")
-                    SleepAlarmScheduler.cancelScheduledAlarms(context)
-                    CustomSleepService.stop(context)
-                    return@launch
-                }
-
-                if (isScheduled) {
-                    Log.i(TAG, "⏰ [Sync] Scheduled mode active. Re-arming bedtime alarm...")
-                    SleepAlarmScheduler.scheduleNextBedtimeAlarm(context)
-
-                    if (isCurrentlyInBedtimeWindow(app)) {
-                        if (!CustomSleepService.isRunning) {
-                            Log.i(TAG, "🌙 [Sync] Inside bedtime window. Starting CustomSleepService...")
-                            CustomSleepService.start(context)
-                        }
-                    } else {
-                        if (CustomSleepService.isRunning) {
-                            Log.i(TAG, "⏰ [Sync] Outside bedtime window. Stopping CustomSleepService...")
-                            CustomSleepService.stop(context)
-                        }
-                    }
-                } else {
-                    Log.i(TAG, "🚀 [Sync] Continuous mode active. Starting CustomSleepService 24/7...")
-                    SleepAlarmScheduler.cancelScheduledAlarms(context)
-                    if (!CustomSleepService.isRunning) {
-                        CustomSleepService.start(context)
-                    }
+                if (isMonitoringEnabled && hasPermission()) {
+                    Log.i(TAG, "[Sync] Re-syncing Google Sleep API registration...")
+                    startSleepMonitoring()
+                } else if (!isMonitoringEnabled) {
+                    stopSleepMonitoring()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error syncing sleep monitoring state", e)
             }
         }
     }
-
-    private suspend fun isCurrentlyInBedtimeWindow(app: KimonApplication?): Boolean {
-        if (app == null) return true
-        val bedtimeHour = app.userSettingsRepository.targetBedtimeHour.first()
-        val bedtimeMin = app.userSettingsRepository.targetBedtimeMinute.first()
-
-        val now = Calendar.getInstance()
-        val currentMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-
-        // Window begins 60 minutes before bedtime
-        var startMinutes = (bedtimeHour * 60 + bedtimeMin) - 60
-        if (startMinutes < 0) startMinutes += 1440
-
-        // Window ends 12 hours after bedtime (e.g. 10 PM -> 10 AM, covering overnight)
-        val endMinutes = (bedtimeHour * 60 + bedtimeMin + 720) % 1440
-
-        return if (startMinutes <= endMinutes) {
-            currentMinutes in startMinutes..endMinutes
-        } else {
-            // Window crosses midnight (e.g. 9:00 PM (1260) to 10:00 AM (600))
-            currentMinutes >= startMinutes || currentMinutes <= endMinutes
-        }
-    }
 }
+

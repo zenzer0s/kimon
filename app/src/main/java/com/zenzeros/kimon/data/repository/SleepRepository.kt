@@ -30,6 +30,13 @@ class SleepRepository(
     fun getTotalSessionsCount(): Flow<Int> = sleepSessionDao.getTotalSessionsCount()
 
     suspend fun recordSession(session: SleepSessionEntity, sendNotification: Boolean = true): Long {
+        // Prevent duplicate insertions
+        val duplicate = sleepSessionDao.findDuplicateOrOverlappingSession(session.startTimeEpochMs, session.endTimeEpochMs)
+        if (duplicate != null) {
+            android.util.Log.w("SleepRepository", "[SleepRepository] Duplicate sleep session detected (ID=${duplicate.id}), skipping insertion.")
+            return duplicate.id
+        }
+
         val id = sleepSessionDao.insertSession(session)
         // Automatically attempt Health Connect sync if available and permitted
         if (healthConnectManager.isAvailable() && healthConnectManager.hasPermissions()) {
@@ -113,7 +120,7 @@ class SleepRepository(
                     durationMinutes = duration,
                     qualityScore = qualityScores[i],
                     status = 0,
-                    source = if (i % 2 == 0) "NATIVE_RUST_ENGINE" else "HEALTH_CONNECT",
+                    source = if (i % 2 == 0) "GOOGLE_SLEEP_API" else "HEALTH_CONNECT",
                     dateString = dateFormat.format(Date(endTime)),
                     syncedToHealthConnect = true,
                     appUsageJson = sampleAppUsage
