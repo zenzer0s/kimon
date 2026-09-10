@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -93,6 +94,28 @@ class StepCounterService : Service() {
                 notificationManager?.notify(NOTIFICATION_ID, buildNotification(steps, goal))
             }
         }
+
+        // The step total is derived from the calendar day. Without a walking sensor event
+        // crossing midnight, the persisted "today" count and this notification keep showing
+        // yesterday's number until the user next moves. Re-read on each day boundary.
+        serviceScope.launch {
+            while (true) {
+                delay(millisUntilNextMidnight())
+                kimonApp.stepCounterManager.loadSavedTodaySteps()
+            }
+        }
+    }
+
+    private fun millisUntilNextMidnight(): Long {
+        val now = java.util.Calendar.getInstance()
+        val next = (now.clone() as java.util.Calendar).apply {
+            add(java.util.Calendar.DAY_OF_YEAR, 1)
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        return (next.timeInMillis - now.timeInMillis).coerceAtLeast(1_000L)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

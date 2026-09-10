@@ -343,7 +343,9 @@ class PomodoroViewModel(
                 if (newRemaining <= 0) {
                     break
                 }
-                delay(200L)
+                // The displayed value only changes on a second boundary; sleep to the next
+                // one instead of polling 5x/second.
+                delay((1000L - System.currentTimeMillis() % 1000L).coerceAtLeast(1L))
             }
 
             if (_uiState.value.remainingSeconds <= 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {

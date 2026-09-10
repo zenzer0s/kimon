@@ -57,27 +57,22 @@ class PomodoroTimerService : Service() {
         )
 
         startForeground(NOTIFICATION_ID, buildNotification(_timerState.value))
+        scheduleCompletion()
+    }
 
+    /**
+     * The notification renders its own live countdown via [NotificationCompat.Builder.setUsesChronometer],
+     * so the service no longer needs a per-second loop to re-post it. A single suspension until the
+     * target end time is all that's required; [PomodoroViewModel.syncWithWallClock] re-aligns on resume.
+     */
+    private fun scheduleCompletion() {
         countdownJob?.cancel()
         countdownJob = serviceScope.launch {
-            while (_timerState.value.isRunning) {
-                val now = System.currentTimeMillis()
-                val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
-                if (_timerState.value.remainingSeconds != newRemaining) {
-                    _timerState.value = _timerState.value.copy(remainingSeconds = newRemaining)
-                    notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
-                }
-                if (newRemaining <= 0) {
-                    break
-                }
-                delay(500L)
-            }
-
-            if (_timerState.value.remainingSeconds == 0) {
-                _timerState.value = _timerState.value.copy(isRunning = false)
-                notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value, isCompleted = true))
-                stopSelf()
-            }
+            val remainingMs = (targetEndTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)
+            delay(remainingMs)
+            _timerState.value = _timerState.value.copy(remainingSeconds = 0, isRunning = false)
+            notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value, isCompleted = true))
+            stopSelf()
         }
     }
 
@@ -98,26 +93,8 @@ class PomodoroTimerService : Service() {
         if (_timerState.value.remainingSeconds > 0) {
             targetEndTimeMs = System.currentTimeMillis() + (_timerState.value.remainingSeconds * 1000L)
             _timerState.value = _timerState.value.copy(isRunning = true)
-            countdownJob?.cancel()
-            countdownJob = serviceScope.launch {
-                while (_timerState.value.isRunning) {
-                    val now = System.currentTimeMillis()
-                    val newRemaining = ((targetEndTimeMs - now + 999L) / 1000L).coerceAtLeast(0L).toInt()
-                    if (_timerState.value.remainingSeconds != newRemaining) {
-                        _timerState.value = _timerState.value.copy(remainingSeconds = newRemaining)
-                        notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
-                    }
-                    if (newRemaining <= 0) {
-                        break
-                    }
-                    delay(500L)
-                }
-                if (_timerState.value.remainingSeconds == 0) {
-                    _timerState.value = _timerState.value.copy(isRunning = false)
-                    notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value, isCompleted = true))
-                    stopSelf()
-                }
-            }
+            notificationManager.notify(NOTIFICATION_ID, buildNotification(_timerState.value))
+            scheduleCompletion()
         }
     }
 
@@ -137,24 +114,34 @@ class PomodoroTimerService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val minutes = state.remainingSeconds / 60
-        val seconds = state.remainingSeconds % 60
-        val timeString = String.format("%02d:%02d", minutes, seconds)
-
-        val contentText = if (isCompleted) {
-            getString(R.string.notification_session_completed, state.modeLabel)
-        } else {
-            getString(R.string.notification_time_remaining, state.modeLabel, timeString)
-        }
-
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_timer_title))
-            .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_focus)
             .setContentIntent(contentIntent)
             .setOngoing(state.isRunning)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+
+        if (state.isRunning && !isCompleted) {
+            // Let the system tick the countdown down to zero. No per-second notify() needed.
+            builder.setContentText(state.modeLabel)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+                .setWhen(targetEndTimeMs)
+                .setShowWhen(true)
+        } else {
+            val minutes = state.remainingSeconds / 60
+            val seconds = state.remainingSeconds % 60
+            val timeString = String.format("%02d:%02d", minutes, seconds)
+            val contentText = if (isCompleted) {
+                getString(R.string.notification_session_completed, state.modeLabel)
+            } else {
+                getString(R.string.notification_time_remaining, state.modeLabel, timeString)
+            }
+            builder.setContentText(contentText)
+                .setUsesChronometer(false)
+                .setShowWhen(false)
+        }
 
         return builder.build()
     }
