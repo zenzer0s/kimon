@@ -439,11 +439,16 @@ class PomodoroViewModel(
 
         // Auto switch mode: FOCUS -> SHORT_BREAK (or LONG_BREAK)
         viewModelScope.launch {
-            val sessionsBeforeLong = userSettingsRepository.sessionsBeforeLongBreak.first()
+            val sessionsBeforeLong = userSettingsRepository.sessionsBeforeLongBreak.first().coerceAtLeast(1)
+            val longBreakEnabled = userSettingsRepository.longBreakEnabled.first()
             val nextMode = when (currentState.currentMode) {
                 PomodoroMode.FOCUS -> {
                     val nextSessionIndex = currentState.currentSessionIndex + 1
-                    if (nextSessionIndex % sessionsBeforeLong == 0) PomodoroMode.LONG_BREAK else PomodoroMode.SHORT_BREAK
+                    if (longBreakEnabled && nextSessionIndex % sessionsBeforeLong == 0) {
+                        PomodoroMode.LONG_BREAK
+                    } else {
+                        PomodoroMode.SHORT_BREAK
+                    }
                 }
                 PomodoroMode.SHORT_BREAK, PomodoroMode.LONG_BREAK -> PomodoroMode.FOCUS
             }

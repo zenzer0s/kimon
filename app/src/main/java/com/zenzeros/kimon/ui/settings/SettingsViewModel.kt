@@ -51,6 +51,7 @@ data class SettingsUiState(
     val shortBreakMinutes: Int = 5,
     val longBreakMinutes: Int = 15,
     val sessionsBeforeLongBreak: Int = 4,
+    val longBreakEnabled: Boolean = true,
     val dailyGoalMinutes: Int = 120,
     val autoStartBreaks: Boolean = false,
     val autoStartPomodoros: Boolean = false,
@@ -104,7 +105,8 @@ class SettingsViewModel(
         val keepScreen: Boolean,
         val dnd: Boolean,
         val clockStyle: String,
-        val dialTick: Boolean
+        val dialTick: Boolean,
+        val longBreakEnabled: Boolean
     )
 
     private data class SoundSettingsGroup(
@@ -148,10 +150,11 @@ class SettingsViewModel(
             userSettingsRepository.dndEnabled,
             combine(
                 userSettingsRepository.clockStyle,
-                userSettingsRepository.dialTickAnimation
-            ) { clockStyle, dialTick -> Pair(clockStyle, dialTick) }
-        ) { aBreaks, aPomodoros, keepScreen, dnd, (clockStyle, dialTick) ->
-            AutomationSettingsGroup(aBreaks, aPomodoros, keepScreen, dnd, clockStyle, dialTick)
+                userSettingsRepository.dialTickAnimation,
+                userSettingsRepository.longBreakEnabled
+            ) { clockStyle, dialTick, longBreak -> Triple(clockStyle, dialTick, longBreak) }
+        ) { aBreaks, aPomodoros, keepScreen, dnd, (clockStyle, dialTick, longBreak) ->
+            AutomationSettingsGroup(aBreaks, aPomodoros, keepScreen, dnd, clockStyle, dialTick, longBreak)
         },
         combine(
             userSettingsRepository.soundEnabled,
@@ -198,6 +201,7 @@ class SettingsViewModel(
             shortBreakMinutes = timer.sBreak,
             longBreakMinutes = timer.lBreak,
             sessionsBeforeLongBreak = timer.sessions,
+            longBreakEnabled = auto.longBreakEnabled,
             dailyGoalMinutes = timer.goal,
             autoStartBreaks = auto.aBreaks,
             autoStartPomodoros = auto.aPomodoros,
@@ -262,6 +266,10 @@ class SettingsViewModel(
 
     fun setSessionsBeforeLongBreak(count: Int) = viewModelScope.launch {
         userSettingsRepository.setSessionsBeforeLongBreak(count.coerceIn(1, 12))
+    }
+
+    fun toggleLongBreakEnabled(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setLongBreakEnabled(enabled)
     }
 
     fun setDailyGoal(minutes: Int) = viewModelScope.launch {

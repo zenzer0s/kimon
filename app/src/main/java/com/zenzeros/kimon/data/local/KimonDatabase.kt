@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [FocusSessionEntity::class, TagEntity::class, TaskEntity::class, SleepSessionEntity::class],
     version = 5,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class KimonDatabase : RoomDatabase() {
 
@@ -40,6 +40,9 @@ abstract class KimonDatabase : RoomDatabase() {
                     KimonDatabase::class.java,
                     "kimon_database.db"
                 )
+                    .addMigrations(*KimonMigrations.ALL)
+                    // Safety net only. Real migrations belong in KimonMigrations; adding a
+                    // Migration(5,6) etc. there makes Room use it instead of wiping data.
                     .fallbackToDestructiveMigration()
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
