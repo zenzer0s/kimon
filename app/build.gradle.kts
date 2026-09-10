@@ -67,6 +67,12 @@ android {
         compose = true
     }
 
+    lint {
+        // The app uses ComponentActivity + Compose with no Fragments; this check
+        // spuriously flags registerForActivityResult for lacking an androidx.fragment dep.
+        disable += "InvalidFragmentVersionForActivityResult"
+    }
+
     buildToolsVersion = "36.1.0"
 }
 
