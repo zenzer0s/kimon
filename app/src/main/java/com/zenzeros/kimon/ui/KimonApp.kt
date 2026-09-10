@@ -6,6 +6,9 @@ import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -54,7 +57,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -318,11 +324,25 @@ fun KimonApp(
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
+                    val navHaptic = LocalHapticFeedback.current
                     NavigationBar {
                         enabledTabs.forEachIndexed { index, tab ->
+                            // Per-tab bounce: quick squish then springy pop-back on tap
+                            val iconScale = remember(tab) { Animatable(1f) }
                             NavigationBarItem(
                                 selected = mainTabPagerState.currentPage == index,
                                 onClick = {
+                                    navHaptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    coroutineScope.launch {
+                                        iconScale.snapTo(0.8f)
+                                        iconScale.animateTo(
+                                            targetValue = 1f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                stiffness = Spring.StiffnessMediumLow
+                                            )
+                                        )
+                                    }
                                     if (mainTabPagerState.currentPage != index) {
                                         coroutineScope.launch {
                                             mainTabPagerState.scrollToPage(index)
@@ -333,7 +353,12 @@ fun KimonApp(
                                     Icon(
                                         painter = painterResource(tab.iconRes),
                                         contentDescription = stringResource(tab.titleRes),
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .graphicsLayer {
+                                                scaleX = iconScale.value
+                                                scaleY = iconScale.value
+                                            }
                                     )
                                 },
                                 label = {
