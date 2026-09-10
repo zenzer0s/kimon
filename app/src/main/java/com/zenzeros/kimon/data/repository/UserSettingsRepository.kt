@@ -57,7 +57,10 @@ class UserSettingsRepository(private val context: Context) {
         val TARGET_BEDTIME_MINUTE = intPreferencesKey("target_bedtime_minute")
         val TARGET_WAKE_HOUR = intPreferencesKey("target_wake_hour")
         val TARGET_WAKE_MINUTE = intPreferencesKey("target_wake_minute")
-        val APP_USAGE_ACCESS_ENABLED = booleanPreferencesKey("app_usage_access_enabled")
+
+        // Step Tracker
+        val STEP_COUNTER_ENABLED = booleanPreferencesKey("step_counter_enabled")
+        val DAILY_STEP_GOAL = intPreferencesKey("daily_step_goal")
     }
 
     // --- Flows ---
@@ -196,11 +199,23 @@ class UserSettingsRepository(private val context: Context) {
         prefs[PreferencesKeys.TARGET_WAKE_MINUTE] ?: 0
     }
 
-    val appUsageAccessEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
-        prefs[PreferencesKeys.APP_USAGE_ACCESS_ENABLED] ?: true
+    val stepCounterEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.STEP_COUNTER_ENABLED] ?: true
+    }
+
+    val dailyStepGoal: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.DAILY_STEP_GOAL] ?: 8000
     }
 
     // --- Setters ---
+    suspend fun setStepCounterEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.STEP_COUNTER_ENABLED] = enabled }
+    }
+
+    suspend fun setDailyStepGoal(goal: Int) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.DAILY_STEP_GOAL] = goal }
+    }
+
     suspend fun setSleepGoalMinutes(minutes: Int) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.SLEEP_GOAL_MINUTES] = minutes }
     }
@@ -221,10 +236,6 @@ class UserSettingsRepository(private val context: Context) {
             prefs[PreferencesKeys.TARGET_WAKE_HOUR] = hour
             prefs[PreferencesKeys.TARGET_WAKE_MINUTE] = minute
         }
-    }
-
-    suspend fun setAppUsageAccessEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[PreferencesKeys.APP_USAGE_ACCESS_ENABLED] = enabled }
     }
 
     suspend fun setWorkDurationMinutes(minutes: Int) {

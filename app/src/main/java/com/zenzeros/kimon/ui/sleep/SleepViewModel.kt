@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.zenzeros.kimon.data.local.entity.SleepSessionEntity
 import com.zenzeros.kimon.data.repository.SleepRepository
 import com.zenzeros.kimon.data.repository.UserSettingsRepository
+import com.zenzeros.kimon.service.step.StepCounterManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,28 +31,92 @@ data class SleepUiState(
     val isHealthConnectSyncEnabled: Boolean = false,
     val hasPermission: Boolean = false,
     val latestSession: SleepSessionEntity? = null,
+    val displayedSession: SleepSessionEntity? = null,
+    val displayedDurationMinutes: Long = 0,
+    val displayedStartTimeEpochMs: Long? = null,
+    val displayedEndTimeEpochMs: Long? = null,
+    val isDisplayedSessionFromLastNight: Boolean = false,
+    val selectedDayEpochMs: Long? = null,
+    val selectedDayLabel: String? = null,
     val recentSessions: List<SleepSessionEntity> = emptyList(),
     val weeklyDays: List<DaySleepStat> = emptyList(),
     val weeklyAverageMinutes: Long = 0,
     val sleepScore: Int = 0,
     val sleepGoalMinutes: Int = 480,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val todaySteps: Int = 0,
+    val stepGoal: Int = 8000,
+    val isStepSensorAvailable: Boolean = true,
+    val hasStepPermission: Boolean = false,
+    val isStepCounterEnabled: Boolean = true
+)
+
+private data class SleepSettingsState(
+    val goalMinutes: Int,
+    val stepGoal: Int,
+    val isStepCounterEnabled: Boolean,
+    val loading: Boolean,
+    val selectedDay: Long?
+)
+
+private data class StepTrackingState(
+    val steps: Int,
+    val hasPermission: Boolean
 )
 
 class SleepViewModel(
     private val sleepRepository: SleepRepository,
-    private val userSettingsRepository: UserSettingsRepository
+    private val userSettingsRepository: UserSettingsRepository,
+    private val stepCounterManager: StepCounterManager
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
+    private val _selectedDayEpochMs = MutableStateFlow<Long?>(null)
+    private val _hasStepPermission = MutableStateFlow(stepCounterManager.hasPermission())
+
+    init {
+        viewModelScope.launch {
+            userSettingsRepository.stepCounterEnabled.collect { enabled ->
+                if (enabled && stepCounterManager.hasPermission()) {
+                    com.zenzeros.kimon.service.step.StepCounterService.start(stepCounterManager.context)
+                } else if (!enabled) {
+                    com.zenzeros.kimon.service.step.StepCounterService.stop(stepCounterManager.context)
+                }
+            }
+        }
+    }
+
+    fun onStepPermissionResult(granted: Boolean) {
+        _hasStepPermission.value = granted
+        if (granted) {
+            com.zenzeros.kimon.service.step.StepCounterService.start(stepCounterManager.context)
+        }
+    }
 
     val uiState: StateFlow<SleepUiState> = combine(
-        sleepRepository.getAllSessions(),
-        userSettingsRepository.sleepMonitoringEnabled,
-        userSettingsRepository.healthConnectSyncEnabled,
-        userSettingsRepository.sleepGoalMinutes,
-        _isLoading
-    ) { sessions, isMonitoring, isHealthSync, goalMinutes, loading ->
+        combine(
+            sleepRepository.getAllSessions(),
+            userSettingsRepository.sleepMonitoringEnabled,
+            userSettingsRepository.healthConnectSyncEnabled
+        ) { sessions, isMonitoring, isHealthSync ->
+            Triple(sessions, isMonitoring, isHealthSync)
+        },
+        combine(
+            userSettingsRepository.sleepGoalMinutes,
+            userSettingsRepository.dailyStepGoal,
+            userSettingsRepository.stepCounterEnabled,
+            _isLoading,
+            _selectedDayEpochMs
+        ) { goalMinutes, stepGoal, stepEnabled, loading, selectedDay ->
+            SleepSettingsState(goalMinutes, stepGoal, stepEnabled, loading, selectedDay)
+        },
+        combine(
+            stepCounterManager.todaySteps,
+            _hasStepPermission
+        ) { steps, hasPerm ->
+            StepTrackingState(steps, hasPerm)
+        }
+    ) { (sessions, isMonitoring, isHealthSync), settings, stepState ->
         val latest = sessions.firstOrNull()
         val recent = sessions.take(15)
 
@@ -64,9 +129,54 @@ class SleepViewModel(
             latest?.durationMinutes ?: 0
         }
 
+        val todayCal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val todayStartOfDay = todayCal.timeInMillis
+        val todayEndOfDay = todayStartOfDay + 86400000L
+
+        // Find session(s) for selected day or for last night (today)
+        val daySessions: List<SleepSessionEntity>
+        val isFromLastNight: Boolean
+        val selectedDayLabel: String?
+
+        if (settings.selectedDay != null) {
+            val endOfDay = settings.selectedDay + 86400000L
+            daySessions = sessions.filter {
+                (it.endTimeEpochMs in (settings.selectedDay + 1)..endOfDay) ||
+                (it.startTimeEpochMs in settings.selectedDay until endOfDay)
+            }
+            val cal = Calendar.getInstance().apply { timeInMillis = settings.selectedDay }
+            val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
+            val numFormat = SimpleDateFormat("d", Locale.getDefault())
+            selectedDayLabel = "${dayFormat.format(cal.time).uppercase()}, ${numFormat.format(cal.time)}"
+            isFromLastNight = (settings.selectedDay == todayStartOfDay)
+        } else {
+            // Default view: Check if there is a session for last night / today
+            daySessions = sessions.filter {
+                (it.endTimeEpochMs in (todayStartOfDay + 1)..todayEndOfDay) ||
+                (it.startTimeEpochMs in todayStartOfDay until todayEndOfDay)
+            }
+            selectedDayLabel = null
+            isFromLastNight = daySessions.isNotEmpty()
+        }
+
+        val displayedSession = if (daySessions.isNotEmpty()) {
+            daySessions.maxByOrNull { it.durationMinutes } ?: daySessions.first()
+        } else null
+
+        val displayedDurationMinutes = daySessions.sumOf { it.durationMinutes }
+        val displayedStartTimeEpochMs = daySessions.minOfOrNull { it.startTimeEpochMs }
+        val displayedEndTimeEpochMs = daySessions.maxOfOrNull { it.endTimeEpochMs }
+
         // Calculate sleep score (target based on goalMinutes)
-        val score = latest?.qualityScore ?: if (avgMins > 0) {
-            val ratio = (avgMins.toFloat() / goalMinutes.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
+        val score = if (daySessions.isNotEmpty()) {
+            daySessions.map { it.qualityScore }.average().toInt()
+        } else if (avgMins > 0) {
+            val ratio = (avgMins.toFloat() / settings.goalMinutes.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
             (ratio * 100).toInt().coerceIn(40, 98)
         } else 0
 
@@ -75,12 +185,24 @@ class SleepViewModel(
             isHealthConnectSyncEnabled = isHealthSync,
             hasPermission = sleepRepository.sleepMonitorManager.hasPermission(),
             latestSession = latest,
+            displayedSession = displayedSession,
+            displayedDurationMinutes = displayedDurationMinutes,
+            displayedStartTimeEpochMs = displayedStartTimeEpochMs,
+            displayedEndTimeEpochMs = displayedEndTimeEpochMs,
+            isDisplayedSessionFromLastNight = isFromLastNight,
+            selectedDayEpochMs = settings.selectedDay,
+            selectedDayLabel = selectedDayLabel,
             recentSessions = recent,
             weeklyDays = weeklyBreakdown,
             weeklyAverageMinutes = avgMins,
             sleepScore = score,
-            sleepGoalMinutes = goalMinutes,
-            isLoading = loading
+            sleepGoalMinutes = settings.goalMinutes,
+            isLoading = settings.loading,
+            todaySteps = stepState.steps,
+            stepGoal = settings.stepGoal,
+            isStepSensorAvailable = stepCounterManager.isSensorAvailable(),
+            hasStepPermission = stepState.hasPermission,
+            isStepCounterEnabled = settings.isStepCounterEnabled
         )
     }.stateIn(
         scope = viewModelScope,
@@ -100,17 +222,18 @@ class SleepViewModel(
         for (i in 6 downTo 0) {
             val dayCal = Calendar.getInstance().apply {
                 add(Calendar.DAY_OF_YEAR, -i)
-            }
-            val startOfDay = dayCal.apply {
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-
+            }
+            val startOfDay = dayCal.timeInMillis
             val endOfDay = startOfDay + 86400000L
 
-            val daySessions = sessions.filter { it.startTimeEpochMs in startOfDay until endOfDay }
+            val daySessions = sessions.filter {
+                (it.endTimeEpochMs in (startOfDay + 1)..endOfDay) ||
+                (it.startTimeEpochMs in startOfDay until endOfDay)
+            }
             val dayDuration = daySessions.sumOf { it.durationMinutes }
 
             val isToday = (dayCal.get(Calendar.DAY_OF_YEAR) == todayDayOfYear && dayCal.get(Calendar.YEAR) == todayYear)
@@ -126,6 +249,61 @@ class SleepViewModel(
             )
         }
         return list
+    }
+
+    fun selectDay(dateEpochMs: Long?) {
+        if (_selectedDayEpochMs.value == dateEpochMs) {
+            _selectedDayEpochMs.value = null // Toggle off to default/latest
+        } else {
+            _selectedDayEpochMs.value = dateEpochMs
+        }
+    }
+
+    fun previousDay() {
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val current = _selectedDayEpochMs.value ?: todayStart
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = current
+            add(Calendar.DAY_OF_YEAR, -1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        _selectedDayEpochMs.value = cal.timeInMillis
+    }
+
+    fun nextDay() {
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val current = _selectedDayEpochMs.value ?: todayStart
+        if (current >= todayStart) {
+            return
+        }
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = current
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (cal.timeInMillis >= todayStart) {
+            _selectedDayEpochMs.value = null
+        } else {
+            _selectedDayEpochMs.value = cal.timeInMillis
+        }
     }
 
     fun addManualSession(startMs: Long, endMs: Long, notes: String? = null) = viewModelScope.launch {
@@ -192,13 +370,15 @@ class SleepViewModel(
 
     class Factory(
         private val sleepRepository: SleepRepository,
-        private val userSettingsRepository: UserSettingsRepository
+        private val userSettingsRepository: UserSettingsRepository,
+        private val stepCounterManager: StepCounterManager
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return SleepViewModel(
                 sleepRepository = sleepRepository,
-                userSettingsRepository = userSettingsRepository
+                userSettingsRepository = userSettingsRepository,
+                stepCounterManager = stepCounterManager
             ) as T
         }
     }

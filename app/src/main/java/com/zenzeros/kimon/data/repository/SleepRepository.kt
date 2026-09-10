@@ -29,6 +29,10 @@ class SleepRepository(
 
     fun getTotalSessionsCount(): Flow<Int> = sleepSessionDao.getTotalSessionsCount()
 
+    suspend fun cleanDuplicates() {
+        sleepSessionDao.removeDuplicateSessions()
+    }
+
     suspend fun recordSession(session: SleepSessionEntity, sendNotification: Boolean = true): Long {
         // Prevent duplicate insertions
         val duplicate = sleepSessionDao.findDuplicateOrOverlappingSession(session.startTimeEpochMs, session.endTimeEpochMs)
@@ -38,6 +42,12 @@ class SleepRepository(
         }
 
         val id = sleepSessionDao.insertSession(session)
+        if (id == -1L) {
+            // Already existed due to unique constraint
+            val existing = sleepSessionDao.findDuplicateOrOverlappingSession(session.startTimeEpochMs, session.endTimeEpochMs)
+            return existing?.id ?: -1L
+        }
+
         // Automatically attempt Health Connect sync if available and permitted
         if (healthConnectManager.isAvailable() && healthConnectManager.hasPermissions()) {
             val synced = healthConnectManager.writeSleepSession(session.copy(id = id))
@@ -46,7 +56,10 @@ class SleepRepository(
             }
         }
         com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
-        if (sendNotification) {
+
+        // Only send push notification if session actually ended recently (within the last 2 hours)
+        val isRecent = (System.currentTimeMillis() - session.endTimeEpochMs) in 0..(2 * 3600 * 1000L)
+        if (sendNotification && isRecent) {
             com.zenzeros.kimon.service.sleep.SleepNotificationHelper.sendSleepSummaryNotification(context, session.copy(id = id))
         }
         return id
@@ -109,10 +122,6 @@ class SleepRepository(
             val duration = durations[i]
             val endTime = startTime + (duration * 60 * 1000)
 
-            val sampleAppUsage = if (i == 0 || i == 3) {
-                """[{"package_name":"com.whatsapp","app_name":"WhatsApp","start_time_ms":${startTime + 180 * 60000},"end_time_ms":${startTime + 186 * 60000},"duration_seconds":360}]"""
-            } else null
-
             sampleList.add(
                 SleepSessionEntity(
                     startTimeEpochMs = startTime,
@@ -122,8 +131,7 @@ class SleepRepository(
                     status = 0,
                     source = if (i % 2 == 0) "GOOGLE_SLEEP_API" else "HEALTH_CONNECT",
                     dateString = dateFormat.format(Date(endTime)),
-                    syncedToHealthConnect = true,
-                    appUsageJson = sampleAppUsage
+                    syncedToHealthConnect = true
                 )
             )
         }

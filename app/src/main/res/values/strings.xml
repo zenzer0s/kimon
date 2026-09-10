@@ -197,16 +197,14 @@
     <string name="title_sleep">Sleep</string>
     <string name="settings_section_sleep">Sleep Tracking</string>
     <string name="settings_sleep_desc">Automatic sleep tracking, sleep stages, goals &amp; sync</string>
-    <string name="settings_sleep_master_title">Automatic Sleep Tracking</string>
+    <string name="settings_sleep_master_title">Sleep Tracking</string>
     <string name="settings_sleep_master_desc">Track sleep duration, stages, and wake times automatically</string>
     <string name="settings_sleep_disabled_hint">Turn on sleep tracking to configure sleep targets and sync.</string>
     <string name="settings_section_sleep_goal">Sleep Target</string>
     <string name="settings_sleep_goal">Daily Sleep Goal</string>
     <string name="settings_sleep_goal_desc">Target duration for optimal rest and recovery</string>
-    <string name="settings_section_sleep_tracking_sync">Sync &amp; Phone Tracking</string>
-    <string name="settings_section_sleep_tracking_sync_desc">Connected health services and phone usage</string>
-    <string name="settings_app_usage_access">Pre-Bed App Usage</string>
-    <string name="settings_app_usage_access_desc">Log screen activity before sleep</string>
+    <string name="settings_section_sleep_tracking_sync">Sync</string>
+    <string name="settings_section_sleep_tracking_sync_desc">Connected health services</string>
     <string name="settings_health_connect_sync">Health Connect Sync</string>
     <string name="settings_health_connect_sync_desc">Sync with Google Health Connect</string>
     <string name="settings_sync_now">Sync Data Now</string>
@@ -214,8 +212,6 @@
     <string name="settings_sync_success">Synced with Health Connect</string>
     <string name="settings_sleep_info_title">On-Device &amp; Private</string>
     <string name="settings_sleep_info_desc">Sleep is automatically detected on-device using Google\'s low-power ML models with zero battery drain and complete privacy.</string>
-    <string name="sleep_mid_sleep_apps">Mid-Sleep App Usage</string>
-    <string name="sleep_mid_sleep_apps_desc">Apps used during wakefulness in this sleep session</string>
     <string name="sleep_score">Sleep Score</string>
     <string name="sleep_duration">Time Asleep</string>
     <string name="sleep_bedtime">Bedtime</string>
@@ -253,4 +249,22 @@
     <string name="widget_sleep_desc">Glance at last night\'s sleep duration, quality score, and goal progress</string>
     <string name="widget_heatmap_title">Focus Heatmap</string>
     <string name="widget_heatmap_desc">16-week visual activity heatmap and streak tracker</string>
+
+    <!-- Step Counter -->
+    <string name="title_step_counter">Daily Steps</string>
+    <string name="label_steps">Steps</string>
+    <string name="label_distance">Distance</string>
+    <string name="label_calories">Calories</string>
+    <string name="step_permission_prompt">Physical activity permission needed to track steps</string>
+    <string name="action_enable_steps">Enable Step Tracker</string>
+    <string name="step_sensor_unavailable">Step sensor not available on this device</string>
+    <string name="settings_section_step">Step Tracking</string>
+    <string name="settings_section_step_goal">Step Target</string>
+    <string name="settings_step_goal">Daily Step Goal</string>
+    <string name="settings_step_goal_desc">Target steps for daily activity and movement</string>
+    <string name="settings_section_step_sensor">Sensor &amp; Hardware</string>
+    <string name="settings_step_sensor_title">Hardware Step Sensor</string>
+    <string name="settings_step_sensor_desc">Dedicated low-power pedometer chip</string>
+    <string name="settings_step_info_title">On-Device &amp; Private</string>
+    <string name="settings_step_info_desc">Steps are detected entirely on-device using your phone\'s dedicated low-power pedometer hardware sensor with zero battery drain, zero network usage, and complete privacy.</string>
 </resources>
