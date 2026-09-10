@@ -32,5 +32,8 @@ sealed interface KimonNavKey : NavKey {
     data object SleepSettings : KimonNavKey
 
     @Serializable
+    data object StepSettings : KimonNavKey
+
+    @Serializable
     data object BackupSettings : KimonNavKey
 }

@@ -8,13 +8,10 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.data.local.entity.SleepSessionEntity
-import com.zenzeros.kimon.service.sleep.usage.AppUsageHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -23,7 +20,6 @@ class SleepReceiver : BroadcastReceiver() {
 
     companion object {
         const val TAG = "SleepReceiver"
-        private val json = Json { ignoreUnknownKeys = true }
     }
 
     override fun onReceive(context: Context, intent: Intent?) {
@@ -76,18 +72,6 @@ class SleepReceiver : BroadcastReceiver() {
                         val statusPenalty = if (status == SleepSegmentEvent.STATUS_MISSING_DATA) 10 else 0
                         val finalScore = (baseScore - statusPenalty).coerceIn(35, 100)
 
-                        // Query App Usage during the sleep interval if enabled
-                        val isAppUsageEnabled = appContext.userSettingsRepository.appUsageAccessEnabled.first()
-                        val appUsageEvents = if (isAppUsageEnabled && AppUsageHelper.hasUsageStatsPermission(context)) {
-                            AppUsageHelper.getAppUsageDuringInterval(context, startTime, endTime)
-                        } else {
-                            emptyList()
-                        }
-
-                        val appUsageJsonString = if (appUsageEvents.isNotEmpty()) {
-                            json.encodeToString(appUsageEvents)
-                        } else null
-
                         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         val session = SleepSessionEntity(
                             startTimeEpochMs = startTime,
@@ -97,8 +81,7 @@ class SleepReceiver : BroadcastReceiver() {
                             status = status,
                             source = "GOOGLE_SLEEP_API",
                             dateString = dateFormat.format(Date(endTime)),
-                            notes = if (status == SleepSegmentEvent.STATUS_MISSING_DATA) "Google Sleep API • Missing Data" else "Google Sleep API",
-                            appUsageJson = appUsageJsonString
+                            notes = if (status == SleepSegmentEvent.STATUS_MISSING_DATA) "Google Sleep API • Missing Data" else "Google Sleep API"
                         )
 
                         val id = appContext.sleepRepository.recordSession(session, sendNotification = true)
@@ -121,10 +104,15 @@ class SleepReceiver : BroadcastReceiver() {
                 when (intent.action) {
                     Intent.ACTION_BOOT_COMPLETED,
                     Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                        val isEnabled = appContext.userSettingsRepository.sleepMonitoringEnabled.first()
-                        if (isEnabled) {
+                        val isSleepEnabled = appContext.userSettingsRepository.sleepMonitoringEnabled.first()
+                        if (isSleepEnabled) {
                             Log.i(TAG, "[SleepReceiver] Re-registering Google Sleep API updates after boot/update...")
                             appContext.sleepMonitorManager.startSleepMonitoring()
+                        }
+                        val isStepEnabled = appContext.userSettingsRepository.stepCounterEnabled.first()
+                        if (isStepEnabled && appContext.stepCounterManager.hasPermission()) {
+                            Log.i(TAG, "[SleepReceiver] Restarting StepCounterService after boot/update...")
+                            com.zenzeros.kimon.service.step.StepCounterService.start(context)
                         }
                     }
                 }

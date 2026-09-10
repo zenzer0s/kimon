@@ -2,22 +2,10 @@
 
 package com.zenzeros.kimon.ui.settings.screens
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,22 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,40 +41,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
-import androidx.health.connect.client.PermissionController
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
-import com.zenzeros.kimon.data.repository.UserSettingsRepository
-import com.zenzeros.kimon.service.health.HealthConnectManager
 import com.zenzeros.kimon.ui.components.bouncyScroll
 import com.zenzeros.kimon.ui.settings.SettingsUiState
-import com.zenzeros.kimon.ui.sleep.SleepViewModel
 import com.zenzeros.kimon.ui.theme.CustomColors.cardBorder
 import com.zenzeros.kimon.ui.theme.CustomColors.cardContainerColor
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
-import com.zenzeros.kimon.ui.theme.CustomColors.switchColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.cardShape
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.segmentedListItemShapes
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
-import kotlinx.coroutines.launch
+import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
-fun SleepSettingsScreen(
+fun StepSettingsScreen(
     state: SettingsUiState,
-    onToggleSleepMonitoring: (Boolean) -> Unit,
-    onToggleHealthConnectSync: (Boolean) -> Unit,
-    onSetSleepGoal: (Int) -> Unit,
-    onToggleScheduledMode: (Boolean) -> Unit = {},
-    onSetBedtime: (Int, Int) -> Unit = { _, _ -> },
-    onSetWakeTime: (Int, Int) -> Unit = { _, _ -> },
+    onSetDailyStepGoal: (Int) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -108,29 +66,16 @@ fun SleepSettingsScreen(
     val kimonApp = context.applicationContext as KimonApplication
     val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
 
-    val healthConnectPermissionLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract()
-    ) { grantedPermissions ->
-        if (grantedPermissions.containsAll(HealthConnectManager.PERMISSIONS)) {
-            onToggleHealthConnectSync(true)
-            coroutineScope.launch {
-                kimonApp.sleepRepository.syncFromHealthConnect()
-                kimonApp.sleepRepository.syncUnsyncedToHealthConnect()
-            }
-        } else {
-            Toast.makeText(context, "Health Connect permissions were not fully granted", Toast.LENGTH_SHORT).show()
-            onToggleHealthConnectSync(false)
-        }
-    }
+    val isSensorAvailable = kimonApp.stepCounterManager.isSensorAvailable()
+    val hasPermission = kimonApp.stepCounterManager.hasPermission()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.settings_section_sleep),
+                        text = stringResource(R.string.settings_section_step),
                         fontFamily = LocalAppFonts.current.topBarTitle,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
@@ -167,11 +112,12 @@ fun SleepSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Spacer(Modifier.height(6.dp))
+
             // ==========================================
-            // CATEGORY 1: SCHEDULE & TARGET GOALS (MONOCHROME)
+            // CATEGORY 1: STEP TARGET (GOAL)
             // ==========================================
             Text(
-                text = stringResource(R.string.settings_section_sleep_goal),
+                text = stringResource(R.string.settings_section_step_goal),
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
@@ -180,7 +126,7 @@ fun SleepSettingsScreen(
                 modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
             )
 
-            // 1. Daily Sleep Goal Stepper
+            // Daily Step Goal Stepper
             SegmentedListItem(
                 leadingContent = {
                     Box(
@@ -190,7 +136,7 @@ fun SleepSettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_bed),
+                            painter = painterResource(R.drawable.ic_steps),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
@@ -208,24 +154,24 @@ fun SleepSettingsScreen(
                     ) {
                         IconButton(
                             onClick = {
-                                if (state.sleepGoalMinutes > 240) {
+                                if (state.dailyStepGoal > 1000) {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    onSetSleepGoal(state.sleepGoalMinutes - 30)
+                                    onSetDailyStepGoal(state.dailyStepGoal - 500)
                                 }
                             },
-                            enabled = state.sleepGoalMinutes > 240,
+                            enabled = state.dailyStepGoal > 1000,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_remove),
                                 contentDescription = "Decrease",
                                 modifier = Modifier.size(16.dp),
-                                tint = if (state.sleepGoalMinutes > 240) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                                tint = if (state.dailyStepGoal > 1000) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
                             )
                         }
 
                         Text(
-                            text = SleepViewModel.formatDuration(state.sleepGoalMinutes.toLong()),
+                            text = NumberFormat.getNumberInstance(Locale.getDefault()).format(state.dailyStepGoal),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.5.sp,
@@ -237,19 +183,19 @@ fun SleepSettingsScreen(
 
                         IconButton(
                             onClick = {
-                                if (state.sleepGoalMinutes < 720) {
+                                if (state.dailyStepGoal < 50000) {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    onSetSleepGoal(state.sleepGoalMinutes + 30)
+                                    onSetDailyStepGoal(state.dailyStepGoal + 500)
                                 }
                             },
-                            enabled = state.sleepGoalMinutes < 720,
+                            enabled = state.dailyStepGoal < 50000,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_add),
                                 contentDescription = "Increase",
                                 modifier = Modifier.size(16.dp),
-                                tint = if (state.sleepGoalMinutes < 720) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                                tint = if (state.dailyStepGoal < 50000) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
                             )
                         }
                     }
@@ -259,7 +205,7 @@ fun SleepSettingsScreen(
                 onClick = {}
             ) {
                 Text(
-                    text = stringResource(R.string.settings_sleep_goal),
+                    text = stringResource(R.string.settings_step_goal),
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Medium,
                         fontSize = 15.sp
@@ -271,10 +217,10 @@ fun SleepSettingsScreen(
             Spacer(Modifier.height(14.dp))
 
             // ==========================================
-            // CATEGORY 2: SYNC & PHONE TRACKING (MONOCHROME)
+            // CATEGORY 2: SENSOR & HARDWARE
             // ==========================================
             Text(
-                text = stringResource(R.string.settings_section_sleep_tracking_sync),
+                text = stringResource(R.string.settings_section_step_sensor),
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
@@ -283,7 +229,6 @@ fun SleepSettingsScreen(
                 modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
             )
 
-            // 1. Health Connect Sync Switch
             SegmentedListItem(
                 leadingContent = {
                     Box(
@@ -293,7 +238,7 @@ fun SleepSettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_sparkles),
+                            painter = painterResource(R.drawable.ic_steps),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
@@ -301,47 +246,36 @@ fun SleepSettingsScreen(
                     }
                 },
                 trailingContent = {
-                    Switch(
-                        checked = state.healthConnectSyncEnabled,
-                        onCheckedChange = null,
-                        thumbContent = {
-                            if (state.healthConnectSyncEnabled) {
-                                Icon(
-                                    painter = painterResource(R.drawable.check),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(R.drawable.clear),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
-                            }
-                        },
-                        colors = switchColors
-                    )
+                    val statusText = when {
+                        !isSensorAvailable -> "Unavailable"
+                        state.stepCounterEnabled && hasPermission -> "Active"
+                        !hasPermission -> "Needs Permission"
+                        else -> "Paused"
+                    }
+                    val isRunning = isSensorAvailable && state.stepCounterEnabled && hasPermission
+
+                    Surface(
+                        shape = CircleShape,
+                        color = if (isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest
+                    ) {
+                        Text(
+                            text = statusText,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 11.5.sp
+                            ),
+                            color = if (isRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
                 },
                 shapes = segmentedListItemShapes(0, 1),
                 colors = listItemColors,
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    val target = !state.healthConnectSyncEnabled
-                    if (target) {
-                        if (!kimonApp.healthConnectManager.isAvailable()) {
-                            Toast.makeText(context, "Health Connect is not available on this device", Toast.LENGTH_LONG).show()
-                            onToggleHealthConnectSync(false)
-                        } else {
-                            healthConnectPermissionLauncher.launch(HealthConnectManager.PERMISSIONS)
-                        }
-                    } else {
-                        onToggleHealthConnectSync(false)
-                    }
-                }
+                onClick = {}
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = stringResource(R.string.settings_health_connect_sync),
+                        text = stringResource(R.string.settings_step_sensor_title),
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Medium,
                             fontSize = 15.sp
@@ -349,7 +283,7 @@ fun SleepSettingsScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = stringResource(R.string.settings_health_connect_sync_desc),
+                        text = stringResource(R.string.settings_step_sensor_desc),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 12.5.sp,
                             lineHeight = 16.sp
@@ -359,56 +293,10 @@ fun SleepSettingsScreen(
                 }
             }
 
-            // 2. Sync Data Now (Small Primary Container Pill Button)
-            if (state.healthConnectSyncEnabled) {
-                Spacer(Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Surface(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            coroutineScope.launch {
-                                kimonApp.sleepRepository.syncFromHealthConnect()
-                                kimonApp.sleepRepository.syncUnsyncedToHealthConnect()
-                                Toast.makeText(context, context.getString(R.string.settings_sync_success), Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sparkles),
-                                contentDescription = null,
-                                modifier = Modifier.size(13.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_sync_now),
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.5.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
-            }
-
             Spacer(Modifier.height(14.dp))
 
             // ==========================================
-            // INFO CARD (PRIVACY & METHOD - MONOCHROME)
+            // INFO CARD (PRIVACY & HARDWARE METHOD - MONOCHROME)
             // ==========================================
             Surface(
                 shape = cardShape,
@@ -431,7 +319,7 @@ fun SleepSettingsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_moon),
+                                painter = painterResource(R.drawable.ic_steps),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(18.dp)
@@ -439,7 +327,7 @@ fun SleepSettingsScreen(
                         }
 
                         Text(
-                            text = stringResource(R.string.settings_sleep_info_title),
+                            text = stringResource(R.string.settings_step_info_title),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp
@@ -449,7 +337,7 @@ fun SleepSettingsScreen(
                     }
 
                     Text(
-                        text = stringResource(R.string.settings_sleep_info_desc),
+                        text = stringResource(R.string.settings_step_info_desc),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 13.sp,
                             lineHeight = 18.sp

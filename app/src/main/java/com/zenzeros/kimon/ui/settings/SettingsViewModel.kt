@@ -78,7 +78,8 @@ data class SettingsUiState(
     val targetBedtimeMinute: Int = 0,
     val targetWakeHour: Int = 7,
     val targetWakeMinute: Int = 0,
-    val appUsageAccessEnabled: Boolean = true
+    val stepCounterEnabled: Boolean = true,
+    val dailyStepGoal: Int = 8000
 )
 
 class SettingsViewModel(
@@ -126,7 +127,8 @@ class SettingsViewModel(
         val bMin: Int,
         val wHour: Int,
         val wMin: Int,
-        val appUsage: Boolean
+        val stepCounter: Boolean,
+        val stepGoal: Int
     )
 
     val uiState: StateFlow<SettingsUiState> = combine(
@@ -181,12 +183,13 @@ class SettingsViewModel(
                 userSettingsRepository.targetBedtimeMinute,
                 userSettingsRepository.targetWakeHour,
                 userSettingsRepository.targetWakeMinute,
-                userSettingsRepository.appUsageAccessEnabled
-            ) { bm, wh, wm, usage ->
-                Tuple4(bm, wh, wm, usage)
+                userSettingsRepository.stepCounterEnabled,
+                userSettingsRepository.dailyStepGoal
+            ) { bm, wh, wm, steps, sGoal ->
+                Tuple5(bm, wh, wm, steps, sGoal)
             }
-        ) { (mode, appTheme, amoled), (sleep, hc, goal, sched, bh), (bm, wh, wm, usage) ->
-            SleepAndThemeGroup(mode, appTheme, amoled, sleep, hc, goal, sched, bh, bm, wh, wm, usage)
+        ) { (mode, appTheme, amoled), (sleep, hc, goal, sched, bh), (bm, wh, wm, steps, sGoal) ->
+            SleepAndThemeGroup(mode, appTheme, amoled, sleep, hc, goal, sched, bh, bm, wh, wm, steps, sGoal)
         }
     ) { timer, auto, sound, appGroup ->
         SettingsUiState(
@@ -222,13 +225,28 @@ class SettingsViewModel(
             targetBedtimeMinute = appGroup.bMin,
             targetWakeHour = appGroup.wHour,
             targetWakeMinute = appGroup.wMin,
-            appUsageAccessEnabled = appGroup.appUsage
+            stepCounterEnabled = appGroup.stepCounter,
+            dailyStepGoal = appGroup.stepGoal
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = SettingsUiState()
     )
+
+    fun toggleStepCounter(enabled: Boolean) = viewModelScope.launch {
+        userSettingsRepository.setStepCounterEnabled(enabled)
+        val context = application?.applicationContext ?: return@launch
+        if (enabled && (application as? KimonApplication)?.stepCounterManager?.hasPermission() == true) {
+            com.zenzeros.kimon.service.step.StepCounterService.start(context)
+        } else {
+            com.zenzeros.kimon.service.step.StepCounterService.stop(context)
+        }
+    }
+
+    fun setDailyStepGoal(goal: Int) = viewModelScope.launch {
+        userSettingsRepository.setDailyStepGoal(goal.coerceIn(1000, 50000))
+    }
 
     fun setWorkDuration(minutes: Int) = viewModelScope.launch {
         userSettingsRepository.setWorkDurationMinutes(minutes.coerceIn(1, 180))
@@ -345,10 +363,6 @@ class SettingsViewModel(
         userSettingsRepository.setTargetWakeTime(hour, minute)
     }
 
-    fun toggleAppUsageAccess(enabled: Boolean) = viewModelScope.launch {
-        userSettingsRepository.setAppUsageAccessEnabled(enabled)
-    }
-
     fun resetAllData() = viewModelScope.launch {
         sessionRepository.clearAllSessions()
         userSettingsRepository.clearAllSettings()
@@ -360,6 +374,12 @@ class SettingsViewModel(
         val c: C,
         val d: D,
         val e: E
+    )
+
+    private data class Tuple3<A, B, C>(
+        val a: A,
+        val b: B,
+        val c: C
     )
 
     private data class Tuple4<A, B, C, D>(

@@ -83,6 +83,7 @@ import com.zenzeros.kimon.ui.settings.screens.AppearanceSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.BackupSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.SettingsMainScreen
 import com.zenzeros.kimon.ui.settings.screens.SleepSettingsScreen
+import com.zenzeros.kimon.ui.settings.screens.StepSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.TimerSettingsScreen
 import com.zenzeros.kimon.ui.sleep.SleepScreen
 import com.zenzeros.kimon.ui.theme.CustomColors
@@ -210,7 +211,9 @@ fun KimonApp(onContentReady: () -> Unit = {}) {
                 SettingsMainScreen(
                     state = currentSettings.value,
                     onNavigate = { key -> settingsBackStack.add(key) },
-                    onBack = navigateBack
+                    onBack = navigateBack,
+                    onToggleSleepMonitoring = { settingsViewModel.toggleSleepMonitoring(it) },
+                    onToggleStepCounter = { settingsViewModel.toggleStepCounter(it) }
                 )
             }
             entry<KimonNavKey.TimerSettings> {
@@ -258,7 +261,13 @@ fun KimonApp(onContentReady: () -> Unit = {}) {
                     onToggleScheduledMode = { settingsViewModel.toggleSleepScheduledMode(it) },
                     onSetBedtime = { h, m -> settingsViewModel.setTargetBedtime(h, m) },
                     onSetWakeTime = { h, m -> settingsViewModel.setTargetWakeTime(h, m) },
-                    onToggleAppUsageAccess = { settingsViewModel.toggleAppUsageAccess(it) },
+                    onBack = navigateBack
+                )
+            }
+            entry<KimonNavKey.StepSettings> {
+                StepSettingsScreen(
+                    state = currentSettings.value,
+                    onSetDailyStepGoal = { settingsViewModel.setDailyStepGoal(it) },
                     onBack = navigateBack
                 )
             }

@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [FocusSessionEntity::class, TagEntity::class, TaskEntity::class, SleepSessionEntity::class],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class KimonDatabase : RoomDatabase() {
@@ -55,6 +55,15 @@ abstract class KimonDatabase : RoomDatabase() {
                                         TagEntity(name = "Design", colorHex = "#FF9100", iconName = "ic_palette")
                                     )
                                 )
+                            }
+                        }
+
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    getInstance(context).sleepSessionDao().removeDuplicateSessions()
+                                } catch (_: Exception) {}
                             }
                         }
                     })

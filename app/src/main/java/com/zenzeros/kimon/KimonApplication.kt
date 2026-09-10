@@ -10,6 +10,10 @@ import com.zenzeros.kimon.domain.usecase.GetDayStatsUseCase
 import com.zenzeros.kimon.domain.usecase.GetOverviewStatsUseCase
 import com.zenzeros.kimon.domain.usecase.GetWeekStatsUseCase
 import com.zenzeros.kimon.domain.usecase.GetYearStatsUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class KimonApplication : Application() {
 
@@ -20,6 +24,7 @@ class KimonApplication : Application() {
     val userSettingsRepository by lazy { UserSettingsRepository(this) }
 
     val sleepMonitorManager by lazy { com.zenzeros.kimon.service.sleep.SleepMonitorManager(this) }
+    val stepCounterManager by lazy { com.zenzeros.kimon.service.step.StepCounterManager(this) }
     val healthConnectManager by lazy { com.zenzeros.kimon.service.health.HealthConnectManager(this) }
     val sleepRepository by lazy {
         com.zenzeros.kimon.data.repository.SleepRepository(
@@ -42,4 +47,21 @@ class KimonApplication : Application() {
     val getDayStatsUseCase by lazy { GetDayStatsUseCase(sessionRepository) }
     val getWeekStatsUseCase by lazy { GetWeekStatsUseCase(sessionRepository) }
     val getYearStatsUseCase by lazy { GetYearStatsUseCase(sessionRepository) }
+
+    override fun onCreate() {
+        super.onCreate()
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                if (userSettingsRepository.sleepMonitoringEnabled.first() && sleepMonitorManager.hasPermission()) {
+                    sleepMonitorManager.startSleepMonitoring()
+                }
+            } catch (_: Exception) {}
+
+            try {
+                if (userSettingsRepository.stepCounterEnabled.first() && stepCounterManager.hasPermission()) {
+                    com.zenzeros.kimon.service.step.StepCounterService.start(this@KimonApplication)
+                }
+            } catch (_: Exception) {}
+        }
+    }
 }

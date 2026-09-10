@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "sleep_sessions",
     indices = [
+        Index(value = ["startTimeEpochMs", "endTimeEpochMs"], unique = true),
         Index("startTimeEpochMs"),
         Index("endTimeEpochMs"),
         Index("dateString")
@@ -23,6 +24,5 @@ data class SleepSessionEntity(
     val source: String = "GOOGLE_SLEEP_API", // "GOOGLE_SLEEP_API", "HEALTH_CONNECT", "MANUAL"
     val dateString: String, // YYYY-MM-DD
     val syncedToHealthConnect: Boolean = false,
-    val notes: String? = null,
-    val appUsageJson: String? = null
+    val notes: String? = null
 )

@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SleepSessionDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSession(session: SleepSessionEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(sessions: List<SleepSessionEntity>)
 
     @Update
@@ -38,8 +38,11 @@ interface SleepSessionDao {
     @Query("SELECT * FROM sleep_sessions WHERE syncedToHealthConnect = 0")
     suspend fun getUnsyncedSessions(): List<SleepSessionEntity>
 
-    @Query("SELECT * FROM sleep_sessions WHERE (startTimeEpochMs BETWEEN :startTimeMs - 900000 AND :startTimeMs + 900000) OR (endTimeEpochMs BETWEEN :endTimeMs - 900000 AND :endTimeMs + 900000) LIMIT 1")
+    @Query("SELECT * FROM sleep_sessions WHERE (startTimeEpochMs = :startTimeMs AND endTimeEpochMs = :endTimeMs) OR (startTimeEpochMs < :endTimeMs AND endTimeEpochMs > :startTimeMs) LIMIT 1")
     suspend fun findDuplicateOrOverlappingSession(startTimeMs: Long, endTimeMs: Long): SleepSessionEntity?
+
+    @Query("DELETE FROM sleep_sessions WHERE id NOT IN (SELECT MIN(id) FROM sleep_sessions GROUP BY startTimeEpochMs, endTimeEpochMs)")
+    suspend fun removeDuplicateSessions()
 
     @Query("SELECT AVG(durationMinutes) FROM sleep_sessions WHERE startTimeEpochMs >= :sinceEpochMs")
     fun getAverageDurationMinutesSince(sinceEpochMs: Long): Flow<Double?>
