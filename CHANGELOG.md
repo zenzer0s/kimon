@@ -8,6 +8,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-10
+
 ### Added
 - In-app update check: on launch (throttled) and from Settings → About, the app
   checks GitHub Releases for a newer stable version and posts a notification.
