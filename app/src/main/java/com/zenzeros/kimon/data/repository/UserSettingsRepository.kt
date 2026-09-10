@@ -22,6 +22,7 @@ class UserSettingsRepository(private val context: Context) {
         val SHORT_BREAK_MINUTES = intPreferencesKey("short_break_minutes")
         val LONG_BREAK_MINUTES = intPreferencesKey("long_break_minutes")
         val SESSIONS_BEFORE_LONG_BREAK = intPreferencesKey("sessions_before_long_break")
+        val LONG_BREAK_ENABLED = booleanPreferencesKey("long_break_enabled")
         val DAILY_GOAL_MINUTES = intPreferencesKey("daily_goal_minutes")
 
         // Automation & Focus Mode
@@ -78,6 +79,10 @@ class UserSettingsRepository(private val context: Context) {
 
     val sessionsBeforeLongBreak: Flow<Int> = context.dataStore.data.map { prefs ->
         prefs[PreferencesKeys.SESSIONS_BEFORE_LONG_BREAK] ?: 4
+    }
+
+    val longBreakEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.LONG_BREAK_ENABLED] ?: true
     }
 
     val dailyGoalMinutes: Flow<Int> = context.dataStore.data.map { prefs ->
@@ -252,6 +257,10 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun setSessionsBeforeLongBreak(count: Int) {
         context.dataStore.edit { prefs -> prefs[PreferencesKeys.SESSIONS_BEFORE_LONG_BREAK] = count }
+    }
+
+    suspend fun setLongBreakEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[PreferencesKeys.LONG_BREAK_ENABLED] = enabled }
     }
 
     suspend fun setDailyGoalMinutes(minutes: Int) {

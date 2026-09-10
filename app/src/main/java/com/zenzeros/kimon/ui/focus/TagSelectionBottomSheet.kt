@@ -38,9 +38,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalToggleButton
 import androidx.compose.material3.FilledTonalToggleButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetState
@@ -85,11 +87,16 @@ fun TagSelectionBottomSheet(
     var isDeleteMode by remember { mutableStateOf(false) }
     var newTagName by remember { mutableStateOf("") }
     var selectedColorHex by remember { mutableStateOf(PRESET_COLORS[0]) }
+    var tagPendingDelete by remember { mutableStateOf<TagEntity?>(null) }
 
     // If all tags get deleted, exit delete mode
     LaunchedEffect(tags) {
         if (tags.isEmpty()) {
             isDeleteMode = false
+        }
+        // Drop a stale pending-delete target if that tag is already gone
+        if (tagPendingDelete != null && tags.none { it.id == tagPendingDelete?.id }) {
+            tagPendingDelete = null
         }
     }
 
@@ -398,12 +405,38 @@ fun TagSelectionBottomSheet(
                         selectedTag = selectedTag,
                         isDeleteMode = isDeleteMode,
                         onSelectTag = onSelectTag,
-                        onDeleteTag = onDeleteTag,
+                        onDeleteTag = { tag -> tagPendingDelete = tag },
                         onDismissRequest = onDismissRequest
                     )
                 }
             }
         }
+    }
+
+    tagPendingDelete?.let { tag ->
+        AlertDialog(
+            onDismissRequest = { tagPendingDelete = null },
+            title = { Text(stringResource(R.string.tag_delete_title)) },
+            text = { Text(stringResource(R.string.tag_delete_confirm_message, tag.name)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteTag(tag)
+                        tagPendingDelete = null
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.tag_delete_title),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { tagPendingDelete = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
 }
 

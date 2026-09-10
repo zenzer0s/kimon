@@ -70,6 +70,12 @@ android {
     buildToolsVersion = "36.1.0"
 }
 
+// Export Room schemas so real migrations can be written from version 5 onward
+// instead of destructively wiping the database on every schema change.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

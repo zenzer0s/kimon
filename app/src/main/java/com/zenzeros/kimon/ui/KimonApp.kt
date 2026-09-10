@@ -241,6 +241,7 @@ fun KimonApp(
                     onSetShortBreak = { settingsViewModel.setShortBreak(it) },
                     onSetLongBreak = { settingsViewModel.setLongBreak(it) },
                     onSetSessionsBeforeLongBreak = { settingsViewModel.setSessionsBeforeLongBreak(it) },
+                    onToggleLongBreakEnabled = { settingsViewModel.toggleLongBreakEnabled(it) },
                     onSetDailyGoal = { settingsViewModel.setDailyGoal(it) },
                     onSetClockStyle = { settingsViewModel.setClockStyle(it) },
                     onToggleDialTickAnimation = { settingsViewModel.toggleDialTickAnimation(it) },

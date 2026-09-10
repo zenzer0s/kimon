@@ -81,6 +81,7 @@
     <string name="tag_create_new">Create New Tag</string>
     <string name="tag_delete_title">Delete Tag</string>
     <string name="tag_delete_mode_hint">Select a tag to delete</string>
+    <string name="tag_delete_confirm_message">Delete \"%1$s\"? Past focus sessions keep their history but lose this tag label. This can\'t be undone.</string>
     <string name="tag_name_placeholder">Tag name</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_create">Create</string>
