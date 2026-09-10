@@ -76,5 +76,13 @@ scripts/bump-version.sh
 
 ## License
 
-**TODO** – choose a license before publishing. Until a `LICENSE` file is added,
-all rights are reserved.
+Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+
+You may view, modify, and redistribute the code for any **noncommercial**
+purpose (personal use, hobby projects, study, and use by nonprofits, schools,
+or government). You may **not** sell it, publish it on a paid or ad-supported
+app store, or use it in a commercial product or service.
+
+This is *source-available*, not open source — the [Open Source
+Definition](https://opensource.org/osd) requires permitting commercial use.
+The copyright holder is not bound by these terms.
