@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -51,6 +52,7 @@ class StepCounterManager(val context: Context) : SensorEventListener {
 
     fun startListening() {
         loadSavedTodaySteps()
+        pruneOldHistory()
         if (isListening || activeSensor == null || !hasPermission()) return
         val registered = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             sensorManager?.registerListener(
@@ -128,6 +130,7 @@ class StepCounterManager(val context: Context) : SensorEventListener {
         prefs.edit()
             .putLong(KEY_LAST_RAW_STEPS, rawSteps)
             .putInt(KEY_TODAY_STEPS, todayStepsCount)
+            .putInt(historyKey(today), todayStepsCount)
             .putString(KEY_LAST_STEP_DATE, today)
             .apply()
 
@@ -143,6 +146,7 @@ class StepCounterManager(val context: Context) : SensorEventListener {
 
         prefs.edit()
             .putInt(KEY_TODAY_STEPS, todayStepsCount)
+            .putInt(historyKey(today), todayStepsCount)
             .putString(KEY_LAST_STEP_DATE, today)
             .apply()
 
@@ -153,10 +157,50 @@ class StepCounterManager(val context: Context) : SensorEventListener {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
 
+    /** Step total for a given "yyyy-MM-dd" date. Today comes from the live counter; past
+     *  days are read from the persisted daily history (0 if that day was never tracked). */
+    fun getStepsForDate(dateString: String): Int {
+        return if (dateString == getTodayDateString()) {
+            _todaySteps.value
+        } else {
+            prefs.getInt(historyKey(dateString), 0)
+        }
+    }
+
+    private fun historyKey(dateString: String): String = "$KEY_HISTORY_PREFIX$dateString"
+
+    private fun pruneOldHistory() {
+        try {
+            val cutoff = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, -HISTORY_RETENTION_DAYS)
+            }.time
+            val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val editor = prefs.edit()
+            var changed = false
+            for (key in prefs.all.keys.toList()) {
+                if (!key.startsWith(KEY_HISTORY_PREFIX)) continue
+                val parsed = try {
+                    fmt.parse(key.removePrefix(KEY_HISTORY_PREFIX))
+                } catch (_: Exception) {
+                    null
+                }
+                if (parsed == null || parsed.before(cutoff)) {
+                    editor.remove(key)
+                    changed = true
+                }
+            }
+            if (changed) editor.apply()
+        } catch (_: Exception) {
+            // Non-critical housekeeping
+        }
+    }
+
     companion object {
         private const val KEY_LAST_STEP_DATE = "step_last_date"
         private const val KEY_LAST_RAW_STEPS = "step_last_raw"
         private const val KEY_TODAY_STEPS = "step_today_steps"
+        private const val KEY_HISTORY_PREFIX = "step_hist_"
+        private const val HISTORY_RETENTION_DAYS = 35
 
         fun calculateDistanceKm(steps: Int): Float = steps * 0.00076f
         fun calculateCaloriesKcal(steps: Int): Int = (steps * 0.04f).toInt()

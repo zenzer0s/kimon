@@ -172,6 +172,14 @@ class SleepViewModel(
         val displayedStartTimeEpochMs = daySessions.minOfOrNull { it.startTimeEpochMs }
         val displayedEndTimeEpochMs = daySessions.maxOfOrNull { it.endTimeEpochMs }
 
+        // Steps for the day being viewed: live counter for today, persisted history otherwise
+        val displayedSteps = if (settings.selectedDay == null || settings.selectedDay >= todayStartOfDay) {
+            stepState.steps
+        } else {
+            val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(settings.selectedDay))
+            stepCounterManager.getStepsForDate(dateStr)
+        }
+
         // Calculate sleep score (target based on goalMinutes)
         val score = if (daySessions.isNotEmpty()) {
             daySessions.map { it.qualityScore }.average().toInt()
@@ -198,7 +206,7 @@ class SleepViewModel(
             sleepScore = score,
             sleepGoalMinutes = settings.goalMinutes,
             isLoading = settings.loading,
-            todaySteps = stepState.steps,
+            todaySteps = displayedSteps,
             stepGoal = settings.stepGoal,
             isStepSensorAvailable = stepCounterManager.isSensorAvailable(),
             hasStepPermission = stepState.hasPermission,
