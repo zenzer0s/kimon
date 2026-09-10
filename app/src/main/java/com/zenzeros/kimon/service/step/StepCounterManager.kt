@@ -52,14 +52,16 @@ class StepCounterManager(val context: Context) : SensorEventListener {
 
     fun startListening() {
         loadSavedTodaySteps()
-        pruneOldHistory()
+        pruneOldHistoryIfDue()
         if (isListening || activeSensor == null || !hasPermission()) return
         val registered = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             sensorManager?.registerListener(
                 this,
                 activeSensor,
                 SensorManager.SENSOR_DELAY_NORMAL,
-                60_000_000 // 60s batching latency for maximum hardware efficiency
+                // 5 min batching: hardware buffers step events and wakes the AP at most
+                // once per 5 min while walking; zero wakeups while the device is idle.
+                300_000_000
             ) ?: false
         } else {
             sensorManager?.registerListener(this, activeSensor, SensorManager.SENSOR_DELAY_NORMAL) ?: false
@@ -169,6 +171,16 @@ class StepCounterManager(val context: Context) : SensorEventListener {
 
     private fun historyKey(dateString: String): String = "$KEY_HISTORY_PREFIX$dateString"
 
+    /** [pruneOldHistory] is cheap but iterates every pref key; startListening() runs on
+     *  every service (re)start and onTaskRemoved, so gate it to once per 24h. */
+    private fun pruneOldHistoryIfDue() {
+        val now = System.currentTimeMillis()
+        val last = prefs.getLong(KEY_LAST_PRUNE, 0L)
+        if (now - last < 24 * 60 * 60 * 1000L) return
+        prefs.edit().putLong(KEY_LAST_PRUNE, now).apply()
+        pruneOldHistory()
+    }
+
     private fun pruneOldHistory() {
         try {
             val cutoff = Calendar.getInstance().apply {
@@ -200,6 +212,7 @@ class StepCounterManager(val context: Context) : SensorEventListener {
         private const val KEY_LAST_RAW_STEPS = "step_last_raw"
         private const val KEY_TODAY_STEPS = "step_today_steps"
         private const val KEY_HISTORY_PREFIX = "step_hist_"
+        private const val KEY_LAST_PRUNE = "step_last_prune"
         private const val HISTORY_RETENTION_DAYS = 35
 
         fun calculateDistanceKm(steps: Int): Float = steps * 0.00076f

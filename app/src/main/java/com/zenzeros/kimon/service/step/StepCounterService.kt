@@ -67,12 +67,28 @@ class StepCounterService : Service() {
         kimonApp.stepCounterManager.startListening()
 
         serviceScope.launch {
+            var lastNotifiedSteps = -1
+            var lastNotifiedGoal = -1
+            var lastNotifyAt = 0L
             combine(
                 kimonApp.stepCounterManager.todaySteps,
                 kimonApp.userSettingsRepository.dailyStepGoal
             ) { steps, goal ->
                 Pair(steps, goal)
             }.collect { (steps, goal) ->
+                // Redrawing the notification churns SystemUI. Skip updates that don't
+                // change what the user sees meaningfully: only refresh on a goal change,
+                // a >=25 step delta, or once every 2 min at most.
+                val now = System.currentTimeMillis()
+                val goalChanged = goal != lastNotifiedGoal
+                val stepsChanged = kotlin.math.abs(steps - lastNotifiedSteps) >= 25
+                val staleEnough = now - lastNotifyAt >= 120_000L
+                if (lastNotifiedSteps >= 0 && !goalChanged && !(stepsChanged && staleEnough)) {
+                    return@collect
+                }
+                lastNotifiedSteps = steps
+                lastNotifiedGoal = goal
+                lastNotifyAt = now
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.notify(NOTIFICATION_ID, buildNotification(steps, goal))
             }
