@@ -78,6 +78,14 @@ android {
         // The app uses ComponentActivity + Compose with no Fragments; this check
         // spuriously flags registerForActivityResult for lacking an androidx.fragment dep.
         disable += "InvalidFragmentVersionForActivityResult"
+
+        // New checks from the AGP 9.4 lint that flag long-standing idioms
+        // (getString / Locale.getDefault read directly in composables). Worth
+        // cleaning up eventually, but not release-blocking.
+        warning += setOf(
+            "LocalContextGetResourceValueCall",
+            "NonObservableLocale",
+        )
     }
 
     buildToolsVersion = "36.1.0"

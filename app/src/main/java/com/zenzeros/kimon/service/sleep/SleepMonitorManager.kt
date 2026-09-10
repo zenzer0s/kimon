@@ -55,6 +55,8 @@ class SleepMonitorManager(private val context: Context) {
         return PendingIntent.getBroadcast(context, SLEEP_REQUEST_CODE, intent, flags)
     }
 
+    // requestSleepSegmentUpdates is guarded by the hasPermission() check below.
+    @android.annotation.SuppressLint("MissingPermission")
     fun startSleepMonitoring(onSuccess: () -> Unit = {}, onFailure: (Exception) -> Unit = {}) {
         val app = context.applicationContext as? KimonApplication
         CoroutineScope(Dispatchers.IO).launch {
