@@ -40,7 +40,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,7 +61,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.zenzeros.kimon.R
+import com.zenzeros.kimon.update.UpdateChecker
 import com.zenzeros.kimon.ui.components.bouncyScroll
+import kotlinx.coroutines.launch
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.CustomColors.listItemColors
 import com.zenzeros.kimon.ui.theme.CustomColors.topBarColors
@@ -84,18 +90,26 @@ fun AboutSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val cookieShape = MaterialShapes.Cookie7Sided.toShape()
     val cloverShape = MaterialShapes.Clover4Leaf.toShape()
 
-    val installedDate = remember {
+    val packageInfo = remember {
         try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            val installTime = packageInfo.firstInstallTime
-            SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(installTime))
+            context.packageManager.getPackageInfo(context.packageName, 0)
         } catch (_: Exception) {
-            "Installed"
+            null
         }
     }
+    val versionName = packageInfo?.versionName ?: "?"
+    val versionCode = packageInfo?.longVersionCode ?: 0L
+    val installedDate = remember(packageInfo) {
+        packageInfo?.firstInstallTime?.let {
+            SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(it))
+        } ?: "Installed"
+    }
+
+    var isCheckingUpdate by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -176,7 +190,7 @@ fun AboutSettingsScreen(
                         )
 
                         Text(
-                            text = "v1.0.0 • Material 3 Expressive",
+                            text = "v$versionName • Material 3 Expressive",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -356,9 +370,48 @@ fun AboutSettingsScreen(
             item {
                 AboutItem(
                     icon = R.drawable.deployed_app_update,
+                    title = stringResource(R.string.update_check_title),
+                    subtitle = if (isCheckingUpdate) {
+                        stringResource(R.string.update_checking)
+                    } else {
+                        "Latest stable release from GitHub"
+                    },
+                    shape = topListItemShape,
+                    isExternal = false,
+                    onClick = {
+                        if (!isCheckingUpdate) {
+                            isCheckingUpdate = true
+                            scope.launch {
+                                val result = UpdateChecker.checkForUpdate(context, force = true)
+                                isCheckingUpdate = false
+                                when (result) {
+                                    is UpdateChecker.Result.UpdateAvailable ->
+                                        openUrl(context, result.url)
+                                    is UpdateChecker.Result.UpToDate ->
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.update_up_to_date, result.version),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    UpdateChecker.Result.Failed ->
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.update_check_failed),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = R.drawable.ic_sparkles,
                     title = "Installed Date",
                     subtitle = installedDate,
-                    shape = topListItemShape,
+                    shape = middleListItemShape,
                     isExternal = false,
                     onClick = null
                 )
@@ -366,9 +419,9 @@ fun AboutSettingsScreen(
 
             item {
                 AboutItem(
-                    icon = R.drawable.ic_sparkles,
-                    title = "Version Code",
-                    subtitle = "1.0.0 (1)",
+                    icon = R.drawable.ic_list,
+                    title = "Version",
+                    subtitle = "$versionName ($versionCode)",
                     shape = middleListItemShape,
                     isExternal = false,
                     onClick = null
@@ -379,10 +432,10 @@ fun AboutSettingsScreen(
                 AboutItem(
                     icon = R.drawable.ic_trophy,
                     title = "License",
-                    subtitle = "GNU General Public License v3.0",
+                    subtitle = "PolyForm Noncommercial 1.0.0",
                     shape = bottomListItemShape,
                     isExternal = true,
-                    onClick = { openUrl(context, "https://www.gnu.org/licenses/gpl-3.0.html") }
+                    onClick = { openUrl(context, GITHUB_REPO_URL + "/blob/master/LICENSE.md") }
                 )
             }
 

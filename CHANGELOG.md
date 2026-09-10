@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added
+- In-app update check: on launch (throttled) and from Settings → About, the app
+  checks GitHub Releases for a newer stable version and posts a notification.
+- Settings → About now shows the real installed version / build number and links
+  to the license.
 - Confirmation dialog before deleting a tag.
 - Bottom-navigation icons bounce on tap, with a haptic tick.
 - Per-day step history, so past days in the sleep screen show real step totals.

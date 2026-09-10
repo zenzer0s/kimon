@@ -268,4 +268,15 @@
     <string name="settings_step_sensor_desc">Dedicated low-power pedometer chip</string>
     <string name="settings_step_info_title">On-Device &amp; Private</string>
     <string name="settings_step_info_desc">Steps are detected entirely on-device using your phone\'s dedicated low-power pedometer hardware sensor with zero battery drain, zero network usage, and complete privacy.</string>
+
+    <!-- App updates -->
+    <string name="updates_channel_name">App updates</string>
+    <string name="updates_channel_desc">Notifies you when a new version is available on GitHub</string>
+    <string name="update_available_title">Update available: v%1$s</string>
+    <string name="update_available_body">A newer version of Kimon is available. Tap to download it from GitHub.</string>
+    <string name="update_check_title">Check for updates</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date">You\'re on the latest version (v%1$s)</string>
+    <string name="update_found">Update available: v%1$s</string>
+    <string name="update_check_failed">Couldn\'t check for updates</string>
 </resources>

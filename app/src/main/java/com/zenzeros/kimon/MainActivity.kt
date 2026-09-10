@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.zenzeros.kimon.ui.KimonApp
+import com.zenzeros.kimon.update.UpdateChecker
 import com.zenzeros.kimon.widget.FocusHeatmapWidgetProvider
 import com.zenzeros.kimon.widget.LastNightSleepWidgetProvider
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         maybeRequestNotificationPermission()
+
+        // Throttled check for a newer stable release on GitHub; notifies if found.
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching { UpdateChecker.checkForUpdate(applicationContext) }
+        }
+
         pendingNavTarget = intent?.getStringExtra(EXTRA_NAVIGATE_TO)
         setContent {
             KimonApp(
