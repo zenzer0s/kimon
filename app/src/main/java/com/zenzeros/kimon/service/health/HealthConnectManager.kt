@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.metadata.Device
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.zenzeros.kimon.data.local.entity.SleepSessionEntity
@@ -89,13 +91,25 @@ class HealthConnectManager(private val context: Context) {
             val endInstant = Instant.ofEpochMilli(session.endTimeEpochMs)
             val zoneOffset = ZoneOffset.systemDefault().rules.getOffset(Instant.now())
 
+            // clientRecordId lets Health Connect de-duplicate on re-sync.
+            val clientId = "kimon-sleep-${session.id}"
+            val metadata = if (session.source == "MANUAL") {
+                Metadata.manualEntry(clientRecordId = clientId)
+            } else {
+                Metadata.autoRecorded(
+                    device = Device(type = Device.TYPE_PHONE),
+                    clientRecordId = clientId,
+                )
+            }
+
             val record = SleepSessionRecord(
                 startTime = startInstant,
                 startZoneOffset = zoneOffset,
                 endTime = endInstant,
                 endZoneOffset = zoneOffset,
+                metadata = metadata,
                 title = "Kimon Focus & Sleep",
-                notes = session.notes
+                notes = session.notes,
             )
 
             client.insertRecords(listOf(record))
