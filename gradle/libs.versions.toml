@@ -8,7 +8,7 @@ lifecycleRuntimeKtx = "2.11.0"
 lifecycleRuntimeCompose = "2.11.0"
 lifecycleViewmodelCompose = "2.11.0"
 activityCompose = "1.13.0"
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 composeBom = "2026.08.00"
 material3 = "1.5.0-alpha26"
 room = "2.8.4"
@@ -53,13 +53,13 @@ androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigat
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version = "1.0.0" }
 
 # Serialization
-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.8.0" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.11.0" }
 
 # Material Kolor
 material-kolor = { module = "com.materialkolor:material-kolor", version = "4.1.1" }
 
 # Coroutines Test
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version = "1.10.1" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version = "1.11.0" }
 
 # Coil
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.7.0" }
