@@ -20,3 +20,8 @@ local.properties
 **/target/
 native/**/target/
 /reverse/
+
+# Release / signing
+keystore.properties
+/dist/
+RELEASE_NOTES.md

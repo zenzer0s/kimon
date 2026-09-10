@@ -1,9 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.baselineprofile)
+}
+
+// App version comes from gradle/version.properties (bump via scripts/bump-version.sh)
+val versionProps = Properties().apply {
+    rootProject.file("gradle/version.properties").inputStream().use { load(it) }
 }
 
 android {
@@ -19,8 +26,8 @@ android {
         minSdk = 29
         //noinspection EditedTargetSdkVersion
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = versionProps.getProperty("VERSION_CODE", "1").trim().toInt()
+        versionName = versionProps.getProperty("VERSION_NAME", "0.0.0").trim()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
