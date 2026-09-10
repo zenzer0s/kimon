@@ -65,7 +65,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.7.0" }
 
 # Health Connect
-androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version = "1.1.0-alpha11" }
+androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version = "1.2.0-alpha06" }
 
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
