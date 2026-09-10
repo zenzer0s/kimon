@@ -145,9 +145,10 @@ class SleepViewModel(
 
         if (settings.selectedDay != null) {
             val endOfDay = settings.selectedDay + 86400000L
+            // A sleep session belongs to the day it ended (wake-up day), matching `dateString`.
+            // Bucketing by both start and end double-counts nights that cross midnight.
             daySessions = sessions.filter {
-                (it.endTimeEpochMs in (settings.selectedDay + 1)..endOfDay) ||
-                (it.startTimeEpochMs in settings.selectedDay until endOfDay)
+                it.endTimeEpochMs in (settings.selectedDay + 1)..endOfDay
             }
             val cal = Calendar.getInstance().apply { timeInMillis = settings.selectedDay }
             val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
@@ -155,10 +156,9 @@ class SleepViewModel(
             selectedDayLabel = "${dayFormat.format(cal.time).uppercase()}, ${numFormat.format(cal.time)}"
             isFromLastNight = (settings.selectedDay == todayStartOfDay)
         } else {
-            // Default view: Check if there is a session for last night / today
+            // Default view: session(s) that ended today (last night's sleep)
             daySessions = sessions.filter {
-                (it.endTimeEpochMs in (todayStartOfDay + 1)..todayEndOfDay) ||
-                (it.startTimeEpochMs in todayStartOfDay until todayEndOfDay)
+                it.endTimeEpochMs in (todayStartOfDay + 1)..todayEndOfDay
             }
             selectedDayLabel = null
             isFromLastNight = daySessions.isNotEmpty()
@@ -230,9 +230,10 @@ class SleepViewModel(
             val startOfDay = dayCal.timeInMillis
             val endOfDay = startOfDay + 86400000L
 
+            // Attribute each night to its wake-up day only, so a session that crosses
+            // midnight is not counted on both days.
             val daySessions = sessions.filter {
-                (it.endTimeEpochMs in (startOfDay + 1)..endOfDay) ||
-                (it.startTimeEpochMs in startOfDay until endOfDay)
+                it.endTimeEpochMs in (startOfDay + 1)..endOfDay
             }
             val dayDuration = daySessions.sumOf { it.durationMinutes }
 

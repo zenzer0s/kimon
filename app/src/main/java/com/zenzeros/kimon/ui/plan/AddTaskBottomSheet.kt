@@ -39,6 +39,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,8 +67,16 @@ fun AddTaskBottomSheet(
     onDismissRequest: () -> Unit
 ) {
     var title by remember { mutableStateOf("") }
-    var selectedTag by remember { mutableStateOf<TagEntity?>(tags.firstOrNull()) }
+    var selectedTag by remember { mutableStateOf<TagEntity?>(null) }
     var estimatedPomodoros by remember { mutableIntStateOf(1) }
+
+    // `tags` may still be empty on the first composition (loads async); default to the
+    // first tag once available without clobbering an explicit user choice.
+    LaunchedEffect(tags) {
+        if (selectedTag == null && tags.isNotEmpty()) {
+            selectedTag = tags.first()
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,

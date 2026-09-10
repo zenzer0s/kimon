@@ -37,23 +37,33 @@ class StepCounterService : Service() {
         val initialSteps = kimonApp?.stepCounterManager?.todaySteps?.value ?: 0
         val initialNotification = buildNotification(initialSteps, 8000)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(
-                NOTIFICATION_ID,
-                initialNotification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                initialNotification,
-                0
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, initialNotification)
+        // Starting a "health" foreground service without ACTIVITY_RECOGNITION throws on
+        // Android 14+. Guard so a stale restart (permission revoked) can't crash the process.
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    initialNotification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+                )
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    initialNotification,
+                    0
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, initialNotification)
+            }
+        } catch (e: Exception) {
+            stopSelf()
+            return
         }
 
-        if (kimonApp == null) return
+        if (kimonApp == null || !kimonApp.stepCounterManager.hasPermission()) {
+            stopSelf()
+            return
+        }
         kimonApp.stepCounterManager.startListening()
 
         serviceScope.launch {
@@ -151,7 +161,8 @@ class StepCounterService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "step_counter_channel"
-        private const val NOTIFICATION_ID = 2002
+        // 2001 = sleep summary, 2002 = (legacy) sleep monitoring - keep distinct
+        private const val NOTIFICATION_ID = 2003
 
         fun start(context: Context) {
             val intent = Intent(context, StepCounterService::class.java)

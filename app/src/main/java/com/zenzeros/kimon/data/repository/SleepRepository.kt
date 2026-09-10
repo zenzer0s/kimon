@@ -84,11 +84,21 @@ class SleepRepository(
         val endTime = System.currentTimeMillis()
 
         val healthConnectSessions = healthConnectManager.readSleepSessions(startTime, endTime)
-        if (healthConnectSessions.isNotEmpty()) {
-            sleepSessionDao.insertAll(healthConnectSessions)
+        var inserted = 0
+        for (session in healthConnectSessions) {
+            // Skip anything that overlaps an existing session (e.g. the same night already
+            // captured by the Google Sleep API, or a session this app itself wrote to HC).
+            val existing = sleepSessionDao.findDuplicateOrOverlappingSession(
+                session.startTimeEpochMs,
+                session.endTimeEpochMs
+            )
+            if (existing != null) continue
+            if (sleepSessionDao.insertSession(session) != -1L) inserted++
+        }
+        if (inserted > 0) {
             com.zenzeros.kimon.widget.LastNightSleepWidgetProvider.updateAllWidgets(context)
         }
-        return healthConnectSessions.size
+        return inserted
     }
 
     suspend fun syncUnsyncedToHealthConnect() {

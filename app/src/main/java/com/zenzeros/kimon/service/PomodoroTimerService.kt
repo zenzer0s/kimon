@@ -200,32 +200,39 @@ class PomodoroTimerService : Service() {
                 putExtra(EXTRA_TOTAL_SECONDS, totalSeconds)
                 putExtra(EXTRA_MODE_LABEL, modeLabel)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (_: Exception) {
+                // e.g. ForegroundServiceStartNotAllowedException when launched from background
             }
         }
 
+        // pause/resume/stop only ever deliver to an already-running service; wrap in
+        // try/catch because startService() throws if the service has already stopped
+        // itself (timer completed) while the app sits in the background.
         fun pauseTimer(context: Context) {
             val intent = Intent(context, PomodoroTimerService::class.java).apply {
                 action = ACTION_PAUSE
             }
-            context.startService(intent)
+            try { context.startService(intent) } catch (_: Exception) {}
         }
 
         fun resumeTimer(context: Context) {
             val intent = Intent(context, PomodoroTimerService::class.java).apply {
                 action = ACTION_RESUME
             }
-            context.startService(intent)
+            try { context.startService(intent) } catch (_: Exception) {}
         }
 
         fun stopTimer(context: Context) {
             val intent = Intent(context, PomodoroTimerService::class.java).apply {
                 action = ACTION_STOP
             }
-            context.startService(intent)
+            try { context.startService(intent) } catch (_: Exception) {}
         }
     }
 }

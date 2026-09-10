@@ -46,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -99,7 +100,11 @@ private enum class KimonTab(val titleRes: Int, val iconRes: Int) {
 }
 
 @Composable
-fun KimonApp(onContentReady: () -> Unit = {}) {
+fun KimonApp(
+    onContentReady: () -> Unit = {},
+    navTarget: String? = null,
+    onNavTargetHandled: () -> Unit = {}
+) {
     val context = LocalContext.current
     val kimonApp = context.applicationContext as KimonApplication
     val coroutineScope = rememberCoroutineScope()
@@ -176,6 +181,19 @@ fun KimonApp(onContentReady: () -> Unit = {}) {
         initialPage = 0,
         pageCount = { enabledTabs.size }
     )
+
+    // Handle deep-link navigation requests (e.g. from a sleep-summary notification tap)
+    LaunchedEffect(navTarget, enabledTabs) {
+        when (navTarget) {
+            null -> Unit
+            "sleep" -> {
+                val idx = enabledTabs.indexOf(KimonTab.SLEEP)
+                if (idx >= 0) mainTabPagerState.scrollToPage(idx)
+                onNavTargetHandled()
+            }
+            else -> onNavTargetHandled()
+        }
+    }
 
     // Settings Navigation Stack
     val settingsBackStack = rememberNavBackStack()

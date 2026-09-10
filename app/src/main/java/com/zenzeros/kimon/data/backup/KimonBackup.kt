@@ -31,6 +31,7 @@ data class KimonSettingsBackup(
     val alarmSoundUri: String = "",
     val alarmSoundTitle: String = "Default",
     val themeMode: String = "SYSTEM",
+    val appTheme: String = "Dynamic",
     val themePalette: String = "DYNAMIC",
     val themeColor: String = "Color.White",
     val amoledBlack: Boolean = false,
