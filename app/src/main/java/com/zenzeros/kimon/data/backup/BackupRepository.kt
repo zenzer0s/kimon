@@ -8,6 +8,8 @@ import com.zenzeros.kimon.data.local.entity.SleepSessionEntity
 import com.zenzeros.kimon.data.local.entity.TagEntity
 import com.zenzeros.kimon.data.local.entity.TaskEntity
 import com.zenzeros.kimon.data.repository.UserSettingsRepository
+import androidx.room.withTransaction
+import com.zenzeros.kimon.ui.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -98,6 +100,7 @@ class BackupRepository(
             alarmSoundUri = userSettingsRepository.alarmSoundUri.first(),
             alarmSoundTitle = userSettingsRepository.alarmSoundTitle.first(),
             themeMode = userSettingsRepository.themeMode.first(),
+            appTheme = userSettingsRepository.appTheme.first().name,
             themePalette = userSettingsRepository.themePalette.first(),
             themeColor = userSettingsRepository.themeColor.first(),
             amoledBlack = userSettingsRepository.amoledBlack.first(),
@@ -142,6 +145,9 @@ class BackupRepository(
         try {
             val backup = json.decodeFromString<KimonBackup>(jsonString)
 
+            // Apply all database changes atomically so a failure mid-restore cannot
+            // leave the database partially wiped / partially restored.
+            database.withTransaction {
             if (replaceExisting) {
                 database.focusSessionDao().deleteAllSessions()
                 database.taskDao().deleteAllTasks()
@@ -219,6 +225,7 @@ class BackupRepository(
                 )
             }
             database.sleepSessionDao().insertAll(sleepSessionsToInsert)
+            } // end withTransaction
 
             // Restore user settings if present
             backup.settings?.let { s ->
@@ -236,6 +243,11 @@ class BackupRepository(
                 userSettingsRepository.setHeadphoneMode(s.headphoneMode)
                 userSettingsRepository.setAlarmSound(s.alarmSoundUri, s.alarmSoundTitle)
                 userSettingsRepository.setThemeMode(s.themeMode)
+                try {
+                    userSettingsRepository.setAppTheme(AppTheme.valueOf(s.appTheme))
+                } catch (_: Exception) {
+                    // Unknown theme name in backup - keep current
+                }
                 userSettingsRepository.setThemePalette(s.themePalette)
                 userSettingsRepository.setThemeColor(s.themeColor)
                 userSettingsRepository.setAmoledBlack(s.amoledBlack)
@@ -248,10 +260,10 @@ class BackupRepository(
 
             Result.success(
                 RestoreSummary(
-                    focusSessionsRestored = focusSessionsToInsert.size,
-                    tagsRestored = tagsToInsert.size,
-                    tasksRestored = tasksToInsert.size,
-                    sleepSessionsRestored = sleepSessionsToInsert.size,
+                    focusSessionsRestored = backup.focusSessions.size,
+                    tagsRestored = backup.tags.size,
+                    tasksRestored = backup.tasks.size,
+                    sleepSessionsRestored = backup.sleepSessions.size,
                     settingsRestored = backup.settings != null
                 )
             )
@@ -284,10 +296,12 @@ class BackupRepository(
 
     suspend fun clearAllData(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            database.focusSessionDao().deleteAllSessions()
-            database.taskDao().deleteAllTasks()
-            database.sleepSessionDao().deleteAllSessions()
-            database.tagDao().deleteAllTags()
+            database.withTransaction {
+                database.focusSessionDao().deleteAllSessions()
+                database.taskDao().deleteAllTasks()
+                database.sleepSessionDao().deleteAllSessions()
+                database.tagDao().deleteAllTags()
+            }
             userSettingsRepository.clearAllSettings()
             Result.success(Unit)
         } catch (e: Exception) {

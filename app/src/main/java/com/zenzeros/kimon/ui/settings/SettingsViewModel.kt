@@ -365,6 +365,11 @@ class SettingsViewModel(
 
     fun resetAllData() = viewModelScope.launch {
         sessionRepository.clearAllSessions()
+        (application as? KimonApplication)?.let { app ->
+            app.database.taskDao().deleteAllTasks()
+            app.database.tagDao().deleteAllTags()
+            app.sleepRepository.clearAllSessions()
+        }
         userSettingsRepository.clearAllSettings()
     }
 

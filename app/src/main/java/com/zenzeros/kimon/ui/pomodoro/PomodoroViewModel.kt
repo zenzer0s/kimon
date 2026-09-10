@@ -133,36 +133,45 @@ class PomodoroViewModel(
         }
     }
 
-    private var dndActivatedByTimer: Boolean = false
+    // Set synchronously the moment a timer starts, cleared synchronously on pause/stop.
+    // The actual filter change happens in a coroutine (needs a DataStore read), so the
+    // request flag guards against pausing before that coroutine runs and leaving DND stuck on.
+    @Volatile private var dndRequestedByTimer: Boolean = false
+    @Volatile private var dndFilterApplied: Boolean = false
+
     private fun applyDndIfEnabled(context: Context?) {
         val nm = (context ?: appContext).getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && nm.isNotificationPolicyAccessGranted) {
+            dndRequestedByTimer = true
             viewModelScope.launch {
                 val dndEnabled = userSettingsRepository.dndEnabled.first()
-                if (dndEnabled && _uiState.value.currentMode == PomodoroMode.FOCUS) {
+                if (dndRequestedByTimer && dndEnabled && _uiState.value.currentMode == PomodoroMode.FOCUS) {
                     try {
                         previousDndFilter = nm.currentInterruptionFilter
                         nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
-                        dndActivatedByTimer = true
+                        dndFilterApplied = true
                     } catch (e: Exception) {
                         // Ignored
                     }
+                } else {
+                    dndRequestedByTimer = false
                 }
             }
         }
     }
 
     private fun restoreDnd(context: Context?) {
+        dndRequestedByTimer = false
         val nm = (context ?: appContext).getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             ?: return
-        if (dndActivatedByTimer && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && nm.isNotificationPolicyAccessGranted) {
+        if (dndFilterApplied && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && nm.isNotificationPolicyAccessGranted) {
             try {
                 nm.setInterruptionFilter(previousDndFilter)
             } catch (e: Exception) {
                 // Ignored
             }
-            dndActivatedByTimer = false
+            dndFilterApplied = false
         }
     }
 
@@ -275,11 +284,16 @@ class PomodoroViewModel(
                         )
                         setDataSource(ctx, alertUri)
                         isLooping = false
-                        prepare()
-                        start()
                         setOnCompletionListener {
                             stopAlarm()
                         }
+                        setOnErrorListener { _, _, _ ->
+                            stopAlarm()
+                            true
+                        }
+                        // prepareAsync + start on the callback keeps prepare() off the main thread
+                        setOnPreparedListener { it.start() }
+                        prepareAsync()
                     }
                     alarmPlayer = player
 

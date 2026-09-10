@@ -104,12 +104,15 @@ class StepCounterManager(val context: Context) : SensorEventListener {
         val lastRaw = prefs.getLong(KEY_LAST_RAW_STEPS, -1L)
         var todayStepsCount = prefs.getInt(KEY_TODAY_STEPS, 0)
 
-        // Reset if new day arrives
-        if (savedDate != today) {
+        // Reset if new day arrives. On the first reading of a new day we also rebase the
+        // raw baseline to `rawSteps` (by skipping the delta below), otherwise steps taken
+        // late yesterday / overnight get wrongly credited to today.
+        val isNewDay = savedDate != today
+        if (isNewDay) {
             todayStepsCount = 0
         }
 
-        if (lastRaw != -1L) {
+        if (lastRaw != -1L && !isNewDay) {
             val delta = if (rawSteps >= lastRaw) {
                 rawSteps - lastRaw
             } else {

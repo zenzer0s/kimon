@@ -73,6 +73,11 @@ class AnalyzeViewModel(
     fun nextOverviewMonth() {
         val newCal = _overviewMonthCalendar.value.clone() as Calendar
         newCal.add(Calendar.MONTH, 1)
+        val now = Calendar.getInstance()
+        val movedIntoFuture = newCal.get(Calendar.YEAR) > now.get(Calendar.YEAR) ||
+            (newCal.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                newCal.get(Calendar.MONTH) > now.get(Calendar.MONTH))
+        if (movedIntoFuture) return
         _overviewMonthCalendar.value = newCal
     }
 
@@ -85,6 +90,11 @@ class AnalyzeViewModel(
     fun nextDay() {
         val newCal = _selectedDayCalendar.value.clone() as Calendar
         newCal.add(Calendar.DAY_OF_YEAR, 1)
+        val now = Calendar.getInstance()
+        val movedIntoFuture = newCal.get(Calendar.YEAR) > now.get(Calendar.YEAR) ||
+            (newCal.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                newCal.get(Calendar.DAY_OF_YEAR) > now.get(Calendar.DAY_OF_YEAR))
+        if (movedIntoFuture) return
         _selectedDayCalendar.value = newCal
     }
 
@@ -97,6 +107,8 @@ class AnalyzeViewModel(
     fun nextWeek() {
         val newCal = _selectedWeekStartCalendar.value.clone() as Calendar
         newCal.add(Calendar.DAY_OF_YEAR, 7)
+        // Don't allow navigating to a week that starts in the future
+        if (newCal.timeInMillis > System.currentTimeMillis()) return
         _selectedWeekStartCalendar.value = newCal
     }
 
@@ -105,6 +117,7 @@ class AnalyzeViewModel(
     }
 
     fun nextYear() {
+        if (_selectedYear.value >= Calendar.getInstance().get(Calendar.YEAR)) return
         _selectedYear.value += 1
     }
 
