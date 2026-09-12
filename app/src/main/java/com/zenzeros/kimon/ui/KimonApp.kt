@@ -5,6 +5,8 @@ package com.zenzeros.kimon.ui
 import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -144,6 +146,18 @@ fun KimonApp(
         "LIGHT" -> false
         "DARK" -> true
         else -> isSystemInDarkTheme()
+    }
+
+    // Keep status-bar and nav-bar icon colours in sync with the current theme.
+    // enableEdgeToEdge() sets an initial value but doesn't track runtime theme changes,
+    // so we push the correct appearance on every recomposition that changes isDark.
+    val window = (context as? Activity)?.window
+    SideEffect {
+        window?.let {
+            val controller = WindowCompat.getInsetsController(it, it.decorView)
+            controller.isAppearanceLightStatusBars = !isDark
+            controller.isAppearanceLightNavigationBars = !isDark
+        }
     }
 
     CustomColors.black = isDark && settingsState.amoledBlack
