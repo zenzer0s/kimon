@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
@@ -283,7 +283,7 @@ fun AboutSettingsScreen(
             // --- 3. DEVELOPER SECTION ---
             item {
                 Text(
-                    text = "DEVELOPER",
+                    text = "Developer",
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp
@@ -324,7 +324,7 @@ fun AboutSettingsScreen(
             item {
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    text = "COMMUNITY",
+                    text = "Community",
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp
@@ -371,7 +371,7 @@ fun AboutSettingsScreen(
             item {
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    text = "APP INFO",
+                    text = "App Info",
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp
@@ -496,7 +496,7 @@ private fun AboutItem(
                         .size(40.dp)
                         .background(
                             color = iconContainerColor,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = CircleShape
                         )
                 ) {
                     Icon(
