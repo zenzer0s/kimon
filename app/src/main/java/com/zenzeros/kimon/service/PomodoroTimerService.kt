@@ -49,6 +49,7 @@ class PomodoroTimerService : Service() {
 
     private fun startCountdown(totalSeconds: Int, modeLabel: String) {
         targetEndTimeMs = System.currentTimeMillis() + (totalSeconds * 1000L)
+        activeTargetEndTimeMs = targetEndTimeMs
         _timerState.value = TimerServiceState(
             remainingSeconds = totalSeconds,
             totalSeconds = totalSeconds,
@@ -101,6 +102,7 @@ class PomodoroTimerService : Service() {
     private fun stopCountdown() {
         countdownJob?.cancel()
         targetEndTimeMs = 0L
+        activeTargetEndTimeMs = 0L
         _timerState.value = TimerServiceState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -180,6 +182,10 @@ class PomodoroTimerService : Service() {
 
         private val _timerState = MutableStateFlow(TimerServiceState())
         val timerState = _timerState.asStateFlow()
+
+        // Exposed so PomodoroViewModel can restore its own targetEndTimeMs after process death.
+        var activeTargetEndTimeMs: Long = 0L
+            private set
 
         fun startTimer(context: Context, totalSeconds: Int, modeLabel: String) {
             val intent = Intent(context, PomodoroTimerService::class.java).apply {

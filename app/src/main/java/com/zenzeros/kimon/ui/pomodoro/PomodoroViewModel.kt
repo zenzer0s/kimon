@@ -85,6 +85,54 @@ class PomodoroViewModel(
                 }
             }
         }
+
+        // If the service is still running after process death (e.g. user swiped the app
+        // away while the timer was active), rehydrate the ViewModel so the UI reflects the
+        // real remaining time instead of a fresh IDLE state.
+        restoreFromService()
+    }
+
+    /**
+     * Called once on init. Reads the service's companion-object state — which survives as
+     * long as the service process is alive — and reconnects the countdown coroutine.
+     */
+    private fun restoreFromService() {
+        val serviceState = PomodoroTimerService.timerState.value
+        val endTimeMs = PomodoroTimerService.activeTargetEndTimeMs
+        if (!serviceState.isRunning || endTimeMs <= 0L) return
+
+        val now = System.currentTimeMillis()
+        val remainingMs = endTimeMs - now
+        if (remainingMs <= 0L) return   // timer already finished while we were dead
+
+        targetEndTimeMs = endTimeMs
+        sessionStartTimeMs = endTimeMs - (serviceState.totalSeconds * 1000L)
+
+        val remaining = ((remainingMs + 999L) / 1000L).toInt()
+        _uiState.update {
+            it.copy(
+                timerStatus = TimerStatus.RUNNING,
+                remainingSeconds = remaining,
+                totalSeconds = serviceState.totalSeconds
+            )
+        }
+
+        // Restart the in-process countdown coroutine to keep the UI ticking.
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            while (_uiState.value.timerStatus == TimerStatus.RUNNING) {
+                val newRemaining = ((targetEndTimeMs - System.currentTimeMillis() + 999L) / 1000L)
+                    .coerceAtLeast(0L).toInt()
+                if (_uiState.value.remainingSeconds != newRemaining) {
+                    _uiState.update { it.copy(remainingSeconds = newRemaining) }
+                }
+                if (newRemaining <= 0) break
+                delay((1000L - System.currentTimeMillis() % 1000L).coerceAtLeast(1L))
+            }
+            if (_uiState.value.remainingSeconds <= 0 && _uiState.value.timerStatus == TimerStatus.RUNNING) {
+                onTimerFinished()
+            }
+        }
     }
 
     fun selectTag(tag: TagEntity?) {
