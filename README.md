@@ -41,7 +41,7 @@ Material 3 Expressive.
   </tr>
 </table>
 
-➡️ [View all screenshots →](SCREENSHOTS.md)
+[View all screenshots](SCREENSHOTS.md)
 
 ## Build
 
@@ -56,44 +56,22 @@ Requires JDK 21 and the Android SDK (compile/target API 37).
 
 `minSdk` is 29 (Android 10).
 
-## Versioning
-
-The version lives in [`gradle/version.properties`](gradle/version.properties) and
-is the single source of truth:
-
-```
-VERSION_NAME=1.2.0
-VERSION_CODE=10200          # major*10000 + minor*100 + patch
-```
-
-To cut a release:
-
-```
-scripts/bump-version.sh 1.2.0
-git push origin master --follow-tags
-```
-
-This bumps the version, rolls `CHANGELOG.md`, commits and tags `v1.2.0`. Pushing
-the tag triggers the **Release** workflow, which builds a signed APK, generates
-`SHA256SUMS.txt`, and opens a **draft** GitHub release with the notes from the
-changelog.
-
 ## Roadmap
 
 Upcoming features planned for future releases:
 
 | Feature | Status |
 |---|---|
-| 🔁 **Habit Tracker** – build streaks for daily habits alongside your focus sessions | Planned |
+| **Habit Tracker** – build streaks for daily habits alongside your focus sessions | Planned |
 
 ## Contributing
 
 Contributions of all kinds are welcome!
 
-- 🌍 **Translations** – help bring Kimon to more languages. Add or improve a locale under `app/src/main/res/values-<lang>/strings.xml` and open a PR.
-- 🐛 **Bug reports** – open an issue with steps to reproduce and your Android version.
-- 💡 **Feature requests** – check the roadmap first, then open a discussion.
-- ⭐ **Star the repo** – if Kimon is useful to you, a star helps others discover it and keeps motivation high!
+- **Translations** – help bring Kimon to more languages. Add or improve a locale under `app/src/main/res/values-<lang>/strings.xml` and open a PR.
+- **Bug reports** – open an issue with steps to reproduce and your Android version.
+- **Feature requests** – check the roadmap first, then open a discussion.
+- **Star the repo** – if Kimon is useful to you, a star helps others discover it and keeps motivation high!
 
 ## License
 
