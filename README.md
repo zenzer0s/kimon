@@ -18,6 +18,31 @@ Material 3 Expressive.
 - **Backup** – export / import everything as a single JSON file.
 - Multiple built-in themes, dynamic color, AMOLED black.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_20260912-122207_Kimon.png" width="200"/><br/>
+      <sub>Focus Timer</sub>
+    </td>
+    <td align="center">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_20260912-122211_Kimon.png" width="200"/><br/>
+      <sub>Analyze — Overview</sub>
+    </td>
+    <td align="center">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_20260912-122231_Kimon.png" width="200"/><br/>
+      <sub>Plan</sub>
+    </td>
+    <td align="center">
+      <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Screenshot_20260912-122234_Kimon.png" width="200"/><br/>
+      <sub>Sleep & Steps</sub>
+    </td>
+  </tr>
+</table>
+
+➡️ [View all screenshots →](SCREENSHOTS.md)
+
 ## Build
 
 Requires JDK 21 and the Android SDK (compile/target API 37).
