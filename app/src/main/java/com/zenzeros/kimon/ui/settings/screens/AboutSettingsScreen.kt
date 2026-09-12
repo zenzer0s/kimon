@@ -358,7 +358,7 @@ fun AboutSettingsScreen(
 
             item {
                 AboutItem(
-                    icon = R.drawable.ic_sparkles,
+                    icon = R.drawable.ic_badge_check,
                     title = "Contribute & Feedback",
                     subtitle = "github.com/zenzer0s/kimon/issues",
                     shape = bottomListItemShape,
@@ -422,7 +422,7 @@ fun AboutSettingsScreen(
 
             item {
                 AboutItem(
-                    icon = R.drawable.ic_sparkles,
+                    icon = R.drawable.ic_download,
                     title = "Installed Date",
                     subtitle = installedDate,
                     shape = middleListItemShape,
@@ -433,7 +433,7 @@ fun AboutSettingsScreen(
 
             item {
                 AboutItem(
-                    icon = R.drawable.ic_list,
+                    icon = R.drawable.ic_hash,
                     title = "Version",
                     subtitle = "$versionName ($versionCode)",
                     shape = middleListItemShape,
