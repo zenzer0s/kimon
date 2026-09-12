@@ -93,6 +93,7 @@ fun AboutSettingsScreen(
     val scope = rememberCoroutineScope()
     val cookieShape = MaterialShapes.Cookie7Sided.toShape()
     val cloverShape = MaterialShapes.Clover4Leaf.toShape()
+    val squircleShape = MaterialShapes.Cookie12Sided.toShape()
 
     val packageInfo = remember {
         try {
@@ -158,6 +159,19 @@ fun AboutSettingsScreen(
                         .padding(top = 10.dp, bottom = 14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(R.mipmap.ic_launcher)
+                            .build(),
+                        contentDescription = "Kimon app icon",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(squircleShape)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
                         text = "KIMON",
                         style = MaterialTheme.typography.displaySmall.copy(
