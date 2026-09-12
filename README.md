@@ -53,26 +53,22 @@ the tag triggers the **Release** workflow, which builds a signed APK, generates
 `SHA256SUMS.txt`, and opens a **draft** GitHub release with the notes from the
 changelog.
 
-## CI
+## Roadmap
 
-- **CI** (`.github/workflows/ci.yml`) – runs on every push and PR: unit tests,
-  debug build, lint (non-blocking), uploads reports and the debug APK.
-- **Release** (`.github/workflows/release.yml`) – runs on `v*` tags.
+Upcoming features planned for future releases:
 
-## Project layout
+| Feature | Status |
+|---|---|
+| 🔁 **Habit Tracker** – build streaks for daily habits alongside your focus sessions | Planned |
 
-```
-app/                     application module
-  src/main/java/com/zenzeros/kimon/
-    data/                Room database, DataStore settings, backup, repositories
-    domain/              stats use-cases and models
-    service/             pomodoro / sleep / step foreground services
-    ui/                  Compose screens (focus, analyze, plan, sleep, settings)
-    widget/              app-widget providers
-baselineprofile/         Macrobenchmark baseline-profile generator
-gradle/version.properties
-scripts/bump-version.sh
-```
+## Contributing
+
+Contributions of all kinds are welcome!
+
+- 🌍 **Translations** – help bring Kimon to more languages. Add or improve a locale under `app/src/main/res/values-<lang>/strings.xml` and open a PR.
+- 🐛 **Bug reports** – open an issue with steps to reproduce and your Android version.
+- 💡 **Feature requests** – check the roadmap first, then open a discussion.
+- ⭐ **Star the repo** – if Kimon is useful to you, a star helps others discover it and keeps motivation high!
 
 ## License
 
