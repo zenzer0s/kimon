@@ -77,9 +77,12 @@ object UpdateChecker {
 
             val version = release.tag.removePrefix("v").removePrefix("V")
             val alreadyNotified = prefs.getString(KEY_LAST_NOTIFIED_TAG, null) == release.tag
-            if (!alreadyNotified || force) {
+            if (!alreadyNotified) {
+                // Always persist the tag so we don't re-notify on the next background pass,
+                // but only fire the notification for background (non-forced) checks —
+                // manual checks already navigate the user to the release page.
                 prefs.edit().putString(KEY_LAST_NOTIFIED_TAG, release.tag).apply()
-                notifyUpdate(appContext, version, release)
+                if (!force) notifyUpdate(appContext, version, release)
             }
             Result.UpdateAvailable(version, release.url)
         }
@@ -102,6 +105,7 @@ object UpdateChecker {
                 readTimeout = 10_000
                 setRequestProperty("Accept", "application/vnd.github+json")
                 setRequestProperty("User-Agent", "Kimon-Android")
+                setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
             }
             if (conn.responseCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, "release check HTTP ${conn.responseCode}")
@@ -134,9 +138,13 @@ object UpdateChecker {
     /** major.minor.patch -> comparable score. Returns -1 if unparseable. */
     private fun versionScore(raw: String?): Long {
         if (raw.isNullOrBlank()) return -1
-        val cleaned = raw.trim().removePrefix("v").removePrefix("V")
-        val nums = cleaned.split(".", "-", "+", "_")
-            .map { part -> part.takeWhile { it.isDigit() } }
+        // Strip pre-release (-rc1, -beta.1) and build metadata (+001) before parsing
+        val cleaned = raw.trim()
+            .removePrefix("v").removePrefix("V")
+            .substringBefore("-")
+            .substringBefore("+")
+        val nums = cleaned.split(".")
+            .map { it.takeWhile { c -> c.isDigit() } }
             .filter { it.isNotEmpty() }
             .map { it.toInt() }
         if (nums.isEmpty()) return -1
