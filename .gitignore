@@ -25,3 +25,7 @@ native/**/target/
 keystore.properties
 /dist/
 RELEASE_NOTES.md
+
+# Signing keystore — never commit
+*.keystore
+*.jks
