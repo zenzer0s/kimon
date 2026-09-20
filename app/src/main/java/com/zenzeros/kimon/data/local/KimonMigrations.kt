@@ -23,5 +23,9 @@ import androidx.room.migration.Migration
  * commit those files; they are the reference for writing correct migrations.
  */
 object KimonMigrations {
-    val ALL: Array<Migration> = emptyArray()
+    private val MIGRATION_5_6 = Migration(5, 6) { db ->
+        db.execSQL("ALTER TABLE tasks ADD COLUMN displayOrder INTEGER NOT NULL DEFAULT 0")
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_5_6)
 }

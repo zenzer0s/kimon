@@ -2,11 +2,7 @@
 
 package com.zenzeros.kimon.ui.sleep
 
-import android.Manifest
-import android.os.Build
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -80,13 +76,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zenzeros.kimon.KimonApplication
 import com.zenzeros.kimon.R
-import com.zenzeros.kimon.service.step.StepCounterManager
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeCardHeader
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeEmptyState
 import com.zenzeros.kimon.ui.analyze.components.AnalyzeNavigationHeader
 import com.zenzeros.kimon.ui.analyze.components.MetricTileCard
 import com.zenzeros.kimon.ui.analyze.components.horizontalSegmentedShape
 import com.zenzeros.kimon.ui.components.bouncyScroll
+import com.zenzeros.kimon.ui.step.StepCard
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.KimonShapeDefaults.cardShape
 import java.text.NumberFormat
@@ -100,10 +96,10 @@ fun SleepScreen(
     viewModel: SleepViewModel = viewModel(
         factory = SleepViewModel.Factory(
             sleepRepository = (LocalContext.current.applicationContext as KimonApplication).sleepRepository,
-            userSettingsRepository = (LocalContext.current.applicationContext as KimonApplication).userSettingsRepository,
-            stepCounterManager = (LocalContext.current.applicationContext as KimonApplication).stepCounterManager
+            userSettingsRepository = (LocalContext.current.applicationContext as KimonApplication).userSettingsRepository
         )
     ),
+    showStepCounter: Boolean = false,
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -111,12 +107,6 @@ fun SleepScreen(
     val haptic = LocalHapticFeedback.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
-
-    val stepPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        viewModel.onStepPermissionResult(isGranted)
-    }
 
     val timeFormat = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     val dateFormat = remember { SimpleDateFormat("EEE, MMM d", Locale.getDefault()) }
@@ -204,7 +194,6 @@ fun SleepScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        val showStepCounter = state.isStepCounterEnabled
         val sleepCardShapes = if (showStepCounter) ListItemDefaults.segmentedShapes(index = 0, count = 2) else null
         val stepCardShapes = if (showStepCounter) ListItemDefaults.segmentedShapes(index = 1, count = 2) else null
 
@@ -212,7 +201,7 @@ fun SleepScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(if (showStepCounter) 2.dp else 12.dp)
         ) {
             // Hero Sleep Card
             Surface(
@@ -474,265 +463,9 @@ fun SleepScreen(
             }
 
             if (showStepCounter && stepCardShapes != null) {
-                // Step Counter Card (Segmented Item 2)
-                StepCounterCard(
-                    steps = state.todaySteps,
-                    goal = state.stepGoal,
-                    isSensorAvailable = state.isStepSensorAvailable,
-                    hasPermission = state.hasStepPermission,
-                    shape = stepCardShapes.shape,
-                    onRequestPermission = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            stepPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
-                        } else {
-                            viewModel.onStepPermissionResult(true)
-                        }
-                    }
+                StepCard(
+                    shape = stepCardShapes.shape
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StepCounterCard(
-    steps: Int,
-    goal: Int,
-    isSensorAvailable: Boolean,
-    hasPermission: Boolean,
-    onRequestPermission: () -> Unit,
-    modifier: Modifier = Modifier,
-    shape: Shape = cardShape
-) {
-    Surface(
-        shape = shape,
-        color = CustomColors.cardContainerColor,
-        border = CustomColors.cardBorder,
-        tonalElevation = 1.dp,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            val goalPercentage = if (goal > 0) ((steps.toFloat() / goal.toFloat()) * 100).toInt() else 0
-            val formattedSteps = remember(steps) {
-                NumberFormat.getNumberInstance(Locale.getDefault()).format(steps)
-            }
-            val formattedGoal = remember(goal) {
-                NumberFormat.getNumberInstance(Locale.getDefault()).format(goal)
-            }
-
-            AnalyzeCardHeader(
-                icon = R.drawable.ic_steps,
-                title = stringResource(R.string.title_step_counter),
-                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
-                iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                trailingContent = {
-                    if (hasPermission && isSensorAvailable) {
-                        Surface(
-                            shape = CircleShape,
-                            color = if (goalPercentage >= 100) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-                            )
-                        ) {
-                            Text(
-                                text = "$goalPercentage%",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.5.sp,
-                                    letterSpacing = (-0.2).sp
-                                ),
-                                color = if (goalPercentage >= 100) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                maxLines = 1,
-                                softWrap = false
-                            )
-                        }
-                    }
-                }
-            )
-
-            if (!isSensorAvailable) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.step_sensor_unavailable),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 13.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else if (!hasPermission) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.step_permission_prompt),
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.5.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
-                    FilledTonalButton(
-                        onClick = onRequestPermission,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_steps),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.action_enable_steps),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
-                }
-            } else {
-                // Steps Hero Metric
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = formattedSteps,
-                        style = MaterialTheme.typography.displaySmall.copy(
-                            fontFamily = com.zenzeros.kimon.ui.theme.LocalAppFonts.current.topBarTitle,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 38.sp,
-                            letterSpacing = (-0.8).sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.label_steps),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Text(
-                            text = "•",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-
-                        Text(
-                            text = "$goalPercentage% of $formattedGoal goal",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = if (goalPercentage >= 100) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    // Progress capsule bar
-                    val progressFraction = if (goal > 0) (steps.toFloat() / goal.toFloat()).coerceIn(0f, 1f) else 0f
-                    val primaryColor = MaterialTheme.colorScheme.primary
-                    val tertiaryColor = MaterialTheme.colorScheme.tertiary
-                    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)
-
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                    ) {
-                        val barWidth = size.width
-                        val barHeight = size.height
-                        val radius = CornerRadius(barHeight / 2f, barHeight / 2f)
-
-                        // Track
-                        drawRoundRect(
-                            color = trackColor,
-                            size = Size(barWidth, barHeight),
-                            cornerRadius = radius
-                        )
-
-                        // Fill
-                        if (progressFraction > 0) {
-                            drawRoundRect(
-                                brush = Brush.horizontalGradient(listOf(primaryColor, tertiaryColor)),
-                                size = Size(barWidth * progressFraction, barHeight),
-                                cornerRadius = radius
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                // Segmented row for Distance and Calories
-                val distanceKm = StepCounterManager.calculateDistanceKm(steps)
-                val caloriesKcal = StepCounterManager.calculateCaloriesKcal(steps)
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Max),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    MetricTileCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        shape = horizontalSegmentedShape(index = 0, count = 2),
-                        icon = R.drawable.ic_distance,
-                        iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                        valueColor = MaterialTheme.colorScheme.onSurface,
-                        label = stringResource(R.string.label_distance),
-                        value = String.format(Locale.getDefault(), "%.2f km", distanceKm)
-                    )
-
-                    MetricTileCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        shape = horizontalSegmentedShape(index = 1, count = 2),
-                        icon = R.drawable.ic_streak,
-                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        iconBg = MaterialTheme.colorScheme.tertiaryContainer,
-                        valueColor = MaterialTheme.colorScheme.onSurface,
-                        label = stringResource(R.string.label_calories),
-                        value = String.format(Locale.getDefault(), "%d kcal", caloriesKcal)
-                    )
-                }
             }
         }
     }

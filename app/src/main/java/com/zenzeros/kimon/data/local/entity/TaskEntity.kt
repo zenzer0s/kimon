@@ -12,5 +12,6 @@ data class TaskEntity(
     val estimatedPomodoros: Int = 1,
     val completedPomodoros: Int = 0,
     val isCompleted: Boolean = false,
-    val createdAtEpochMs: Long = System.currentTimeMillis()
+    val createdAtEpochMs: Long = System.currentTimeMillis(),
+    val displayOrder: Int = 0
 )

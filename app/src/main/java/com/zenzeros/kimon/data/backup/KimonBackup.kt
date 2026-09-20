@@ -74,7 +74,8 @@ data class TaskBackup(
     val estimatedPomodoros: Int = 1,
     val completedPomodoros: Int = 0,
     val isCompleted: Boolean = false,
-    val createdAtEpochMs: Long = 0
+    val createdAtEpochMs: Long = 0,
+    val displayOrder: Int = 0
 )
 
 @Serializable

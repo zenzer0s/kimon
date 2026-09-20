@@ -70,6 +70,9 @@
     <string name="plan_empty_tasks">No tasks yet. Tap + below to add your first task!</string>
     <string name="plan_action_add_task">Add Task</string>
     <string name="plan_content_desc_completed">Completed</string>
+    <string name="plan_content_desc_reorder">Reorder task</string>
+    <string name="plan_section_completed">Completed (%1$d)</string>
+    <string name="plan_action_clear_completed">Clear</string>
     <string name="task_add_title">New Task</string>
     <string name="task_estimated_sessions">Estimated Sessions</string>
     <string name="task_category_label">Category</string>
@@ -195,6 +198,7 @@
     <!-- Sleep Monitor -->
     <!-- Sleep Monitor -->
     <string name="tab_sleep">Sleep</string>
+    <string name="tab_steps">Steps</string>
     <string name="title_sleep">Sleep</string>
     <string name="settings_section_sleep">Sleep Tracking</string>
     <string name="settings_sleep_desc">Automatic sleep tracking, sleep stages, goals &amp; sync</string>

@@ -65,7 +65,8 @@ class BackupRepository(
                 estimatedPomodoros = entity.estimatedPomodoros,
                 completedPomodoros = entity.completedPomodoros,
                 isCompleted = entity.isCompleted,
-                createdAtEpochMs = entity.createdAtEpochMs
+                createdAtEpochMs = entity.createdAtEpochMs,
+                displayOrder = entity.displayOrder
             )
         }
 
@@ -204,7 +205,8 @@ class BackupRepository(
                     estimatedPomodoros = taskBackup.estimatedPomodoros,
                     completedPomodoros = taskBackup.completedPomodoros,
                     isCompleted = taskBackup.isCompleted,
-                    createdAtEpochMs = if (taskBackup.createdAtEpochMs > 0) taskBackup.createdAtEpochMs else System.currentTimeMillis()
+                    createdAtEpochMs = if (taskBackup.createdAtEpochMs > 0) taskBackup.createdAtEpochMs else System.currentTimeMillis(),
+                    displayOrder = taskBackup.displayOrder
                 )
             }
             database.taskDao().insertAll(tasksToInsert)

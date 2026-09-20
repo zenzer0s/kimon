@@ -26,14 +26,25 @@ class PlanViewModel(
     fun addTask(title: String, category: String = "Focus", pomodoros: Int = 1) {
         if (title.isBlank()) return
         viewModelScope.launch {
+            val minOrder = tasks.value.filter { !it.isCompleted }.minOfOrNull { it.displayOrder } ?: 0
             taskRepository.insertTask(
                 TaskEntity(
                     title = title.trim(),
                     category = category,
                     estimatedPomodoros = pomodoros,
-                    isCompleted = false
+                    isCompleted = false,
+                    displayOrder = minOrder - 1
                 )
             )
+        }
+    }
+
+    fun updateTaskOrder(reorderedTasks: List<TaskEntity>) {
+        viewModelScope.launch {
+            val updated = reorderedTasks.mapIndexed { index, task ->
+                if (task.displayOrder != index) task.copy(displayOrder = index) else task
+            }
+            taskRepository.updateTasks(updated)
         }
     }
 
@@ -48,6 +59,14 @@ class PlanViewModel(
     fun deleteTask(task: TaskEntity) {
         viewModelScope.launch {
             taskRepository.deleteTask(task)
+        }
+    }
+
+    fun clearCompletedTasks() {
+        viewModelScope.launch {
+            tasks.value.filter { it.isCompleted }.forEach {
+                taskRepository.deleteTask(it)
+            }
         }
     }
 

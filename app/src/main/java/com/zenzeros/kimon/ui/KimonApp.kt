@@ -95,6 +95,7 @@ import com.zenzeros.kimon.ui.settings.screens.SleepSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.StepSettingsScreen
 import com.zenzeros.kimon.ui.settings.screens.TimerSettingsScreen
 import com.zenzeros.kimon.ui.sleep.SleepScreen
+import com.zenzeros.kimon.ui.step.StepScreen
 import com.zenzeros.kimon.ui.theme.CustomColors
 import com.zenzeros.kimon.ui.theme.KimonTheme
 import com.zenzeros.kimon.ui.theme.LocalAppFonts
@@ -104,7 +105,8 @@ private enum class KimonTab(val titleRes: Int, val iconRes: Int) {
     FOCUS(R.string.tab_focus, R.drawable.ic_focus),
     ANALYZE(R.string.tab_analyze, R.drawable.ic_analyze),
     PLAN(R.string.tab_plan, R.drawable.ic_plan),
-    SLEEP(R.string.tab_sleep, R.drawable.ic_moon)
+    SLEEP(R.string.tab_sleep, R.drawable.ic_moon),
+    STEPS(R.string.tab_steps, R.drawable.ic_steps)
 }
 
 @Composable
@@ -188,12 +190,20 @@ fun KimonApp(
         }
     }
 
-    // Dynamic Root Tabs: Focus > Analyze > Plan > Sleep (when enabled)
-    val enabledTabs = remember(settingsState.sleepMonitoringEnabled) {
-        if (settingsState.sleepMonitoringEnabled) {
-            listOf(KimonTab.FOCUS, KimonTab.ANALYZE, KimonTab.PLAN, KimonTab.SLEEP)
-        } else {
-            listOf(KimonTab.FOCUS, KimonTab.ANALYZE, KimonTab.PLAN)
+    // Dynamic Root Tabs: Focus > Analyze > Plan > Sleep / Steps
+    val hasSleep = settingsState.sleepMonitoringEnabled
+    val hasSteps = settingsState.stepCounterEnabled
+
+    val enabledTabs = remember(hasSleep, hasSteps) {
+        buildList {
+            add(KimonTab.FOCUS)
+            add(KimonTab.ANALYZE)
+            add(KimonTab.PLAN)
+            if (hasSleep) {
+                add(KimonTab.SLEEP)
+            } else if (hasSteps) {
+                add(KimonTab.STEPS)
+            }
         }
     }
 
@@ -202,12 +212,21 @@ fun KimonApp(
         pageCount = { enabledTabs.size }
     )
 
-    // Handle deep-link navigation requests (e.g. from a sleep-summary notification tap)
+    // Handle deep-link navigation requests (e.g. from a notification tap)
     LaunchedEffect(navTarget, enabledTabs) {
         when (navTarget) {
             null -> Unit
             "sleep" -> {
                 val idx = enabledTabs.indexOf(KimonTab.SLEEP)
+                if (idx >= 0) mainTabPagerState.scrollToPage(idx)
+                onNavTargetHandled()
+            }
+            "steps" -> {
+                val idx = if (enabledTabs.contains(KimonTab.STEPS)) {
+                    enabledTabs.indexOf(KimonTab.STEPS)
+                } else {
+                    enabledTabs.indexOf(KimonTab.SLEEP)
+                }
                 if (idx >= 0) mainTabPagerState.scrollToPage(idx)
                 onNavTargetHandled()
             }
@@ -458,8 +477,14 @@ fun KimonApp(
                     ) { page ->
                         when (enabledTabs.getOrNull(page)) {
                             KimonTab.SLEEP -> SleepScreen(
+                                showStepCounter = settingsState.stepCounterEnabled,
                                 onNavigateToSettings = {
                                     settingsBackStack.add(KimonNavKey.SleepSettings)
+                                }
+                            )
+                            KimonTab.STEPS -> StepScreen(
+                                onNavigateToSettings = {
+                                    settingsBackStack.add(KimonNavKey.StepSettings)
                                 }
                             )
                             KimonTab.PLAN -> PlanScreen()
