@@ -8,6 +8,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-20
+
+### Added
+- Smooth drag-and-drop task reordering powered by Material 3 Expressive motion physics (`MotionScheme`).
+- Dedicated collapsible "Completed" tasks section to organize active and done items neatly.
+- Separated Steps and Sleep tracking into modular feature codebases (`ui.step` and `ui.sleep`).
+- Flexible tracking navigation: when both Sleep and Steps are enabled, they seamlessly combine into a unified dashboard view; when individually enabled, each functions independently as its own tab.
+
+### Changed
+- Refined task reordering gestures with responsive drag handle controls, eliminating swipe conflicts.
+
+
 ## [1.0.0] - 2026-09-10
 
 ### Added
